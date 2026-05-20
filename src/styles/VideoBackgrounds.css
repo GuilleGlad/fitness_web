@@ -1,0 +1,38 @@
+/* src/components/VideoBackground.css */
+
+.video-background-container {
+    /* Establish a container that defines the dimensions for the video */
+    position: relative;
+    width: 100%;
+    /* Setting minimum height ensures it takes up space even if content is added */
+    /* You might want to use a specific height (e.g., 60vh) depending on layout */
+    min-height: 100vh; /* Example: makes it take up at least half the viewport height */
+    overflow: hidden; /* Crucial: keeps the video contained */
+}
+
+.video-background {
+    /* Make the video element absolute so it covers the entire parent container */
+    position: absolute;
+    top: 50%; /* Start at 50% to perfectly center the video */
+    left: 50%;
+    transform: translate(-50%, -50%); /* Shift it back by 50% of its own size */
+    
+    /* Ensure it covers 100% of the parent container */
+    min-width: 100%;
+    min-height: 100%;
+    width: auto; /* Use auto width/height combined with object-fit */
+    height: auto;
+
+    /* Object-fit: cover ensures the video always covers the container, 
+       cropping the edges if necessary to maintain aspect ratio. */
+    object-fit: cover; 
+    z-index: 1; /* Place the video below any foreground content */
+}
+
+/* Optional: Styling for content that might sit on top of the video */
+.video-content-overlay {
+    position: relative;
+    z-index: 2; /* Ensures content is above the background video */
+    color: white;
+    padding: 40px;
+}
