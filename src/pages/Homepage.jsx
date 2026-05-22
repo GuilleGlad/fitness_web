@@ -3,6 +3,8 @@ import VideoBackground from '../components/VideoBackgrounds';
 import Navbar from '../components/Navbar';
 import FloatingCard from '../components/FloatingCard';
 import BigTitle from '../components/BigTitle';
+import Logo from '../components/Logo';
+import FloatingText from '../components/FloatingText';
 
 function Homepage() {
     // NOTE: Replace '/videos/hero-bg.mp4' with the actual path to your video asset.
@@ -10,6 +12,9 @@ function Homepage() {
     const logoPath = '/images/Logo-01-1-1.png';
     const trainerPic = '/images/Image-02.jpg';
     const trainerName = 'Sergio Zane';
+    const pictures = [
+        '/images/Image-03.jpg'
+    ];
     return (
         <div className="homepage-wrapper">
             <div className="video-background-container">
@@ -36,23 +41,46 @@ function Homepage() {
                     This wrapper div is crucial for placing foreground content (text, buttons, etc.) 
                     on top of the video background, using z-index.
                 */}
-                <div className="video-content-overlay">
+                <div className="video-content-overlay ">
                     {/* PARENT COMPONENTS SHOULD PLACE THEIR CONTENT HERE */}
                     {/* Example Content: */}
                     <div className='h-[80lvh]'>
                         <Navbar></Navbar>
                         <div className='items-center absolute bottom-0 flex-1 md:flex'>
-                            <div className="md:w-1/3">
+                            <div className="w-full lg:w-1/2">
                                 <FloatingCard trainerPic={trainerPic} trainerName={trainerName} ></FloatingCard>
                             </div>
-                            <div className="md:w-2/3">
+                            <div className="w-full md:w-1/2 lg:w-2/3">
                                 <BigTitle title=""></BigTitle>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <div className="flex-1 lg:flex bg-black">
+                <div className="w-2/3 ">
+                    <FloatingText text="About us" color="text-white"></FloatingText>
+                </div>
+                <div className=''>
+                    <BigTitle title="TARGETED TRAINING IN AN EXCLUSIVE PRIVATE GYM." color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                </div>
+            </div>
+            <div className="flex-1 lg:flex bg-black">
 
+                    <div className='w-full lg:w-1/3 p-8 '>
+                        <img src={pictures[0]} className='rounded-xl shadow-lg'/>
+                    </div>
+                    <div className="flex-1 lg:mt-10">
+                        <div className='w-full'>
+                            <BigTitle title="Work with a dedicated coach in a refined, relaxed space built around your growth and your results." color="text-customYellow " size="text-2xl lg:text-6xl"></BigTitle>
+                        </div>
+                        <div className="flex mt-5 justify-evenly">
+                            <div className='text-white w-1/3'>Curabitur tincidunt, felis a elementum tincidunt, ex felis fermentum dui, eget pulvinar arcu eros eu eros. Vestibulum sollicitudin pretium velit, eget justo sit amet. Pellentesque in nulla in nisi dictum interdum.</div>
+                            <div className='text-white w-1/3'>Etiam accumsan urna a mauris dapibus, nec nunc convallis. Phasellus eget justo et libero ultrices posuere. Cras euismod, arcu nec congue convallis, ipsum orci non libero.  amet felis placerat</div>
+                        </div>
+                    </div>
+
+            </div>
         </div>
     );
 }

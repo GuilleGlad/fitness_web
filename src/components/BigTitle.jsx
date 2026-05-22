@@ -1,14 +1,21 @@
 import React from 'react';
 
-const BigTitle = ({title}) => {
+const BigTitle = ({title, color, size}) => {
     var defaultTitle = "WE ACHIEVE YOUR GOALS. TOGETHER";
+    var defaultColor = "text-white ";
+    var defaultSize = "text-4xl lg:text-9xl"
     if(title){
         defaultTitle = title;
     }
-
+    if(color){
+        defaultColor = color;
+    }
+    if(size){
+        defaultSize = size;
+    }
     return (
         <div className=''>
-            <h1 className={`mt-10 mr-20 text-right text-3xl md:text-9xl font-bold uppercase`}>{defaultTitle}</h1>
+            <h1 className={`${defaultSize} ${defaultColor} mr-10 text-right font-bold `}>{defaultTitle}</h1>
         </div>
     )
 }
