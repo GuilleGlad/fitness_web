@@ -19,20 +19,22 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
 
       {/* Enlaces de Navegación (Visible en escritorio) */}
       <div id="menu-items" className={`md:flex space-x-6 ${isMenuOpen ? 'hidden' : 'hidden md:block'}`}>
-        <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">Inicio</a>
-        <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">Servicios</a>
-        <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">Acerca de</a>
-        <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">Blog</a>
+        <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">HOME</a>
+        <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">SERVICES</a>
+        <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">ABOUT</a>
+        <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">PAGE</a>
+        <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">CONTACT</a>
       </div>
 
       {/* Menú de navegación expandido (Solo visible en móvil) */}
       {/* Esta sección se usaría para que el menú se "caiga" de forma vertical */}
       <div className={`md:hidden absolute top-16 left-0 right-0 bg-black shadow-lg transition duration-300 overflow-hidden ${isMenuOpen ? 'block' : 'hidden'}`} id="mobile-menu">
         <div className="flex flex-col items-center py-4 space-y-2">
-            <a href="#" className="text-xl py-2 w-full text-center hover:bg-gray-100">Inicio</a>
-            <a href="#" className="text-xl py-2 w-full text-center hover:bg-gray-100">Servicios</a>
-            <a href="#" className="text-xl py-2 w-full text-center hover:bg-gray-100">Acerca de</a>
-            <a href="#" className="text-xl py-2 w-full text-center hover:bg-gray-100">Blog</a>
+            <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">HOME</a>
+            <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">SERVICES</a>
+            <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">ABOUT</a>
+            <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">PAGE</a>
+            <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">CONTACT</a>
         </div>
       </div>
     </nav>
