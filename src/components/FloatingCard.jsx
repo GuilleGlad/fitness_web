@@ -5,7 +5,7 @@ import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
 const FloatingCard = ({trainerPic, trainerName, trainerPhone, trainerEmail}) => {
     return(
-        <div className='p-4 flex backdrop-blur bg-gray-600 rounded-lg items-center justify-evenly gap-4 lg:max-w-[50%] md:w-[60%] md:ml-10 mr-6'>
+        <div className='p-4 flex backdrop-blur bg-gray-600 rounded-lg items-center justify-evenly gap-4 lg:max-w-[60%] md:w-[60%] md:ml-10 mr-6'>
             <div id='pictureDiv' >
                 <img src={trainerPic} alt="" className='w-16 rounded-full'/>
             </div>
@@ -15,7 +15,7 @@ const FloatingCard = ({trainerPic, trainerName, trainerPhone, trainerEmail}) => 
                     <span className='text-xs'>Personal Trainer</span>
                 </div>
             </div>
-            <div className='flex gap-2 lg:gap-4 w-16 mr-10 lg:ml-10'>
+            <div className='flex gap-2 lg:gap-4 w-16 mr-10 lg:ml-6'>
                 <div id="phoneDiv">
                     <FontAwesomeIcon icon={faPhone} className='bg-gray-500 rounded-full p-4' />
                 </div>

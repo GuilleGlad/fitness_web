@@ -21,9 +21,10 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
       <div id="menu-items" className={`md:flex space-x-6 ${isMenuOpen ? 'hidden' : 'hidden md:block'}`}>
         <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">HOME</a>
         <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">SERVICES</a>
-        <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">ABOUT</a>
+        <a href="#about" className="uppercase text-white-600 hover:text-customYellow transition">ABOUT</a>
         <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">PAGE</a>
         <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">CONTACT</a>
+        <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">LOGIN</a>
       </div>
 
       {/* Menú de navegación expandido (Solo visible en móvil) */}
@@ -35,6 +36,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
             <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">ABOUT</a>
             <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">PAGE</a>
             <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">CONTACT</a>
+            <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">LOGIN</a>
         </div>
       </div>
     </nav>

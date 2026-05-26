@@ -1,0 +1,10 @@
+
+.slick-slide{
+  border-width: 12px;
+  border-style: solid;
+  border-color: white;
+}
+
+.slick-prev:before, .slick-next:before{
+    color: black;
+}
