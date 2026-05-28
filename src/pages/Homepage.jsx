@@ -12,10 +12,14 @@ import "slick-carousel/slick/slick-theme.css";
 import Slider from 'react-slick';
 import '../styles/Homepage.css'
 import ImageCard from '../components/ImageCard';
+import Comments from '../components/Comments';
+import Faq from '../components/Faq';
+import BigSubTitle from '../components/BigSubTitle';
 
 function Homepage() {
     // NOTE: Replace '/videos/hero-bg.mp4' with the actual path to your video asset.
-    const videoPath = '/videos/videoplayback.mp4';
+    const videoPath1 = '/videos/videoplayback.mp4';
+    const videoPath2 = '/videos/videoplayback2.mp4';
     const logoPath = '/images/Logo-01-1-1.png';
     const trainerPic = '/images/Image-02.jpg';
     const trainerName = 'Sergio Zane';
@@ -44,7 +48,7 @@ function Homepage() {
                 */}
                 <video
                     className="video-background"
-                    src={videoPath}
+                    src={videoPath1}
                     autoPlay
                     loop
                     muted
@@ -252,6 +256,77 @@ function Homepage() {
 
                 </div>
                 <div className='separator pt-32 bg-black'></div>
+                {/* TESTIMONIALS */}
+                <div className="bg-black w-full flex-1 mr-32">
+                    <div className="flex-1 lg:flex bg-black lg:mr-32">
+                        <div className="w-1/4">
+                            <FloatingText text="TESTIMONIALS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
+                        </div>
+                        <div className='w-3/4'>
+                            <BigTitle title="WHAT OUR MEMBERS ARE SAYING" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-3 ml-32 mr-32 mt-10 ">
+                        <Comments stars={5} text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." account="Emily Roberts" picture="/images/Testimonials-01.jpg" role="members" />
+                        <Comments stars={1} text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." account="Emily Roberts" picture="/images/Testimonials-03.jpg" role="members" />
+                        <Comments stars={3} text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." account="Emily Roberts" picture="/images/Testimonials-04.jpg" role="members" />
+                        <Comments stars={5} text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." account="Emily Roberts" picture="/images/Testimonials-05.jpg" role="members" />
+                        <Comments stars={5} text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." account="Emily Roberts" picture="/images/Testimonials-06.jpg" role="members" />
+                        <Comments stars={5} text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." account="Emily Roberts" picture="/images/Testimonials-07.jpg" role="members" />
+                    </div>
+
+                </div>
+                <div className='separator pt-32 bg-black'></div>
+                {/* FAQ */}
+                <div className="bg-black w-full flex-1 mr-32">
+                    <div className="flex-1 lg:flex bg-black lg:mr-32">
+                        <div className="w-1/4">
+                            <FloatingText text="FAQS QUESTIONS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
+                        </div>
+                        <div className='w-3/4'>
+                            <BigTitle title="FAQ" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                        </div>
+                    </div>
+                    <div className='w-1/2 ml-[30%]'>
+                        <div className="flex flex-col justify-center ">
+                            <Faq title={"Do I need any equipment to get started?"} text={"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur."} />
+                            <Faq title={"What happens if an exercise feels too hard?"} text={"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur."} />
+                            <Faq title={"Will I actually see progress week by week?"} text={"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur."} />
+                            <Faq title={"Can I do the workouts at home or de I need a gym?"} text={"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur."} />
+                            <Faq title={"Has anyone actually transformed with this program?"} text={"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur."} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className='separator pt-32 bg-black'></div>
+                {/* VIDEO2 */}
+                <div className="video-background-container ">
+
+                    <video
+                        className="video-background"
+                        src={videoPath2}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        poster="/path/to/placeholder.jpg" // Optional: shows an image before video loads
+                    >
+                        {/* Fallback for older browsers */}
+                        Your browser does not support the video tag.
+                    </video>
+                    <div className="video-content-overlay lg:ml-16">
+                        <div className='h-[80lvh]'>
+                            <div className='items-center absolute bottom-0 flex-col md:flex'>
+                                <div className="w-full ml-32 mr-32">
+                                    <BigSubTitle title="TRANSFORM YOUR BODY STARTING TODAY" subtitle="Take the first step toward a stronger, healthier, and more confident version of yourself." button_text="JOIN THE PROGRAM" />
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div className='separator pt-32 bg-black'></div>
+                
             </>
 
         </div>
