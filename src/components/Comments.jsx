@@ -3,7 +3,7 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 
-const Comments = ({ stars, text, account, picture, role }) => {
+const Comments = ({stars, text, account, picture, role }) => {
     // Ensure the number of stars is between 1 and 5
     const minStars = Math.max(1, stars);
     const maxStars = Math.min(5, stars);

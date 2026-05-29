@@ -15,6 +15,7 @@ import ImageCard from '../components/ImageCard';
 import Comments from '../components/Comments';
 import Faq from '../components/Faq';
 import BigSubTitle from '../components/BigSubTitle';
+import Footer from '../components/Footer';
 
 function Homepage() {
     // NOTE: Replace '/videos/hero-bg.mp4' with the actual path to your video asset.
@@ -23,6 +24,8 @@ function Homepage() {
     const logoPath = '/images/Logo-01-1-1.png';
     const trainerPic = '/images/Image-02.jpg';
     const trainerName = 'Sergio Zane';
+    const defaultEmail = 'support@musclefit.com';
+
     const pictures = [
         '/images/Image-03.jpg'
     ];
@@ -326,7 +329,10 @@ function Homepage() {
                     </div>
                 </div>
                 <div className='separator pt-32 bg-black'></div>
-                
+                <div className="bg-black flex-1 ml-32 mr-32">
+                    <Footer email={defaultEmail} links={["transformations", "about us", "pricing", "how to start", "faq"]}/>
+                </div>
+                <div className='separator pt-32 bg-black'></div>
             </>
 
         </div>
