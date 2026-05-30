@@ -43,8 +43,8 @@ const Footer = ({logoPath, email, links}) => {
                     ))}                
                 </div>            
             </div>
-            <div className='flex mt-10 justify-around'>
-                <div className="w-1/3 flex">
+            <div className='flex mt-10 justify-around bg-gray-700 rounded p-4'>
+                <div className="w-1/2 flex">
                     <div className='ml-2'>
                         <FontAwesomeIcon icon={faPhone} className='text-customYellow'/> 
                         <span className='text-white text-sm'>+1 (888) 807-5000</span>
@@ -54,7 +54,7 @@ const Footer = ({logoPath, email, links}) => {
                         <span className='text-white text-sm'>Jl. Soekarno-hatta</span>                        
                     </div>
                 </div>
-                <div className="w-1/3 ">
+                <div className="w-1/32 ">
                     <span className='text-white text-sm'>Copyright © 2025 Musclefit | Powered by Onecontributor</span>
                 </div>
             </div>
