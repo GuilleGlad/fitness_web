@@ -20,8 +20,8 @@ const Footer = ({logoPath, email, links}) => {
         <div className="flex flex-col">
             <div className="flex bg-black mr-32">
                 <div className="flex flex-col w-1/4">
-                    <img className="w-1/4" src={defaultlogoPath} alt='AdrianFitness'></img>
-                    <span className='text-white'>Have any question? Reach out to us!</span>
+                    <img className="w-1/3" src={defaultlogoPath} alt='AdrianFitness'></img>
+                    <span className='text-white text-sm mt-2'>Have any question? Reach out to us!</span>
                     <div className="flex gap-2 items-center">
                         <FontAwesomeIcon icon={faEnvelope} className='text-customYellow'/><span className='text-white font-bold text-2xl'>{email}</span>
                     </div>
@@ -43,7 +43,8 @@ const Footer = ({logoPath, email, links}) => {
                     ))}                
                 </div>            
             </div>
-            <div className='flex mt-10 justify-around bg-gray-700 rounded p-4'>
+            <div className='m-20'></div>
+            <div className='flex mt-10 justify-around bg-gray-800 rounded-lg p-2 '>
                 <div className="w-1/2 flex">
                     <div className='ml-2'>
                         <FontAwesomeIcon icon={faPhone} className='text-customYellow'/> 

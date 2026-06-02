@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { Link } from 'react-router-dom';
 const Menu = ({ isMenuOpen, toggleMenu }) => {
   return (
     <nav className="flex items-center justify-center w-full md:flex-1 lg:flex-grow">
@@ -24,7 +24,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
         <a href="#about" className="uppercase text-white-600 hover:text-customYellow transition">ABOUT</a>
         <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">PAGE</a>
         <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">CONTACT</a>
-        <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">LOGIN</a>
+        <Link to="/Login" className="uppercase text-white-600 hover:text-customYellow transition">LOGIN</Link>
       </div>
 
       {/* Menú de navegación expandido (Solo visible en móvil) */}
