@@ -1,13 +1,70 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import BigTitle from '../components/BigTitle'; // Reusing the core component
 import LoginForm from '../components/LoginForm';
 import { TextField, Input, InputLabel, FormControl, FormHelperText, Button } from "@mui/material";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDotCircle } from '@fortawesome/free-solid-svg-icons';
+import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast';
+import { Tooltip } from 'react-tooltip';
+
+
 function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const apiUrl = process.env.REACT_APP_API_URL;
+    const [online, setOnline] = useState(false);
+    const [serverStatusStr, setServerStatusStr] = useState('El servidor esta offline');
+    const loginSuccessNotif = () => {
+        toast("Login Exitoso, redirigiendo...",
+            {
+                icon: '👍',
+                style: {
+                    color: 'white',
+                    background: 'green'
+                }
+            }
+        );
+    }
+    const loginErrorNotif = () => {
+        toast("Error de Login.",
+            {
+                icon: '👎',
+                style: {
+                    color: 'white',
+                    background: 'red'
+                }
+            }
+        )
+    }
 
-    const handleLogin = (e) => {
+    useEffect(() => {
+        const fetch = async () => {
+            const intervalId = setInterval(async () => {
+                try {
+                    const response = await axios(apiUrl + "/testApi");
+                    if (response.data.success) {
+                        setOnline(true);
+                        setServerStatusStr('El servidor esta Online');
+                    } else {
+                        setOnline(false);
+                        setServerStatusStr('El servidor esta Offline');
+                    }
+                } catch (e) {
+                    setOnline(false);
+                    setServerStatusStr('El servidor esta Offline');
+                    console.error('error: ' + e.message);
+                } finally {
+                    //console.log(online);
+                }
+            }, 5000);
+            return () => clearInterval(intervalId);
+        }
+        fetch();
+    });
+
+    const handleLogin = async (e) => {
         e.preventDefault();
 
         // Basic Validation
@@ -15,22 +72,39 @@ function Login() {
             setError("Por favor, ingresa correo y contraseña.");
             return;
         }
+        const loginData = {
+            "email": email,
+            "password": password
+        }
 
-        // Simulation: Here, you would send data to your API
-        console.log("Attempting login:", { email, password });
-        setError('');
-
-        // Example: Simulate successful login after a short delay
-        setTimeout(() => {
-            alert('Login exitoso! Redireccionando...');
-            // Redirect logic here
-        }, 1000);
+        try {
+            const login = await axios.post(apiUrl + "/auth/login", loginData);
+            loginSuccessNotif();
+        } catch (e) {
+            loginErrorNotif();
+            //console.error('error: ' + e.message);
+        }
     };
 
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter') {
+            handleLogin(event);
+        }
+    };
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
             <div className="w-full max-w-md bg-gray-800 p-8 rounded-xl shadow-2xl">
                 <div className="text-center mb-10">
+                    <Toaster />
+                    <div className='text-right'>
+                        {
+                            !online && <a id='serverStatus'><FontAwesomeIcon icon={faDotCircle} color='gray' /></a>
+                        }
+                        {
+                            online && <a id='serverStatus'><FontAwesomeIcon icon={faDotCircle} color='lightgreen' /></a>
+                        }
+                    </div>
+                    <Tooltip anchorSelect='#serverStatus' content={serverStatusStr} />
                     <h1 className="text-4xl font-bold text-white mb-2">EliteFit</h1>
                     <p className="text-xl text-yellow-400">Inicia sesión para comenzar tu transformación.</p>
                 </div>
@@ -53,6 +127,7 @@ function Login() {
                         }}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        onKeyDown={handleKeyDown}
                     />
                     <TextField
                         type='password'
@@ -69,7 +144,8 @@ function Login() {
                         }}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                    />                    
+                        onKeyDown={handleKeyDown}
+                    />
                 </div>
 
                 {/* Placeholder for the actual form, using the handler to simulate submission */}
