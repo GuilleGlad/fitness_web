@@ -1,0 +1,34 @@
+import { useState, useEffect } from 'react';
+
+export function useServerStatus(pingUrl, intervalMs = 10000) {
+  const [isAlive, setIsAlive] = useState(true);
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        // Use HEAD to minimize network payload
+        const response = await fetch(pingUrl, { 
+          method: 'HEAD',
+          cache: 'no-store' // Prevent the browser from caching a "valid" response if the server goes down
+        });
+        
+        // response.ok is true if the status code is 200-299
+        setIsAlive(response.ok);
+      } catch (error) {
+        // If the network request fails entirely (e.g., server is down, CORS issue)
+        setIsAlive(false);
+      }
+    };
+
+    // Run immediately on mount
+    checkStatus();
+
+    // Set up the interval heartbeat
+    const intervalId = setInterval(checkStatus, intervalMs);
+
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [pingUrl, intervalMs]);
+
+  return isAlive;
+}

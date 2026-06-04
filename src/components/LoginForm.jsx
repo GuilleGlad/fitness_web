@@ -1,72 +1,166 @@
-import React from 'react';
-import { User, Lock } from 'lucide-react';
-import AccentButton from './AccentButton';
+import React, {useState, useEffect} from 'react';
+import BigTitle from '../components/BigTitle'; // Reusing the core component
+import { TextField, Input, InputLabel, FormControl, FormHelperText, Button } from "@mui/material";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDotCircle } from '@fortawesome/free-solid-svg-icons';
+import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast';
+import { Tooltip } from 'react-tooltip';
+import {Link} from 'react-router-dom';
+import { useServerStatus } from '../hooks/useServerStatus';
 
-const LoginForm = ({ onLogin }) => {
-    const handleSubmit = (e) => {
+const LoginForm = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const apiUrl = process.env.REACT_APP_API_URL;
+    const [serverStatusStr, setServerStatusStr] = useState('El servidor esta offline');
+    const loginSuccessNotif = () => {
+        toast("Login Exitoso, redirigiendo...",
+            {
+                icon: '👍',
+                style: {
+                    color: 'white',
+                    background: 'green'
+                }
+            }
+        );
+    }
+    const loginErrorNotif = () => {
+        toast("Error de Login.",
+            {
+                icon: '👎',
+                style: {
+                    color: 'white',
+                    background: 'red'
+                }
+            }
+        )
+    }
+    const isServerOnline = useServerStatus(apiUrl + "/testApi", 5000);
+
+    // useEffect(() => {
+    //     const fetch = async () => {
+    //         const intervalId = setInterval(async () => {
+    //             try {
+    //                 const response = await axios(apiUrl + "/testApi");
+    //                 if (response.data.success) {
+    //                     setOnline(true);
+    //                     setServerStatusStr('El servidor esta Online');
+    //                 } else {
+    //                     setOnline(false);
+    //                     setServerStatusStr('El servidor esta Offline');
+    //                 }
+    //             } catch (e) {
+    //                 setOnline(false);
+    //                 setServerStatusStr('El servidor esta Offline');
+    //                 console.error('error: ' + e.message);
+    //             } finally {
+    //                 //console.log(online);
+    //             }
+    //         }, 5000);
+    //         return () => clearInterval(intervalId);
+    //     }
+    //     fetch();
+    // });
+
+    const handleLogin = async (e) => {
         e.preventDefault();
-        // Assuming local state manages the inputs before calling onLogin
-        // For simplicity here, we just pass a placeholder handler
-        onLogin(); 
+
+        // Basic Validation
+        if (!email || !password) {
+            setError("Por favor, ingresa correo y contraseña.");
+            return;
+        }
+        const loginData = {
+            "email": email,
+            "password": password
+        }
+
+        try {
+            const login = await axios.post(apiUrl + "/auth/login", loginData);
+            loginSuccessNotif();
+        } catch (e) {
+            loginErrorNotif();
+            //console.error('error: ' + e.message);
+        }
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter') {
+            handleLogin(event);
+        }
     };
 
     return (
-        <div className="w-full max-w-md p-8 md:p-12 bg-[#121212] shadow-2xl rounded-xl border border-[#222] text-white">
-            <h2 className="text-3xl font-extrabold text-center mb-8 text-[#b8fb00]">
-                Iniciar Sesión
-            </h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Email Input */}
-                <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                        Correo Electrónico
-                    </label>
-                    <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            autoComplete="email"
-                            required
-                            className="w-full p-3 pl-10 rounded-lg bg-[#1f1f1f] text-white border border-gray-700 focus:ring-2 focus:ring-[#b8fb00] focus:border-[#b8fb00] transition duration-150"
-                        />
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+            <div className="w-full max-w-md bg-gray-800 p-8 rounded-xl shadow-2xl">
+                <div className="text-center mb-10">
+                    <Toaster />
+                    <div className='text-right'>
+                        {
+                            !isServerOnline && <a id='serverStatus'><FontAwesomeIcon icon={faDotCircle} color='gray' /></a>
+                        }
+                        {
+                            isServerOnline && <a id='serverStatus'><FontAwesomeIcon icon={faDotCircle} color='lightgreen' className='text-green-400 animate-pulse' /></a>
+                        }
                     </div>
+                    <Tooltip anchorSelect='#serverStatus' content={serverStatusStr} />
+                    <h1 className="text-4xl font-bold text-white mb-2">EliteFit</h1>
+                    <p className="text-xl text-yellow-400">Inicia sesión para comenzar tu transformación.</p>
                 </div>
 
-                {/* Password Input */}
-                <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                        Contraseña
-                    </label>
-                    <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            autoComplete="current-password"
-                            required
-                            className="w-full p-3 pl-10 rounded-lg bg-[#1f1f1f] text-white border border-gray-700 focus:ring-2 focus:ring-[#b8fb00] focus:border-[#b8fb00] transition duration-150"
-                        />
-                    </div>
+                {/* Login Form Structure (Simulated by the button handler above) */}
+                <div className="mb-8">
+                    <h2 className="text-2xl font-semibold text-white mb-6 text-center">Iniciar Sesión</h2>
+                    <TextField
+                        label="Email"
+                        variant="filled"
+                        color="secondary"
+                        size="small"
+                        fullWidth
+                        sx={{
+                            backgroundColor: "lightGray",
+                            "&:hover": { backgroundColor: "white" },
+                            fontWeight: "bold",
+                            borderRadius: 3,
+                            marginBottom: 2,
+                        }}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                    />
+                    <TextField
+                        type='password'
+                        label="Password"
+                        variant="filled"
+                        color="secondary"
+                        size="small"
+                        fullWidth
+                        sx={{
+                            backgroundColor: "lightGray",
+                            "&:hover": { backgroundColor: "white" },
+                            fontWeight: "bold",
+                            borderRadius: 3,
+                        }}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                    />
                 </div>
 
-                {/* Options and Forgot Link */}
-                <div className="flex justify-between items-center text-sm">
-                    <div className="flex items-center">
-                        <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-[#b8fb00] border-gray-600 bg-[#1f1f1f] focus:ring-[#b8fb00]"/>
-                        <label htmlFor="remember-me" className="ml-2 text-gray-300">Recordarme</label>
-                    </div>
-                    <a href="#" className="text-[#b8fb00] hover:text-white transition duration-150">¿Olvidaste tu contraseña?</a>
-                </div>
+                {/* Placeholder for the actual form, using the handler to simulate submission */}
+                <button
+                    onClick={handleLogin}
+                    className="w-full bg-yellow-500 text-gray-900 font-bold py-3 rounded-lg hover:bg-yellow-400 transition duration-200 text-lg shadow-lg"
+                >
+                    Continuar
+                </button>
 
-                {/* Submit Button */}
-                <AccentButton type="submit" primary={true}>
-                    ACCEDER A TU CUENTA
-                </AccentButton>
-            </form>
+                <p className="text-center text-sm mt-6 text-gray-400">
+                    ¿No tienes cuenta? <Link to="/register" className="text-yellow-400 hover:text-yellow-300">Regístrate aquí</Link>
+                </p>
+            </div>
         </div>
     );
 };
