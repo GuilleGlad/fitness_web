@@ -38,32 +38,6 @@ const LoginForm = () => {
         )
     }
     const isServerOnline = useServerStatus(apiUrl + "/testApi", 5000);
-
-    // useEffect(() => {
-    //     const fetch = async () => {
-    //         const intervalId = setInterval(async () => {
-    //             try {
-    //                 const response = await axios(apiUrl + "/testApi");
-    //                 if (response.data.success) {
-    //                     setOnline(true);
-    //                     setServerStatusStr('El servidor esta Online');
-    //                 } else {
-    //                     setOnline(false);
-    //                     setServerStatusStr('El servidor esta Offline');
-    //                 }
-    //             } catch (e) {
-    //                 setOnline(false);
-    //                 setServerStatusStr('El servidor esta Offline');
-    //                 console.error('error: ' + e.message);
-    //             } finally {
-    //                 //console.log(online);
-    //             }
-    //         }, 5000);
-    //         return () => clearInterval(intervalId);
-    //     }
-    //     fetch();
-    // });
-
     const handleLogin = async (e) => {
         e.preventDefault();
 

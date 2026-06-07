@@ -6,6 +6,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { Tooltip } from 'react-tooltip';
 import axios from 'axios';
 import { useServerStatus } from '../hooks/useServerStatus';
+import {useNavigate } from 'react-router-dom';
 // Simulación del enum para los roles
 
 const ROLES = {
@@ -16,6 +17,7 @@ const ROLES = {
 
 
 export default function RegisterForm() {
+    const navigate = useNavigate();
     const apiUrl = process.env.REACT_APP_API_URL;
     const [serverStatusStr, setServerStatusStr] = useState('El servidor esta offline');
     const [formData, setFormData] = useState({
@@ -108,6 +110,13 @@ export default function RegisterForm() {
             console.log(response.data);
             setSuccess(true);
             registroSuccessNotif("Registro Exitoso, redirigiendo...");
+            //guardar el token en localStorage o en un contexto global para futuras solicitudes
+            localStorage.setItem('token', response.data.token);
+            const redirectUrl = formData.role === ROLES.CLIENT ? "/wizard" : "/dashboard";
+            //redireccionar al dashboard o a la página principal después del login exitoso
+            setTimeout(() => {
+                navigate(redirectUrl);
+            }, 1500);            
         }catch(e){
             // console.error("error: " + e.status);
             setSuccess(false);

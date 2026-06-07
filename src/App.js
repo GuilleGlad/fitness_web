@@ -4,6 +4,7 @@ import Homepage from './pages/Homepage';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import OnboardingWizard from './pages/OnboardingWizard';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
         <Route path="/" element={<Homepage/>}/>
         <Route path="/login" element={<Login/>}/>
         <Route path="/register" element={<Register/>}/>
+        <Route path="/wizard" element={<OnboardingWizard/>}/>
       </Routes>
     </BrowserRouter>
   );

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 export function useServerStatus(pingUrl, intervalMs = 10000) {
-  const [isAlive, setIsAlive] = useState(true);
+  const [isAlive, setIsAlive] = useState(false);
 
   useEffect(() => {
     const checkStatus = async () => {
