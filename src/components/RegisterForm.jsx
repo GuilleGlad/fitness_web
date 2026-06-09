@@ -25,6 +25,7 @@ export default function RegisterForm() {
         email: '',
         password: '',
         confirmPassword: '',
+        genre: '',
         role: 0, // Valor por defecto
     });
 
@@ -71,7 +72,7 @@ export default function RegisterForm() {
         setSuccess(false);
 
         // 1. Validaciones básicas
-        if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+        if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword || !formData.genre || formData.role === 0) {
             // setError('Todos los campos son obligatorios.');
             registroErrorNotif('Todos los campos son obligatorios.');
             return;
@@ -96,6 +97,12 @@ export default function RegisterForm() {
         if (formData.password.length < 6) {
             setError('La contraseña debe tener al menos 6 caracteres.');
             registroErrorNotif('La contraseña debe tener al menos 6 caracteres.');
+            return;
+        }
+        // 5. Validación de selección de género
+        if (!formData.genre) {
+            // setError('Debe seleccionar un género');
+            registroErrorNotif('Debe seleccionar un género');
             return;
         }
         if(formData.role == 0){
@@ -192,6 +199,21 @@ export default function RegisterForm() {
                             onChange={handleChange}
                             className="w-full px-4 py-3 bg-[#c4c4c4] text-slate-800 placeholder-slate-500 font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#facc15] transition-all"
                         />
+                    </div>
+
+                    {/* Campo: Género (Dropdown) */}
+                    <div>
+                        <select
+                            name="genre"
+                            value={formData.genre}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 bg-[#c4c4c4] text-slate-800 font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#facc15] transition-all cursor-pointer"
+                        >
+                            <option value="">Seleccionar Género...</option>
+                            <option value="f">Femenino</option>
+                            <option value="m">Masculino</option>
+                            <option value="n">Prefiere no decirlo</option>
+                        </select>
                     </div>
 
                     {/* Campo: Rol (Dropdown) */}
