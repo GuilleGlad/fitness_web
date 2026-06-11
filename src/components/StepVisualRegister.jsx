@@ -3,16 +3,16 @@ import React from 'react';
 const StepVisualRegister = ({ formData, updateData, next, prev }) => {
   const handleMeasureChange = (e) => {
     updateData({
-      medidas: { ...formData.medidas, [e.target.name]: e.target.value }
+       [e.target.name]: e.target.value 
     });
   };
 
   // Extraemos las medidas con valores por defecto para evitar errores matemáticos en el SVG
-  var cintura = parseFloat(formData.medidas.cintura) || 60;
-  var cadera = parseFloat(formData.medidas.cadera) || 90;
-  const brazos = parseFloat(formData.medidas.brazos) || 25;
-  var pierna1 = parseFloat(formData.medidas.piernas) || 20;
-  var pierna2 = parseFloat(formData.medidas.piernas) || 20;
+  var cintura = parseFloat(formData.waist) || 60;
+  var cadera = parseFloat(formData.hips) || 90;
+  var brazos = parseFloat(formData.arms) || 25;
+  var pierna1 = parseFloat(formData.legs) || 20;
+  var pierna2 = parseFloat(formData.legs) || 20;
 
   // Factores de escala para deformar sutilmente la silueta de forma controlada y proporcional
   if(cadera < 60) cadera = 60;
@@ -23,6 +23,8 @@ const StepVisualRegister = ({ formData, updateData, next, prev }) => {
   if(pierna2 > 80) pierna2 = 80;
   if(pierna1 < 20) pierna1 = 20;
   if(pierna2 < 20) pierna2 = 20;
+  if(brazos < 15) brazos = 15;
+  if(brazos > 50) brazos = 50;
   
   const escalaCadera_izq = Math.min(353 - cadera);
   const escalaCadera_der = Math.min(cadera + 484);
@@ -32,6 +34,13 @@ const StepVisualRegister = ({ formData, updateData, next, prev }) => {
   const escalaPiernas2_izq = Math.min(280 + 40 - pierna1);
   const escalaPiernas1_der = Math.min(522 + pierna2);
   const escalaPiernas2_der = Math.min(522 + pierna2);
+
+  const escalaBrazos1_izq = Math.min(238 - brazos);
+  const escalaBrazos2_izq = Math.min(238 - brazos);
+  const escalaBrazos3_izq = Math.min(248 - brazos);
+  const escalaBrazos1_der = Math.min(600 + brazos);
+  const escalaBrazos2_der = Math.min(605 + brazos);
+  const escalaBrazos3_der = Math.min(610 + brazos);
   // const escalaCadera = Math.min(Math.max(cadera / 90, 0.6), 1.6);
   const escalaCintura = Math.min(Math.max(cintura / 70, 0.6), 1.6);
   const escalaBrazos = Math.min(Math.max(brazos / 30, 0.6), 1.6);
@@ -47,7 +56,19 @@ const StepVisualRegister = ({ formData, updateData, next, prev }) => {
       <div className="flex justify-center bg-gray-700/60 p-4 rounded-xl border border-gray-200">
         <svg version="1.1" id="Layer_1" x="0px" y="0px" stroke='white' strokeWidth='4'
           viewBox="0 0 837.483 1819.369" enable-background="new 0 0 837.483 1819.369" fill="#f1b80c" className="w-48 h-auto">
-          <path d={`M 736.728 849.786 c -0.634 -1.435 -13.566 -15.425 -33.487 -23.292 c -4.568 -1.94 -4.545 2.705 -16.944 -34.925 c -26.957 -72.647 -5.661 -112.736 -51.135 -200.791 c -6.888 -14.322 -9.901 -24.921 -16.16 -50.12 c -25.397 -104.478 -6.032 -90.98 -15.87 -135.251 c -17.961 -63.049 -50.754 -59.498 -71.782 -59.155 c -16.944 0.378 -45.224 -11.699 -52.936 -19.746 c -10.555 -11.486 -17.912 -20.548 -11.679 -58.855 c 0 0 7.037 -12.141 9.078 -34.125 c 9.284 11.287 24.572 -33.84 16.065 -42.691 c -1.745 -1.867 -5.169 -1.236 -6.289 1.015 c -1.292 1.484 -1.315 3.695 -2.888 4.964 c -2 -9.359 3.289 -28.498 -7.935 -56.968 c -5.541 -12.289 -11.235 -15.496 -21.547 -22.44 c -8.401 -6.048 -28.842 -7.595 -29.842 -7.717 h -9.461 c -1 0.122 -21.441 1.669 -29.842 7.717 c -10.312 6.944 -16.006 10.151 -21.547 22.44 c -11.224 28.47 -5.935 47.609 -7.935 56.968 c -1.573 -1.269 -1.596 -3.48 -2.888 -4.964 c -1.12 -2.251 -4.544 -2.882 -6.289 -1.015 c -8.507 8.851 6.781 53.978 16.065 42.691 c 2.041 21.984 9.078 34.125 9.078 34.125 c 6.233 38.307 -1.124 47.369 -11.679 58.855 c -7.712 8.047 -35.992 20.124 -52.935 19.746 c -21.029 -0.343 -53.822 -3.894 -71.782 59.155 c -9.838 44.271 9.527 30.773 -15.87 135.251 c -6.259 25.199 -9.272 35.798 -16.16 50.12 c -45.474 88.055 -24.178 128.144 -51.135 200.791 c -12.399 37.63 -12.376 32.985 -16.944 34.925 c -19.921 7.867 -32.853 21.857 -33.487 23.292 c -8.923 20.454 -23.328 27.412 -19.921 33.844 c 0.896 1.702 3.318 2.588 4.944 1.381 c 5.189 0.91 12.738 -4.808 16.127 -8.599 c 4.102 -4.706 3.375 -7.457 11.332 -13.86 c 1.824 2.047 -2.155 20.335 -3.12 23.398 c -4.877 14.729 -26.567 49.619 -17.595 54.417 c 0.945 0.4 2.227 0.955 3.073 0.089 c 1.553 -1.53 3.53 -2.604 4.841 -4.372 c 8.025 -10.218 17.566 -34.36 24.059 -39.238 c 3.279 0.224 1.596 2.346 -4.475 22.532 c -3.673 13.084 -5.142 19.941 -5.142 19.941 c -10.126 30.466 6.229 25.716 11.501 6.808 c 0.448 -1.537 9.722 -26.912 10.129 -28.16 c 1.241 -3.291 4.602 -17.806 8.801 -14.872 c 0.646 2.469 -0.335 3.044 -3.536 31.521 c -2.6 21.813 -3.236 8.789 -2.713 26.425 c 0.079 2.164 4.439 3.257 6.282 2.115 c 10.539 -9.723 12.692 -57.611 18.074 -61.022 c 3.669 4.293 4.272 33.754 5.982 39.221 c 2.652 9.705 7.446 4.802 7.981 3.239 c 3.825 -9.324 -0.19 -30.536 0.628 -45.388 c 0 0 4.369 -14.53 7.198 -38.676 c 4.176 -45.514 -17.861 13.267 48.59 -167.185 c 0 0 5.299 -10.218 13.794 -30.791 c 9.81 -21.31 5.988 -35.652 19.766 -73.451 
+          <path d={`M 736.728 849.786 
+          c -0.634 -1.435 -13.566 -15.425 -33.487 -23.292 
+          c -4.568 -1.94 -4.545 2.705 -16.944 -34.925 
+          C 659.34 718.922 680.636 678.833 ${escalaBrazos1_der} 589 
+          C ${escalaBrazos3_der} 574.678 ${escalaBrazos2_der} 564.079 ${escalaBrazos2_der} 538.88 
+          C ${escalaBrazos1_der} 434.402 615.808 447.9 605.97 403.629 
+          C 585.171 342.358 552.378 345.909 531.35 346.252 
+          c -16.944 0.378 -45.224 -11.699 -52.936 -19.746 c -10.555 -11.486 -17.912 -20.548 -11.679 -58.855 c 0 0 7.037 -12.141 9.078 -34.125 c 9.284 11.287 24.572 -33.84 16.065 -42.691 c -1.745 -1.867 -5.169 -1.236 -6.289 1.015 c -1.292 1.484 -1.315 3.695 -2.888 4.964 c -2 -9.359 3.289 -28.498 -7.935 -56.968 c -5.541 -12.289 -11.235 -15.496 -21.547 -22.44 c -8.401 -6.048 -28.842 -7.595 -29.842 -7.717 h -9.461 c -1 0.122 -21.441 1.669 -29.842 7.717 c -10.312 6.944 -16.006 10.151 -21.547 22.44 c -11.224 28.47 -5.935 47.609 -7.935 56.968 c -1.573 -1.269 -1.596 -3.48 -2.888 -4.964 c -1.12 -2.251 -4.544 -2.882 -6.289 -1.015 c -8.507 8.851 6.781 53.978 16.065 42.691 c 2.041 21.984 9.078 34.125 9.078 34.125 c 6.233 38.307 -1.124 47.369 -11.679 58.855 c -7.712 8.047 -35.992 20.124 -52.935 19.746 
+          C 284.915 345.909 252.122 342.358 236 400 
+          C 226.162 444.271 ${escalaBrazos3_izq} 430.773 ${escalaBrazos2_izq} 531.593 
+          C ${escalaBrazos1_izq} 556.792 ${escalaBrazos2_izq} 567.391 ${escalaBrazos1_izq} 582
+          C 162.526 670.055 183.822 710.144 156.865 782.791 
+          c -12.399 37.63 -12.376 32.985 -16.944 34.925 c -19.921 7.867 -32.853 21.857 -33.487 23.292 c -8.923 20.454 -23.328 27.412 -19.921 33.844 c 0.896 1.702 3.318 2.588 4.944 1.381 c 5.189 0.91 12.738 -4.808 16.127 -8.599 c 4.102 -4.706 3.375 -7.457 11.332 -13.86 c 1.824 2.047 -2.155 20.335 -3.12 23.398 c -4.877 14.729 -26.567 49.619 -17.595 54.417 c 0.945 0.4 2.227 0.955 3.073 0.089 c 1.553 -1.53 3.53 -2.604 4.841 -4.372 c 8.025 -10.218 17.566 -34.36 24.059 -39.238 c 3.279 0.224 1.596 2.346 -4.475 22.532 c -3.673 13.084 -5.142 19.941 -5.142 19.941 c -10.126 30.466 6.229 25.716 11.501 6.808 c 0.448 -1.537 9.722 -26.912 10.129 -28.16 c 1.241 -3.291 4.602 -17.806 8.801 -14.872 c 0.646 2.469 -0.335 3.044 -3.536 31.521 c -2.6 21.813 -3.236 8.789 -2.713 26.425 c 0.079 2.164 4.439 3.257 6.282 2.115 c 10.539 -9.723 12.692 -57.611 18.074 -61.022 c 3.669 4.293 4.272 33.754 5.982 39.221 c 2.652 9.705 7.446 4.802 7.981 3.239 c 3.825 -9.324 -0.19 -30.536 0.628 -45.388 c 0 0 4.369 -14.53 7.198 -38.676 c 4.176 -45.514 -17.861 13.267 48.59 -167.185 c 0 0 5.299 -10.218 13.794 -30.791 c 9.81 -21.31 5.988 -35.652 19.766 -73.451 
           C 267.527 588.103 284 541.345 291.529 520.953 
           C ${escalaCintura_izq} 753.598 281.786 598.021 ${escalaCadera_izq} 852 
           C ${escalaPiernas2_izq} 957.526 ${escalaPiernas1_izq} 929 ${escalaPiernas2_izq} 1076.028 
@@ -69,19 +90,19 @@ const StepVisualRegister = ({ formData, updateData, next, prev }) => {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-[10px] font-bold text-slate-400 block mb-1 pl-1">Cintura</label>
-            <input type="number" name="cintura" placeholder="Ej: 75" value={formData.medidas.cintura} onChange={handleMeasureChange} className={inputMeasureStyle} />
+            <input type="number" name="waist" placeholder="Ej: 75" value={formData.waist} onChange={handleMeasureChange} className={inputMeasureStyle} />
           </div>
           <div>
             <label className="text-[10px] font-bold text-slate-400 block mb-1 pl-1">Cadera</label>
-            <input type="number" name="cadera" placeholder="Ej: 95" value={formData.medidas.cadera} onChange={handleMeasureChange} className={inputMeasureStyle} />
+            <input type="number" name="hips" placeholder="Ej: 95" value={formData.hips} onChange={handleMeasureChange} className={inputMeasureStyle} />
           </div>
           <div>
             <label className="text-[10px] font-bold text-slate-400 block mb-1 pl-1">Brazos</label>
-            <input type="number" name="brazos" placeholder="Ej: 32" value={formData.medidas.brazos} onChange={handleMeasureChange} className={inputMeasureStyle} />
+            <input type="number" name="arms" placeholder="Ej: 32" value={formData.arms} onChange={handleMeasureChange} className={inputMeasureStyle} />
           </div>
           <div>
             <label className="text-[10px] font-bold text-slate-400 block mb-1 pl-1">Piernas</label>
-            <input type="number" name="piernas" placeholder="Ej: 55" value={formData.medidas.piernas} onChange={handleMeasureChange} className={inputMeasureStyle} />
+            <input type="number" name="legs" placeholder="Ej: 55" value={formData.legs} onChange={handleMeasureChange} className={inputMeasureStyle} />
           </div>
         </div>
       </div>
@@ -90,14 +111,14 @@ const StepVisualRegister = ({ formData, updateData, next, prev }) => {
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col items-center justify-center p-3 bg-slate-800/60 border-2 border-dashed border-slate-600 rounded-xl cursor-pointer hover:border-[#f1b80c] transition-all min-h-[70px]">
           <span className="text-xs font-bold text-slate-300">Foto Frente 📷</span>
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => updateData({ fotoFrente: e.target.files[0] })} />
-          {formData.fotoFrente && <span className="text-[10px] text-[#f1b80c] mt-1 truncate max-w-[140px]">{formData.fotoFrente.name}</span>}
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => updateData({ photo_front: e.target.files[0] })} />
+          {formData.photo_front && <span className="text-[10px] text-[#f1b80c] mt-1 truncate max-w-[140px]">{formData.photo_front.name}</span>}
         </label>
 
         <label className="flex flex-col items-center justify-center p-3 bg-slate-800/60 border-2 border-dashed border-slate-600 rounded-xl cursor-pointer hover:border-[#f1b80c] transition-all min-h-[70px]">
           <span className="text-xs font-bold text-slate-300">Foto Espalda 📷</span>
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => updateData({ fotoEspalda: e.target.files[0] })} />
-          {formData.fotoEspalda && <span className="text-[10px] text-[#f1b80c] mt-1 truncate max-w-[140px]">{formData.fotoEspalda.name}</span>}
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => updateData({ photo_back: e.target.files[0] })} />
+          {formData.photo_back && <span className="text-[10px] text-[#f1b80c] mt-1 truncate max-w-[140px]">{formData.photo_back.name}</span>}
         </label>
       </div>
 
@@ -108,7 +129,7 @@ const StepVisualRegister = ({ formData, updateData, next, prev }) => {
         </button>
         <button
           onClick={next}
-          disabled={!formData.fotoFrente || !formData.fotoEspalda || !formData.medidas.cintura || !formData.medidas.cadera || !formData.medidas.brazos || !formData.medidas.piernas}
+          disabled={!formData.photo_front || !formData.photo_back || !formData.waist || !formData.hips || !formData.arms || !formData.legs}
           className="w-2/3 py-3 bg-[#f1b80c] text-[#1e222b] font-bold rounded-xl hover:bg-[#d9a406] disabled:opacity-40 disabled:pointer-events-none transition-all text-sm"
         >
           Siguiente

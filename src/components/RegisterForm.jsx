@@ -64,7 +64,7 @@ export default function RegisterForm() {
         setIsOpen(false)
     };
 
-    const isServerOnline = useServerStatus(apiUrl + "/testApi", 5000);
+    const isServerOnline = useServerStatus(apiUrl + "/testApi", 5000, setServerStatusStr);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -115,6 +115,7 @@ export default function RegisterForm() {
             const response = await axios.post(apiUrl + "/auth/register",formData);
             console.log('Datos enviados con éxito:', formData);
             console.log(response.data);
+            localStorage.setItem('client_id', response.data.user.id);
             setSuccess(true);
             registroSuccessNotif("Registro Exitoso, redirigiendo...");
             //guardar el token en localStorage o en un contexto global para futuras solicitudes

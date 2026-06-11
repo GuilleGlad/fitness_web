@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export function useServerStatus(pingUrl, intervalMs = 10000) {
+export function useServerStatus(pingUrl, intervalMs = 10000, setServerStatusStr) {
   const [isAlive, setIsAlive] = useState(false);
 
   useEffect(() => {
@@ -14,9 +14,11 @@ export function useServerStatus(pingUrl, intervalMs = 10000) {
         
         // response.ok is true if the status code is 200-299
         setIsAlive(response.ok);
+        setServerStatusStr(response.ok ? 'El servidor está online' : 'El servidor está offline');
       } catch (error) {
         // If the network request fails entirely (e.g., server is down, CORS issue)
         setIsAlive(false);
+        setServerStatusStr('El servidor está offline');
       }
     };
 

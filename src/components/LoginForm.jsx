@@ -37,7 +37,7 @@ const LoginForm = () => {
             }
         )
     }
-    const isServerOnline = useServerStatus(apiUrl + "/testApi", 5000);
+    const isServerOnline = useServerStatus(apiUrl + "/testApi", 5000,setServerStatusStr);
     const handleLogin = async (e) => {
         e.preventDefault();
 

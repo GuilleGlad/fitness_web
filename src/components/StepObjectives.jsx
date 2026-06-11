@@ -1,7 +1,7 @@
 import React from 'react';
 
 const StepObjectives = ({ formData, updateData, next, prev }) => {
-  const handleSelect = (obj) => updateData({ objetivo: obj });
+  const handleSelect = (obj) => updateData({ goal: obj });
 
   return (
     <div className="space-y-4">
@@ -11,7 +11,7 @@ const StepObjectives = ({ formData, updateData, next, prev }) => {
         <button
           type="button" onClick={() => handleSelect('perder_grasa')}
           className={`w-full p-4 rounded-xl border text-left transition-all ${
-            formData.objetivo === 'perder_grasa'
+            formData.goal === 'perder_grasa'
               ? 'border-[#f1b80c] bg-[#f1b80c]/10 text-[#f1b80c]'
               : 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600'
           }`}
@@ -23,7 +23,7 @@ const StepObjectives = ({ formData, updateData, next, prev }) => {
         <button
           type="button" onClick={() => handleSelect('aumentar_masa')}
           className={`w-full p-4 rounded-xl border text-left transition-all ${
-            formData.objetivo === 'aumentar_masa'
+            formData.goal === 'aumentar_masa'
               ? 'border-[#f1b80c] bg-[#f1b80c]/10 text-[#f1b80c]'
               : 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600'
           }`}
@@ -38,7 +38,7 @@ const StepObjectives = ({ formData, updateData, next, prev }) => {
           Atrás
         </button>
         <button 
-          onClick={next} disabled={!formData.objetivo}
+          onClick={next} disabled={!formData.goal}
           className="w-2/3 py-3.5 bg-[#f1b80c] text-[#1e222b] font-bold rounded-xl hover:bg-[#d9a406] disabled:opacity-40 disabled:pointer-events-none transition-all text-sm"
         >
           Siguiente

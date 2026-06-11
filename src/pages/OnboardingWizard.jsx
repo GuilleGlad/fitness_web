@@ -3,15 +3,26 @@ import StepBiometrics from '../components/StepBiometrics';
 import StepObjectives from '../components/StepObjectives';
 import StepVisualRegister from '../components/StepVisualRegister';
 import StepTrainerAssignment from '../components/StepTrainerAssignment';
+import axios from 'axios';
 
 const OnboardingWizard = () => {
+  const apiUrl = process.env.REACT_APP_API_URL;
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({
-    altura: '', peso: '', edad: '', diasEntrenamiento: '3',
-    objetivo: '', // 'perder_grasa' | 'aumentar_masa'
-    fotoFrente: null, fotoEspalda: null,
-    medidas: { cintura: '', cadera: '', brazos: '', piernas: '' },
-    trainerId: null
+  const [formData, setFormData] = useState(
+    {
+      height: '', 
+      weight: '', 
+      age: '', 
+      training_days: '3',
+      goal: '', // 'perder_grasa' | 'aumentar_masa'
+      photo_front_url: null, 
+      photo_back_url: null,
+      waist: '', 
+      hips: '', 
+      arms: '', 
+      legs: '',
+      trainerId: null,
+      client_id: localStorage.getItem('client_id') || null
   });
 
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 4));
@@ -19,10 +30,27 @@ const OnboardingWizard = () => {
 
   const updateFormData = (newData) => {
     setFormData((prev) => ({ ...prev, ...newData }));
+    console.log(formData);
   };
 
   const handleSubmit = () => {
     console.log("Datos listos para enviar a EliteFit:", formData);
+    const config = {
+      headers:{
+        "Content-Type": "multipart/form-data",
+        "Authorization": "Bearer " + localStorage.getItem('token')
+      }
+    }
+    const response = axios.post(apiUrl + "/progress/add", formData, config)
+      .then((res) => {
+        console.log("Respuesta del servidor:", res.data);
+        alert("¡Registro exitoso! Bienvenido a EliteFit.");
+      })
+      .catch((err) => {
+        console.error("Error al enviar datos:", err);
+        alert("Hubo un error al registrarse. Por favor, inténtalo de nuevo.");
+      });
+
   };
 
   return (
