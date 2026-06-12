@@ -67,7 +67,7 @@ const OnboardingWizard = () => {
     const response_progress = axios.post(apiUrl + "/progress/add", formData, config)
       .then((res) => {
         console.log("Respuesta del servidor:", res.data);
-        registroSuccessNotif("Registro de datos Exitoso.");
+        registroSuccessNotif("Registro de datos Exitoso, redirigiendo...");
       })
       .catch((err) => {
         console.error("Error al enviar datos:", err);
