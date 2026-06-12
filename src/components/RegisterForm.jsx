@@ -25,6 +25,7 @@ export default function RegisterForm() {
         email: '',
         password: '',
         confirmPassword: '',
+        phone: '',
         genre: '',
         role: 0, // Valor por defecto
     });
@@ -197,6 +198,18 @@ export default function RegisterForm() {
                             name="confirmPassword"
                             placeholder="Confirmar Password"
                             value={formData.confirmPassword}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 bg-[#c4c4c4] text-slate-800 placeholder-slate-500 font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#facc15] transition-all"
+                        />
+                    </div>
+
+                    {/* Campo: Telefono */}
+                    <div>
+                        <input
+                            type="text"
+                            name="phone"
+                            placeholder="Teléfono (opcional)"
+                            value={formData.phone}
                             onChange={handleChange}
                             className="w-full px-4 py-3 bg-[#c4c4c4] text-slate-800 placeholder-slate-500 font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#facc15] transition-all"
                         />
