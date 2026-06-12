@@ -6,7 +6,7 @@ import { faDotCircle } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { Tooltip } from 'react-tooltip';
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import { useServerStatus } from '../hooks/useServerStatus';
 
 const LoginForm = () => {
@@ -38,25 +38,37 @@ const LoginForm = () => {
         )
     }
     const isServerOnline = useServerStatus(apiUrl + "/testApi", 5000,setServerStatusStr);
+    const navigate = useNavigate();
+
     const handleLogin = async (e) => {
         e.preventDefault();
 
-        // Basic Validation
         if (!email || !password) {
             setError("Por favor, ingresa correo y contraseña.");
             return;
         }
+
         const loginData = {
-            "email": email,
-            "password": password
-        }
+            email,
+            password,
+        };
 
         try {
-            const login = await axios.post(apiUrl + "/auth/login", loginData);
+            const response = await axios.post(apiUrl + "/auth/login", loginData);
+            const { token, user } = response.data;
+            localStorage.setItem('token', token);
+            localStorage.setItem('role', user.role || 3);
+            localStorage.setItem('name', user.name || user.email || 'Usuario EliteFit');
             loginSuccessNotif();
+            setTimeout(() => {
+                if (Number(user.role) === 3) {
+                    navigate('/wizard');
+                } else {
+                    navigate('/dashboard');
+                }
+            }, 1200);
         } catch (e) {
             loginErrorNotif();
-            //console.error('error: ' + e.message);
         }
     };
 

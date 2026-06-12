@@ -121,6 +121,8 @@ export default function RegisterForm() {
             registroSuccessNotif("Registro Exitoso, redirigiendo...");
             //guardar el token en localStorage o en un contexto global para futuras solicitudes
             localStorage.setItem('token', response.data.token);
+            localStorage.setItem('role', formData.role);
+            localStorage.setItem('name', formData.name);
             const redirectUrl = formData.role === ROLES.CLIENT ? "/wizard" : "/dashboard";
             //redireccionar al dashboard o a la página principal después del login exitoso
             setTimeout(() => {
