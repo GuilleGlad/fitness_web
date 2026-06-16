@@ -37,11 +37,11 @@ const ROLE_MENUS = {
 const Dashboard = () => {
   const navigate = useNavigate();
   const [selectedMenu, setSelectedMenu] = useState('Perfil de Usuario');
-  const roleValue = localStorage.getItem('role') || 3;
+  const roleValue = parseInt(localStorage.getItem('role'), 10) || 3;
   const userName = localStorage.getItem('name') || 'Usuario EliteFit';
-  const userRole = ROLE_MAP[roleValue] || 'Cliente';
+  const userRole = ROLE_MAP[roleValue] || 3;
   const notifications = 4;
-  const roleString = Object.entries(ROLE_MAP).find(([key,value]) => value === userRole)[0].toUpperCase();
+  const roleString = Object.entries(ROLE_MAP).find(([key, value]) => value === userRole)?.[0]?.toUpperCase() || 'CLIENTE';
   const menuLinks = ROLE_MENUS[roleValue] || ROLE_MENUS[3];
   const initials = useMemo(() => {
     return userName
@@ -61,7 +61,7 @@ const Dashboard = () => {
   };
 
   const renderSectionContent = () => {
-    if (roleValue === 1 || roleValue === "Admin") {
+    if (roleValue === 1) {
       return (
         <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
@@ -116,7 +116,7 @@ const Dashboard = () => {
       );
     }
 
-    if (roleValue === 2 || roleValue === "Trainer") {
+    if (roleValue === 2) {
       return (
         <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
@@ -287,7 +287,13 @@ const Dashboard = () => {
                 {menuLinks.map((item) => (
                   <button
                     key={item}
-                    onClick={() => setSelectedMenu(item)}
+                    onClick={() => {
+                      if (item === 'Ejercicios' || item === 'Ejercicios por Entrenador') {
+                        navigate('/trainer-exercises');
+                        return;
+                      }
+                      setSelectedMenu(item);
+                    }}
                     className={`w-full rounded-3xl px-4 py-3 text-left text-sm font-semibold transition-all ${selectedMenu === item ? 'bg-[#f1b80c] text-[#1e222b]' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
                   >
                     {item}

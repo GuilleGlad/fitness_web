@@ -10,6 +10,11 @@ import {Link, useNavigate} from 'react-router-dom';
 import { useServerStatus } from '../hooks/useServerStatus';
 
 const LoginForm = () => {
+    const ROLE_MAP = {
+    'admin': 1,
+    'trainer': 2,
+    'client': 3,
+    };    
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -56,12 +61,17 @@ const LoginForm = () => {
         try {
             const response = await axios.post(apiUrl + "/auth/login", loginData);
             const { token, user } = response.data;
+            localStorage.setItem('client_id', user.id);
             localStorage.setItem('token', token);
-            localStorage.setItem('role', user.role || 3);
+            const roleFromResponse = user.role;
+            const role = typeof roleFromResponse === 'string' && /^\d+$/.test(roleFromResponse)
+                ? Number(roleFromResponse)
+                : ROLE_MAP[roleFromResponse?.toLowerCase()] || 3;
+            localStorage.setItem('role', role);
             localStorage.setItem('name', user.name || user.email || 'Usuario EliteFit');
             loginSuccessNotif();
             setTimeout(() => {
-                if (Number(user.role) === 3) {
+                if (role === 3 && user.status === 0) {
                     navigate('/wizard');
                 } else {
                     navigate('/dashboard');

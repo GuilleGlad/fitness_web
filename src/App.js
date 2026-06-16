@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import OnboardingWizard from './pages/OnboardingWizard';
 import Dashboard from './pages/Dashboard';
+import TrainerExercises from './pages/TrainerExercises';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
         <Route path="/register" element={<Register/>}/>
         <Route path="/wizard" element={<OnboardingWizard/>}/>
         <Route path="/dashboard" element={<Dashboard/>}/>
+        <Route path="/trainer-exercises" element={<TrainerExercises/>}/>
       </Routes>
     </BrowserRouter>
   );

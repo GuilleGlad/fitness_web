@@ -6,8 +6,10 @@ import StepTrainerAssignment from '../components/StepTrainerAssignment';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import {Toaster} from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const OnboardingWizard = () => {
+  const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(
@@ -24,7 +26,7 @@ const OnboardingWizard = () => {
       arms: '',
       legs: '',
       trainerId: null,
-      client_id: localStorage.getItem('client_id') || null
+      client_id: localStorage.getItem('client_id')
     });
   const registroSuccessNotif = (text) => {
     toast(text,
@@ -68,6 +70,9 @@ const OnboardingWizard = () => {
       .then((res) => {
         console.log("Respuesta del servidor:", res.data);
         registroSuccessNotif("Registro de datos Exitoso, redirigiendo...");
+        setTimeout(() => {
+            navigate('/dashboard');
+        }, 1200);        
       })
       .catch((err) => {
         console.error("Error al enviar datos:", err);
