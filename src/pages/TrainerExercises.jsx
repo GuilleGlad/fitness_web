@@ -31,6 +31,7 @@ const TrainerExercises = () => {
         toast.error('Token no disponible. Inicia sesión.');
         return;
       }
+      
 
       setLoading(true);
       try {
@@ -48,9 +49,8 @@ const TrainerExercises = () => {
           }))
         );
       } catch (err) {
-        console.error('Error fetching exercises', err);
         setFetchError('No se pudieron cargar los ejercicios.');
-        toast.error('No se pudieron cargar los ejercicios.');
+        console.log('No se pudieron cargar los ejercicios. '+ err.message);
       } finally {
         setLoading(false);
       }
@@ -148,11 +148,21 @@ const TrainerExercises = () => {
     setEditingId(exercise.id);
   };
 
-  const handleDelete = (id) => {
-    setExercises((previous) => previous.filter((exercise) => exercise.id !== id));
-    if (editingId === id) {
-      setForm(initialForm);
-      setEditingId(null);
+  const handleDelete = async (id) => {
+    const token = localStorage.getItem('token');
+    const headers = { Authorization: 'Bearer ' + token };
+    try {
+      const response = await axios.delete(apiUrl + "/exercises/delete/" + id, { headers });
+      toast.success('Ejercicio eliminado correctamente.');
+      setExercises((previous) => previous.filter((exercise) => exercise.id !== id));
+      if (editingId === id) {
+        setForm(initialForm);
+        setEditingId(null);
+      }
+    } catch (error) {
+      console.error('Error eliminando ejercicio:', error);
+      toast.error('No se pudo eliminar el ejercicio. Intenta de nuevo.');
+      return;
     }
   };
 
@@ -166,8 +176,57 @@ const TrainerExercises = () => {
 
   const pageTitle = 'Gestión de ejercicios';
 
+  const triggerYesNoToast = (handle, ...params) => {
+    toast((t) => (
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <span>¿Está seguro que desea eliminar el ejercicio?</span>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id); // Closes the toast
+              handle(...params);
+            }}
+            style={{ background: '#9a1314', color: 'white', marginRight: '8px', padding: '8px 16px', borderRadius: '9999px', border: 'none', cursor: 'pointer' }}
+          >
+            Si
+          </button>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id); // Closes the toast
+            }}
+            style={{ background: '#c8cfd5', color: '#242526', padding: '8px 16px', borderRadius: '9999px', border: 'none', cursor: 'pointer' }}
+          >
+            No
+          </button>
+        </div>
+      </div>
+    ), {
+      style: {
+        background: '#323',
+
+      },
+      duration: Infinity, // Prevents the toast from auto-closing before selection
+    });
+  };
+
+
   return (
     <div className="min-h-screen bg-[#0d1117] text-white">
+      <Toaster
+        toastOptions={{
+          style: {
+            color: 'white',
+            background: 'green'
+          },
+          success: {
+            icon: '👍',
+          },
+          error: {
+            icon: '👎',
+            background: 'red',
+          }
+        }
+        } />
       <div className="mx-auto max-w-[1400px] space-y-6 p-6 lg:p-8">
         <div className="flex flex-col gap-4 rounded-[40px] border border-slate-800 bg-[#141820] p-6 shadow-2xl lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -223,14 +282,14 @@ const TrainerExercises = () => {
                       <button
                         type="button"
                         onClick={() => handleEdit(exercise)}
-                        className="rounded-3xl bg-[#1d4ed8] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#2563eb]"
+                        className="rounded-3xl bg-customYellow text-gray-900 px-4 py-2 text-sm font-semibold transition hover:bg-yellow-500 hover:text-black"
                       >
                         Editar
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(exercise.id)}
-                        className="rounded-3xl bg-[#dc2626] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#ef4444]"
+                        onClick={() => triggerYesNoToast(handleDelete,exercise.id)}
+                        className="rounded-3xl bg-gray-600 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:bg-gray-500"
                       >
                         Eliminar
                       </button>
