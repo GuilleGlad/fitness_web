@@ -24,7 +24,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
         <a href="#about" className="uppercase text-white-600 hover:text-customYellow transition">ABOUT</a>
         <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">PAGE</a>
         <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">CONTACT</a>
-        <Link to="/Login" className="uppercase text-white-600 hover:text-customYellow transition">LOGIN</Link>
+        <Link to="/login" className="uppercase text-white-600 hover:text-customYellow transition">LOGIN</Link>
       </div>
 
       {/* Menú de navegación expandido (Solo visible en móvil) */}
@@ -36,7 +36,7 @@ const Menu = ({ isMenuOpen, toggleMenu }) => {
             <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">ABOUT</a>
             <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">PAGE</a>
             <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">CONTACT</a>
-            <a href="#" className="uppercase text-white-600 hover:text-customYellow transition">LOGIN</a>
+            <Link to="/login" className="uppercase text-white-600 hover:text-customYellow transition">LOGIN</Link>
         </div>
       </div>
     </nav>

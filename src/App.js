@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import OnboardingWizard from './pages/OnboardingWizard';
 import Dashboard from './pages/Dashboard';
 import TrainerExercises from './pages/TrainerExercises';
+import TrainerLibrary from './pages/TrainerLibrary';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/wizard" element={<OnboardingWizard/>}/>
         <Route path="/dashboard" element={<Dashboard/>}/>
         <Route path="/trainer-exercises" element={<TrainerExercises/>}/>
+        <Route path="/trainer-library" element={<TrainerLibrary/>}/>
       </Routes>
     </BrowserRouter>
   );

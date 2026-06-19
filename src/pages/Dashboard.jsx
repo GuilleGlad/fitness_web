@@ -21,6 +21,7 @@ const ROLE_MENUS = {
     'Perfil de Usuario',
     'Clientes',
     'Ejercicios',
+    'Fotos/Videos',
     'Recetas',
     'Pagos',
     'Ajustes',
@@ -288,10 +289,14 @@ const Dashboard = () => {
                   <button
                     key={item}
                     onClick={() => {
-                      if (item === 'Ejercicios' || item === 'Ejercicios por Entrenador') {
-                        navigate('/trainer-exercises');
-                        return;
-                      }
+                        if (item === 'Ejercicios' || item === 'Ejercicios por Entrenador') {
+                          navigate('/trainer-exercises');
+                          return;
+                        }
+                        if (item === 'Fotos/Videos') {
+                          navigate('/trainer-library');
+                          return;
+                        }
                       setSelectedMenu(item);
                     }}
                     className={`w-full rounded-3xl px-4 py-3 text-left text-sm font-semibold transition-all ${selectedMenu === item ? 'bg-[#f1b80c] text-[#1e222b]' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}

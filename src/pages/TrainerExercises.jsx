@@ -31,7 +31,7 @@ const TrainerExercises = () => {
         toast.error('Token no disponible. Inicia sesión.');
         return;
       }
-      
+
 
       setLoading(true);
       try {
@@ -50,7 +50,7 @@ const TrainerExercises = () => {
         );
       } catch (err) {
         setFetchError('No se pudieron cargar los ejercicios.');
-        console.log('No se pudieron cargar los ejercicios. '+ err.message);
+        console.log('No se pudieron cargar los ejercicios. ' + err.message);
       } finally {
         setLoading(false);
       }
@@ -288,7 +288,7 @@ const TrainerExercises = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => triggerYesNoToast(handleDelete,exercise.id)}
+                        onClick={() => triggerYesNoToast(handleDelete, exercise.id)}
                         className="rounded-3xl bg-gray-600 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:bg-gray-500"
                       >
                         Eliminar
