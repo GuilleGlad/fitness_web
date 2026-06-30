@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../api/axiosClient';
 import toast, { Toaster } from 'react-hot-toast';
 
 const initialForm = {

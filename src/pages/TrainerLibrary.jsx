@@ -1,5 +1,6 @@
-import axios from 'axios';
-import React, { useState, useEffect } from 'react';
+import axios from '../api/axiosClient';
+import React, { useState, useEffect, useRef } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Toaster } from 'react-hot-toast';
 import LibraryItem from '../components/LibraryItem';
@@ -8,7 +9,8 @@ const TrainerLibrary = () => {
     const [media, setMedia] = useState([]);
     const [payload, setPayload] = useState([]);
     const apiUrl = process.env.REACT_APP_API_URL;
-    
+    const navigate = useNavigate();
+
     useEffect(() => {
         const trainerId = localStorage.getItem('client_id');
         const token = localStorage.getItem('token');
@@ -21,12 +23,12 @@ const TrainerLibrary = () => {
         const fetchLibrary = async () => {
             try {
                 await axios.get(`${apiUrl}/library/list/${trainerId}`, config)
-                .then((data) => {
-                    const lib = data.data.library;
-                    lib.map((f) => f.new = false)
-                    console.log(lib);
-                    setMedia((m) => [...lib, ...m])
-                })
+                    .then((data) => {
+                        const lib = data.data.library;
+                        lib.map((f) => f.new = false)
+                        console.log(lib);
+                        setMedia((m) => [...lib, ...m])
+                    })
 
             } catch (err) {
                 console.log(err.message);
@@ -34,6 +36,8 @@ const TrainerLibrary = () => {
         };
         fetchLibrary();
     }, []);
+
+    const fileInputRef = useRef(null);
 
     const handleFiles = async (e) => {
         const token = localStorage.getItem('token');
@@ -48,7 +52,6 @@ const TrainerLibrary = () => {
             return;
         }
 
-
         const files = Array.from(e.target.files || []);
         const newItems = files.map((file) => ({
             id: Math.random().toString(36).slice(2, 9),
@@ -60,8 +63,10 @@ const TrainerLibrary = () => {
             new: true
         }));
         setMedia((m) => [...newItems, ...m]);
-        console.log(media);
 
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
     const removeItem = (id) => {
@@ -72,11 +77,21 @@ const TrainerLibrary = () => {
         <div className="min-h-screen p-6 bg-gray-900 text-white">
             <Toaster />
             <div className="max-w-5xl mx-auto">
+                <div className="flex flex-col gap-4 rounded-[40px] border border-slate-800 bg-[#141820] p-6 shadow-2xl lg:flex-row lg:items-center lg:justify-between">
                 <h1 className="text-3xl font-bold mb-4">Biblioteca de Fotos/Videos</h1>
+                <button
+                    type="button"
+                    onClick={() => navigate('/dashboard')}
+                    className="inline-flex items-center justify-center rounded-3xl bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]"
+                >
+                    Volver al dashboard
+                </button>
+                </div>
                 <p className="text-sm text-gray-300 mb-6">Sube fotos y videos que los entrenadores podrán usar en otras secciones.</p>
 
                 <label className="inline-block mb-4">
                     <input
+                        ref={fileInputRef}
                         type="file"
                         accept="image/*,video/*"
                         multiple
@@ -85,7 +100,7 @@ const TrainerLibrary = () => {
                         id="media-input"
                     />
                     <button
-                        onClick={() => document.getElementById('media-input').click()}
+                        onClick={() => fileInputRef.current?.click()}
                         className="px-4 py-2 bg-customYellow text-black font-semibold rounded"
                     >
                         Subir Fotos/Videos
@@ -103,6 +118,7 @@ const TrainerLibrary = () => {
                             apiUrl={apiUrl}
                             trainerId={localStorage.getItem('client_id')}
                             token={localStorage.getItem('token')}
+                            onDeleteSuccess={removeItem}
                         />
                     ))}
                 </div>
