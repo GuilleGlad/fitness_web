@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDotCircle } from '@fortawesome/free-solid-svg-icons';
 import toast, { Toaster } from 'react-hot-toast';
 import { Tooltip } from 'react-tooltip';
-import axios from '../api/axiosClient';
+import axios from 'axios';
 import { useServerStatus } from '../hooks/useServerStatus';
 import {useNavigate } from 'react-router-dom';
 // Simulación del enum para los roles

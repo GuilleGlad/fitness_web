@@ -3,7 +3,7 @@ import StepBiometrics from '../components/StepBiometrics';
 import StepObjectives from '../components/StepObjectives';
 import StepVisualRegister from '../components/StepVisualRegister';
 import StepTrainerAssignment from '../components/StepTrainerAssignment';
-import axios from '../api/axiosClient';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 import {Toaster} from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';

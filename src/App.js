@@ -8,6 +8,7 @@ import OnboardingWizard from './pages/OnboardingWizard';
 import Dashboard from './pages/Dashboard';
 import TrainerExercises from './pages/TrainerExercises';
 import TrainerLibrary from './pages/TrainerLibrary';
+import TrainerRecipes from './pages/TrainerRecipes';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard/>}/>
         <Route path="/trainer-exercises" element={<TrainerExercises/>}/>
         <Route path="/trainer-library" element={<TrainerLibrary/>}/>
+        <Route path="/trainer-recipes" element={<TrainerRecipes/>}/>
       </Routes>
     </BrowserRouter>
   );

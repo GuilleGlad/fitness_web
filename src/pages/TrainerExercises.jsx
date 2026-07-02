@@ -1,7 +1,9 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from '../api/axiosClient';
+import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
+import TrainerLibrary from './TrainerLibrary';
+
 
 const initialForm = {
   title: '',
@@ -19,7 +21,9 @@ const TrainerExercises = () => {
   const [fetchError, setFetchError] = useState('');
   const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
-
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [libraryTarget, setLibraryTarget] = useState('photo');
+  
   const exercisesCount = exercises.length;
 
   useEffect(() => {
@@ -171,7 +175,30 @@ const TrainerExercises = () => {
     setEditingId(null);
   };
 
-  const previewPhoto = form.photoUrl || '/images/Shape-016.png';
+  const openLibraryPicker = (target) => {
+    setLibraryTarget(target);
+    setIsLibraryOpen(true);
+  };
+
+  const handleSelectLibraryItem = (url, mediaType) => {
+    if (libraryTarget === 'photo' && mediaType !== 'image') {
+      toast.error('Selecciona una imagen para la foto.');
+      return;
+    }
+
+    if (libraryTarget === 'video' && mediaType !== 'video') {
+      toast.error('Selecciona un video para el campo de video.');
+      return;
+    }
+
+    setForm((previous) => ({
+      ...previous,
+      [libraryTarget === 'photo' ? 'photoUrl' : 'videoUrl']: url,
+    }));
+    setIsLibraryOpen(false);
+  };
+
+  const previewPhoto = form.photoUrl || '';
   const previewVideo = form.videoUrl || '';
 
   const pageTitle = 'Gestión de ejercicios';
@@ -332,24 +359,42 @@ const TrainerExercises = () => {
 
               <label className="block space-y-2 text-sm text-slate-200">
                 <span>Foto (URL)</span>
-                <input
-                  name="photoUrl"
-                  value={form.photoUrl}
-                  onChange={handleChange}
-                  className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                  placeholder="https://.../foto.jpg"
-                />
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    name="photoUrl"
+                    value={form.photoUrl}
+                    onChange={handleChange}
+                    className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                    placeholder="https://.../foto.jpg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => openLibraryPicker('photo')}
+                    className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                  >
+                    Biblioteca
+                  </button>
+                </div>
               </label>
 
               <label className="block space-y-2 text-sm text-slate-200">
                 <span>Video (URL)</span>
-                <input
-                  name="videoUrl"
-                  value={form.videoUrl}
-                  onChange={handleChange}
-                  className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                  placeholder="https://.../video.mp4"
-                />
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    name="videoUrl"
+                    value={form.videoUrl}
+                    onChange={handleChange}
+                    className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                    placeholder="https://.../video.mp4"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => openLibraryPicker('video')}
+                    className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                  >
+                    Biblioteca
+                  </button>
+                </div>
               </label>
 
               <div className="grid gap-4 lg:grid-cols-2">
@@ -374,26 +419,52 @@ const TrainerExercises = () => {
             <div className="mt-8 rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
               <p className="text-sm font-semibold text-slate-200">Vista previa</p>
               <div className="mt-4 grid gap-4">
-                <div className="rounded-3xl overflow-hidden border border-slate-800 bg-[#0f172a]">
-                  <img src={previewPhoto} alt="Previsualización" className="h-56 w-full object-cover" />
-                </div>
-                {previewVideo ? (
-                  <div className="rounded-3xl overflow-hidden border border-slate-800 bg-[#0f172a]">
-                    <video controls className="h-56 w-full bg-black">
-                      <source src={previewVideo} />
-                      Tu navegador no soporta la reproducción de video.
-                    </video>
+                {!previewVideo && !previewPhoto ? (
+                  <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-950/10 p-6 text-center text-sm text-slate-500">
+                    Añade la URL de un video/imagen para ver las vistas previa.
                   </div>
                 ) : (
-                  <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-950/10 p-6 text-center text-sm text-slate-500">
-                    Añade la URL de un video para ver la vista previa.
-                  </div>
-                )}
+                  previewVideo || previewPhoto ? (
+                    <>
+                      {previewPhoto &&  
+                        <div className="rounded-3xl overflow-hidden border border-slate-800 bg-[#0f172a]">
+                          <img src={previewPhoto} alt="Previsualización" className="h-56 w-full object-cover" />
+                        </div>
+                      }
+                      {previewVideo &&
+                        <div className="rounded-3xl overflow-hidden border border-slate-800 bg-[#0f172a]">
+                          <video controls className="h-56 w-full bg-black">
+                            <source src={previewVideo} />
+                            Tu navegador no soporta la reproducción de video.
+                          </video>
+                        </div>
+                      }
+                    </>
+                  ) : (
+                    <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-950/10 p-6 text-center text-sm text-slate-500">
+                      Añade la URL de un video para ver la vista previa.
+                    </div>
+                  )
+                )
+                }
+
               </div>
             </div>
           </section>
         </div>
       </div>
+
+      {isLibraryOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-6xl">
+            <TrainerLibrary
+              isModal
+              onSelectMedia={handleSelectLibraryItem}
+              onClose={() => setIsLibraryOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

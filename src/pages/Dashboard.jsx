@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const ROLE_MAP = {
   'admin': 1,
@@ -44,6 +45,7 @@ const Dashboard = () => {
   const notifications = 4;
   const roleString = Object.entries(ROLE_MAP).find(([key, value]) => value === userRole)?.[0]?.toUpperCase() || 'CLIENTE';
   const menuLinks = ROLE_MENUS[roleValue] || ROLE_MENUS[3];
+  const apiUrl = process.env.REACT_APP_API_URL;
   const initials = useMemo(() => {
     return userName
       .split(' ')
@@ -52,6 +54,34 @@ const Dashboard = () => {
       .join('')
       .toUpperCase();
   }, [userName]);
+
+  useEffect(() => {
+    const verifyToken = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+      }
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      try{
+      axios.get(`${apiUrl}/auth/check-token`, config).then((response) => {
+        console.log(response);
+        if (response.status !== 200) {
+          navigate('/login');
+        }
+      }).catch((error) => {
+        navigate('/login');
+      })
+      }catch(error){
+        navigate('/login');
+      }
+    }
+    verifyToken();
+
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -289,14 +319,18 @@ const Dashboard = () => {
                   <button
                     key={item}
                     onClick={() => {
-                        if (item === 'Ejercicios' || item === 'Ejercicios por Entrenador') {
-                          navigate('/trainer-exercises');
-                          return;
-                        }
-                        if (item === 'Fotos/Videos') {
-                          navigate('/trainer-library');
-                          return;
-                        }
+                      if (item === 'Ejercicios' || item === 'Ejercicios por Entrenador') {
+                        navigate('/trainer-exercises');
+                        return;
+                      }
+                      if (item === 'Fotos/Videos') {
+                        navigate('/trainer-library');
+                        return;
+                      }
+                      if (item === 'Recetas' || item === 'Recetas por Entrenador') {
+                        navigate('/trainer-recipes');
+                        return;
+                      }
                       setSelectedMenu(item);
                     }}
                     className={`w-full rounded-3xl px-4 py-3 text-left text-sm font-semibold transition-all ${selectedMenu === item ? 'bg-[#f1b80c] text-[#1e222b]' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}

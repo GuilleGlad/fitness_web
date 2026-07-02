@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
-import axios from '../api/axiosClient';
+import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRemove } from '@fortawesome/free-solid-svg-icons';
