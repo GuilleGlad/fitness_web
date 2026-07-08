@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import VideoBackground from '../components/VideoBackgrounds';
 import Navbar from '../components/Navbar';
 import FloatingCard from '../components/FloatingCard';
@@ -18,26 +18,60 @@ import BigSubTitle from '../components/BigSubTitle';
 import Footer from '../components/Footer';
 
 function Homepage() {
+    const STORAGE_KEY = 'elitefit_settings';
+    const [settings, setSettings] = useState({
+        logoUrl: '',
+        homeCarouselUrls: '',
+        adsCarouselUrls: '',
+    });
+
+    useEffect(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return;
+
+        try {
+            const parsed = JSON.parse(saved);
+            setSettings({
+                logoUrl: parsed.logoUrl || '',
+                homeCarouselUrls: parsed.homeCarouselUrls || '',
+                adsCarouselUrls: parsed.adsCarouselUrls || '',
+            });
+        } catch (error) {
+            console.error('No se pudieron cargar los ajustes:', error);
+        }
+    }, []);
+
     // NOTE: Replace '/videos/hero-bg.mp4' with the actual path to your video asset.
     const videoPath1 = '/videos/videoplayback.mp4';
     const videoPath2 = '/videos/videoplayback2.mp4';
-    const logoPath = '/images/Logo-01-1-1.png';
+    const logoPath = settings.logoUrl || '/images/Logo-01-1-1.png';
     const trainerPic = '/images/Image-02.jpg';
     const trainerName = 'Sergio Zane';
     const defaultEmail = 'support@musclefit.com';
 
-    const pictures = [
-        '/images/Image-03.jpg'
-    ];
+    const pictures = useMemo(() => {
+        const urls = (settings.homeCarouselUrls || '')
+            .split(/\n|,/)
+            .map((item) => item.trim())
+            .filter(Boolean);
+        return urls.length > 0 ? urls : ['/images/Image-03.jpg'];
+    }, [settings.homeCarouselUrls]);
 
-    const settings = {
+    const adsImages = useMemo(() => {
+        const urls = (settings.adsCarouselUrls || '')
+            .split(/\n|,/)
+            .map((item) => item.trim())
+            .filter(Boolean);
+        return urls.length > 0 ? urls : ['/images/cards/Image-07.jpg'];
+    }, [settings.adsCarouselUrls]);
+
+    const sliderSettings = {
         dots: true,
         infinite: true,
         speed: 500,
         slidesToShow: 3,
         slidesToScroll: 1,
         autoplay: true,
-
     };
 
     return (
@@ -70,7 +104,7 @@ function Homepage() {
                     {/* PARENT COMPONENTS SHOULD PLACE THEIR CONTENT HERE */}
                     {/* Example Content: */}
                     <div className='h-[80lvh]'>
-                        <Navbar></Navbar>
+                        <Navbar logoPath={logoPath}></Navbar>
                         <div className='items-center absolute bottom-0 flex-1 md:flex'>
                             <div className="w-full lg:w-1/2">
                                 <FloatingCard trainerPic={trainerPic} trainerName={trainerName} ></FloatingCard>
@@ -167,31 +201,13 @@ function Homepage() {
                     </div>
                     <div className="flex-1 bg-black">
                         <div id='carousel' className='ml-32 mr-32 mt-10 mb-20 p-10 rounded-lg bg-white '>
-                            <Slider {...settings} >
-                                <div>
-                                    <img src="/images/carousel/Testimonial-01.jpg" alt="Slide 1" />
-                                    <span className='font-bold'>Lost 6Kg in 10 weeks, stronger.</span>
-                                </div>
-                                <div>
-                                    <img src="/images/carousel/Testimonial-02.jpg" alt="Slide 2" />
-                                    <span className='font-bold'>Dropped 8Kg in 12 weeks, faster.</span>
-                                </div>
-                                <div>
-                                    <img src="/images/carousel/Testimonial-03.jpg" alt="Slide 3" />
-                                    <span className='font-bold'>Lost 5Kg in 8 weeks, healthier.</span>
-                                </div>
-                                <div>
-                                    <img src="/images/carousel/Testimonial-04.jpg" alt="Slide 4" />
-                                    <span className='font-bold'>Down 7Kg, best muscle tone overvall.</span>
-                                </div>
-                                <div>
-                                    <img src="/images/carousel/Testimonial-05.jpg" alt="Slide 5" />
-                                    <span className='font-bold'>Lost 6Kg, gained strength and confidence .</span>
-                                </div>
-                                <div>
-                                    <img src="/images/carousel/Testimonial-06.jpg" alt="Slide 6" />
-                                    <span className='font-bold'>Gained 3Kg muscle in 12 weeks.</span>
-                                </div>
+                            <Slider {...sliderSettings} >
+                                {pictures.map((image, index) => (
+                                    <div key={`${image}-${index}`}>
+                                        <img src={image} alt={`Slide ${index + 1}`} className="h-64 w-full object-cover" />
+                                        <span className='mt-3 block font-bold text-center'>Contenido destacado {index + 1}</span>
+                                    </div>
+                                ))}
                             </Slider>
                         </div>
                     </div>
@@ -215,7 +231,7 @@ function Homepage() {
                             <ImageCard
                                 title="Individual training plan"
                                 description="Diseño personalizado para alcanzar tus metas físicas y de salud."
-                                imageUrl="/images/cards/Image-07.jpg"
+                                imageUrl={adsImages[0] || '/images/cards/Image-07.jpg'}
                                 altText="Individual training plan"
                             />
                         </div>
@@ -223,7 +239,7 @@ function Homepage() {
                             <ImageCard
                                 title="Nutrition guidance"
                                 description="Guía nutricional balanceada y planes alimenticios adaptados a tu estilo de vida."
-                                imageUrl="/images/cards/Image-08.jpg"
+                                imageUrl={adsImages[1] || '/images/cards/Image-08.jpg'}
                                 altText="Nutrition guidance"
                             />
                         </div>
@@ -234,7 +250,7 @@ function Homepage() {
                                 isCTA={true} // === ESTADO CTA ===
                                 ctaText="Ver Disponibilidad"
                                 ctaLink="/horarios"
-                                imageUrl='/images/Shape-016.png'
+                                imageUrl={adsImages[2] || '/images/Shape-016.png'}
                             />
                         </div>
 
@@ -242,7 +258,7 @@ function Homepage() {
                             <ImageCard
                                 title="Training in a private gym"
                                 description="Máxima privacidad y equipamiento de vanguardia para tu comodidad."
-                                imageUrl="/images/cards/Image-09.jpg"
+                                imageUrl={adsImages[3] || '/images/cards/Image-09.jpg'}
                                 altText="Training in a private gym"
                             />
                         </div>
@@ -250,7 +266,7 @@ function Homepage() {
                             <ImageCard
                                 title="Training in a private gym"
                                 description="Máxima privacidad y equipamiento de vanguardia para tu comodidad."
-                                imageUrl="/images/cards/Image-010-1.jpg"
+                                imageUrl={adsImages[4] || '/images/cards/Image-010-1.jpg'}
                                 altText="Training in a private gym"
                             />
                         </div>

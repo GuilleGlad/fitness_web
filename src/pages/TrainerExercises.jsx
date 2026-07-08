@@ -180,20 +180,35 @@ const TrainerExercises = () => {
     setIsLibraryOpen(true);
   };
 
-  const handleSelectLibraryItem = (url, mediaType) => {
-    if (libraryTarget === 'photo' && mediaType !== 'image') {
-      toast.error('Selecciona una imagen para la foto.');
-      return;
+  const handleSelectLibraryItem = (payload) => {
+    const selectedItems = Array.isArray(payload) ? payload : [payload];
+    const validItems = selectedItems.filter(Boolean);
+
+    if (libraryTarget === 'photo') {
+      const invalidItem = validItems.find((item) => item.mediaType !== 'image');
+      if (invalidItem) {
+        toast.error('Selecciona una imagen para la foto.');
+        return;
+      }
     }
 
-    if (libraryTarget === 'video' && mediaType !== 'video') {
-      toast.error('Selecciona un video para el campo de video.');
+    if (libraryTarget === 'video') {
+      const invalidItem = validItems.find((item) => item.mediaType !== 'video');
+      if (invalidItem) {
+        toast.error('Selecciona un video para el campo de video.');
+        return;
+      }
+    }
+
+    const urls = validItems.map((item) => item.url).filter(Boolean);
+    if (urls.length === 0) {
+      toast.error('No se seleccionó ningún elemento válido.');
       return;
     }
 
     setForm((previous) => ({
       ...previous,
-      [libraryTarget === 'photo' ? 'photoUrl' : 'videoUrl']: url,
+      [libraryTarget === 'photo' ? 'photoUrl' : 'videoUrl']: urls.join('\n'),
     }));
     setIsLibraryOpen(false);
   };
@@ -459,6 +474,7 @@ const TrainerExercises = () => {
           <div className="w-full max-w-6xl">
             <TrainerLibrary
               isModal
+              selectionMode="single"
               onSelectMedia={handleSelectLibraryItem}
               onClose={() => setIsLibraryOpen(false)}
             />

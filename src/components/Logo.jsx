@@ -1,9 +1,9 @@
 import React from 'react';
 
-const Logo = ({logoPath, isMenuOpen}) => {
-    var defaultLogo = '/images/Logo-01-1-1.png';
+const Logo = ({ logoPath, isMenuOpen }) => {
+    let defaultLogo = '/images/Logo-01-1-1.png';
 
-    if(logoPath){
+    if (logoPath) {
         defaultLogo = logoPath;
     }
     return (

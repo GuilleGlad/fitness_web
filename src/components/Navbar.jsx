@@ -3,10 +3,10 @@ import Logo from './Logo';
 import Menu from './Menu';
 import ContactUs from './ContactUs';
 
-const Navbar = () => {
+const Navbar = ({ logoPath: providedLogoPath }) => {
   // Estado para controlar si el menú está abierto o cerrado en móvil
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const logoPath = '/images/Logo-01-1-1.png';
+  const logoPath = providedLogoPath || '/images/Logo-01-1-1.png';
   // Función para cambiar el estado del menú
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -21,7 +21,7 @@ const Navbar = () => {
       {/* COLUMNA 1: LOGO */}
       <div className="w-1/4 flex items-center justify-start">
         <Logo 
-            logoSrc={logoPath} 
+            logoPath={logoPath} 
             isMenuOpen={isMenuOpen} />
       </div>
 

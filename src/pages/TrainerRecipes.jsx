@@ -70,12 +70,23 @@ const TrainerRecipes = () => {
     setIsLibraryOpen(true);
   };
 
-  const handleSelectLibraryItem = (url, mediaType) => {
-    if (mediaType !== 'image') {
+  const handleSelectLibraryItem = (payload) => {
+    const selectedItems = Array.isArray(payload) ? payload : [payload];
+    const validItems = selectedItems.filter(Boolean);
+    const invalidItem = validItems.find((item) => item.mediaType !== 'image');
+
+    if (invalidItem) {
       toast.error('Selecciona una imagen.');
       return;
     }
-    setForm((prev) => ({ ...prev, image_url: url }));
+
+    const urls = validItems.map((item) => item.url).filter(Boolean);
+    if (urls.length === 0) {
+      toast.error('No se seleccionó ningún elemento válido.');
+      return;
+    }
+
+    setForm((prev) => ({ ...prev, image_url: urls.join('\n') }));
     setIsLibraryOpen(false);
   };
 
@@ -340,7 +351,12 @@ const TrainerRecipes = () => {
         {isLibraryOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
             <div className="w-full max-w-6xl">
-              <TrainerLibrary isModal onSelectMedia={handleSelectLibraryItem} onClose={() => setIsLibraryOpen(false)} />
+              <TrainerLibrary
+                isModal
+                selectionMode="single"
+                onSelectMedia={handleSelectLibraryItem}
+                onClose={() => setIsLibraryOpen(false)}
+              />
             </div>
           </div>
         )}

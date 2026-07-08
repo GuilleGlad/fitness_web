@@ -1,27 +1,38 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRemove } from '@fortawesome/free-solid-svg-icons';
 
-const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess }) => {
-    const [status, setStatus] = useState('pending');
+const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUploadSuccess }) => {
+    const [status, setStatus] = useState(item?.new ? 'pending' : 'uploaded');
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState(null);
+    const uploadStartedRef = useRef(false);
 
     useEffect(() => {
-        if (!item.new) {
-            setStatus('uploaded')
-        }
-        if (!item.file || !apiUrl || !trainerId || !token || status !== 'pending') {
+        if (!item?.file || !apiUrl || !trainerId || !token) {
+            if (!item?.new) {
+                setStatus('uploaded');
+            }
             return;
         }
+
+        if (!item.new) {
+            setStatus('uploaded');
+            return;
+        }
+
+        if (uploadStartedRef.current) {
+            return;
+        }
+
+        uploadStartedRef.current = true;
+        setStatus('uploading');
 
         const formData = new FormData();
         formData.append('trainerId', trainerId);
         formData.append('file', item.file);
-
-        setStatus('uploading');
 
         axios
             .post(`${apiUrl}/library/add`,
@@ -39,8 +50,8 @@ const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess }) => {
                 })
             .then((res) => {
                 const serverItemId = res?.data?.itemId;
-                if (serverItemId !== undefined && serverItemId !== null) {
-                    item.id = serverItemId;
+                if (serverItemId !== undefined && serverItemId !== null && typeof onUploadSuccess === 'function') {
+                    onUploadSuccess(item.id, serverItemId);
                 }
                 setStatus('uploaded');
             })
@@ -48,9 +59,9 @@ const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess }) => {
                 const message = uploadError?.response?.data?.message || uploadError.message || 'Error al subir el archivo';
                 setError(message);
                 setStatus('error');
-                toast.error(`Error subiendo ${item.name}: ${message}`);
+                toast.error(`Error subiendo ${item.filename || item.name}: ${message}`);
             });
-    }, []);
+    }, [apiUrl, item?.file, item?.id, item?.new, item?.size, item?.filename, onUploadSuccess, token, trainerId]);
 
     const triggerYesNoToast = (handle, ...params) => {
         toast((t) => (

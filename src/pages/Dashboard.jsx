@@ -331,6 +331,10 @@ const Dashboard = () => {
                         navigate('/trainer-recipes');
                         return;
                       }
+                      if (item === 'Ajustes') {
+                        navigate('/settings');
+                        return;
+                      }
                       setSelectedMenu(item);
                     }}
                     className={`w-full rounded-3xl px-4 py-3 text-left text-sm font-semibold transition-all ${selectedMenu === item ? 'bg-[#f1b80c] text-[#1e222b]' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
