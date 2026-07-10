@@ -11,11 +11,11 @@ const ROLE_MAP = {
 const ROLE_MENUS = {
   1: [
     'Perfil de Usuario',
-    'Entrenadores',
     'Clientes',
-    'Ejercicios por Entrenador',
-    'Patrocinadores / Publicidad',
-    'Recetas por Entrenador',
+    'Entrenadores',
+    'Ejercicios',
+    'Recetas',
+    'Noticias',
     'Ajustes',
   ],
   2: [

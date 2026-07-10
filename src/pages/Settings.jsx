@@ -10,6 +10,9 @@ const defaultSettings = {
   logoUrl: '',
   homeCarouselUrls: '',
   adsCarouselUrls: '',
+  titulo: '',
+  videoUrl: '',
+  aboutUrl: '',
 };
 
 const Settings = () => {
@@ -17,21 +20,55 @@ const Settings = () => {
   const [settings, setSettings] = useState(defaultSettings);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [libraryTarget, setLibraryTarget] = useState('logo');
-
+  const token = localStorage.getItem('token');
+  const apiUrl = process.env.REACT_APP_API_URL;
+  
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return;
+    const fetchSettings = async () => {
+      try {
+        await axios.get(`${apiUrl}/admin/settings`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }).then((response) => {
+          const { data } = response;
+          if (data) {
+            const {result} = data;
+            const result_arr = result[0];
+            const {logo , title, video} = result_arr;
+            setSettings({
+              logoUrl: result_arr.logo || '',
+              homeCarouselUrls: (JSON.parse(result_arr.gallery) || []).join('\n'),
+              adsCarouselUrls: (JSON.parse(result_arr.ads) || []).join('\n'),
+              titulo: result_arr.title || '',
+              videoUrl: result_arr.video_background || '',
+              aboutUrl: result_arr.about || '',
+            });
+          }
+        });
+        // console.log(settings);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        // console.log('Ajustes cargados correctamente.');
+      } catch (error) {
+        console.error('Error cargando ajustes:', error);
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return;
 
-    try {
-      const parsed = JSON.parse(saved);
-      setSettings({ ...defaultSettings, ...parsed });
-    } catch (error) {
-      console.error('No se pudieron recuperar los ajustes:', error);
+        try {
+          const parsed = JSON.parse(saved);
+          setSettings({ ...defaultSettings, ...parsed });
+        } catch (error) {
+          console.error('No se pudieron recuperar los ajustes:', error);
+        }
+      }
     }
+    fetchSettings();
   }, []);
 
   const previewUrls = useMemo(() => {
     return {
+      video: settings.videoUrl || '',
       logo: settings.logoUrl || '',
       gallery: (settings.homeCarouselUrls || '')
         .split(/\n|,/)
@@ -41,12 +78,17 @@ const Settings = () => {
         .split(/\n|,/)
         .map((item) => item.trim())
         .filter(Boolean),
+      about: settings.aboutUrl || '',
     };
   }, [settings]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     setSettings((previous) => ({ ...previous, [name]: value }));
+  };
+
+  const handleClear = (fieldName) => {
+    setSettings((previous) => ({ ...previous, [fieldName]: '' }));
   };
 
   const openLibraryPicker = (target) => {
@@ -58,13 +100,31 @@ const Settings = () => {
     const selectedItems = Array.isArray(payload) ? payload : [payload];
     const validItems = selectedItems.filter(Boolean);
 
-    if (libraryTarget === 'logo') {
-      const logoItem = validItems.find((item) => item.mediaType === 'image') || validItems[0];
-      if (!logoItem) {
-        toast.error('Selecciona una imagen para el logotipo.');
-        return;
+    if (libraryTarget === 'logo' || libraryTarget === 'video' || libraryTarget === 'about') {
+      if(libraryTarget === 'logo'){
+        const logoItem = validItems.find((item) => item.mediaType === 'image') || validItems[0];
+        if (!logoItem) {
+          toast.error('Selecciona una imagen para el logotipo.');
+          return;
+        }
+        setSettings((previous) => ({ ...previous, logoUrl: logoItem.url }));
       }
-      setSettings((previous) => ({ ...previous, logoUrl: logoItem.url }));
+      if(libraryTarget === 'video'){
+        const videoItem = validItems.find((item) => item.mediaType === 'video') || validItems[0];
+        if (!videoItem) {
+          toast.error('Selecciona un video para el fondo de cabecera.');
+          return;
+        }
+        setSettings((previous) => ({ ...previous, videoUrl: videoItem.url }));        
+      }
+      if(libraryTarget === 'about'){
+        const aboutItem = validItems.find((item) => item.mediaType === 'image') || validItems[0];
+        if (!aboutItem) {
+          toast.error('Selecciona una imagen para el logotipo.');
+          return;
+        }
+        setSettings((previous) => ({ ...previous, aboutUrl: aboutItem.url }));
+      }      
     } else {
       const urls = validItems.map((item) => item.url).filter(Boolean);
       if (urls.length === 0) {
@@ -80,7 +140,7 @@ const Settings = () => {
         setSettings((previous) => ({
           ...previous,
           homeCarouselUrls: urls.join('\n'),
-        }));        
+        }));
       } else {
         setSettings((previous) => ({
           ...previous,
@@ -94,9 +154,6 @@ const Settings = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
-    const token = localStorage.getItem('token');
-    const apiUrl = process.env.REACT_APP_API_URL;
 
     if (!token) {
       toast.error('No hay sesión activa. Inicia sesión nuevamente.');
@@ -113,6 +170,9 @@ const Settings = () => {
         .split(/\n|,/)
         .map((item) => item.trim())
         .filter(Boolean),
+      title: settings.titulo || '',
+      video: settings.videoUrl || '',
+      about: settings.aboutUrl || '',
     };
 
     try {
@@ -171,6 +231,23 @@ const Settings = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              <label htmlFor="titulo" className="block space-y-2 text-sm text-slate-200">
+                <span>Titulo</span>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    id="titulo"
+                    name="titulo"
+                    value={settings.titulo}
+                    onChange={handleChange}
+                    className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                    placeholder="Ejemplo de título"
+                  />
+                  <button type="button" onClick={() => handleClear('titulo')} className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
+                    Limpiar
+                  </button>
+                </div>
+              </label>
+
               <label htmlFor="logoUrl" className="block space-y-2 text-sm text-slate-200">
                 <span>Logotipo</span>
                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -182,13 +259,70 @@ const Settings = () => {
                     className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
                     placeholder="https://.../logo.png"
                   />
-                  <button
-                    type="button"
-                    onClick={() => openLibraryPicker('logo')}
-                    className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-                  >
-                    Biblioteca
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openLibraryPicker('logo')}
+                      className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                    >
+                      Biblioteca
+                    </button>
+                    <button type="button" onClick={() => handleClear('logoUrl')} className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
+                      Limpiar
+                    </button>
+                  </div>
+                </div>
+              </label>
+
+              <label htmlFor="logoUrl" className="block space-y-2 text-sm text-slate-200">
+                <span>Imagen para la sección Acerca de Nosotros</span>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    id="aboutUrl"
+                    name="aboutUrl"
+                    value={settings.aboutUrl}
+                    onChange={handleChange}
+                    className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                    placeholder="https://.../logo.png"
+                  />
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openLibraryPicker('about')}
+                      className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                    >
+                      Biblioteca
+                    </button>
+                    <button type="button" onClick={() => handleClear('aboutUrl')} className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
+                      Limpiar
+                    </button>
+                  </div>
+                </div>
+              </label>
+
+              <label htmlFor="logoUrl" className="block space-y-2 text-sm text-slate-200">
+                <span>Video de Fondo</span>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    id="videoUrl"
+                    name="videoUrl"
+                    value={settings.videoUrl}
+                    onChange={handleChange}
+                    className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                    placeholder="https://.../video.mp4"
+                  />
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openLibraryPicker('video')}
+                      className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                    >
+                      Biblioteca
+                    </button>
+                    <button type="button" onClick={() => handleClear('videoUrl')} className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
+                      Limpiar
+                    </button>
+                  </div>
                 </div>
               </label>
 
@@ -205,13 +339,18 @@ const Settings = () => {
                     placeholder="https://.../foto-1.jpg
 https://.../foto-2.jpg"
                   />
-                  <button
-                    type="button"
-                    onClick={() => openLibraryPicker('gallery')}
-                    className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-                  >
-                    Biblioteca
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openLibraryPicker('gallery')}
+                      className="rounded-3xl border border-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                    >
+                      Biblioteca
+                    </button>
+                    <button type="button" onClick={() => handleClear('homeCarouselUrls')} className="rounded-3xl border border-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
+                      Limpiar
+                    </button>
+                  </div>
                 </div>
               </label>
 
@@ -228,13 +367,18 @@ https://.../foto-2.jpg"
                     placeholder="https://.../ad-1.jpg
 https://.../ad-2.jpg"
                   />
-                  <button
-                    type="button"
-                    onClick={() => openLibraryPicker('ads')}
-                    className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-                  >
-                    Biblioteca
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openLibraryPicker('ads')}
+                      className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                    >
+                      Biblioteca
+                    </button>
+                    <button type="button" onClick={() => handleClear('adsCarouselUrls')} className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
+                      Limpiar
+                    </button>
+                  </div>
                 </div>
               </label>
 
@@ -255,6 +399,15 @@ https://.../ad-2.jpg"
 
             <div className="space-y-5">
               <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
+                <p className="text-sm font-semibold text-slate-200">Titulo</p>
+                {settings.titulo ? (
+                  <p className="mt-4 text-lg text-gray-400 font-extrabold">{settings.titulo}</p>
+                ) : (
+                  <p className="mt-4 text-sm text-slate-400">Aún no hay titlo establecido.</p>
+                )}
+              </div>
+
+              <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
                 <p className="text-sm font-semibold text-slate-200">Logotipo</p>
                 {previewUrls.logo ? (
                   <img src={previewUrls.logo} alt="Vista previa del logotipo" className="mt-4 h-20 w-auto rounded-2xl object-contain" />
@@ -264,12 +417,21 @@ https://.../ad-2.jpg"
               </div>
 
               <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
+                <p className="text-sm font-semibold text-slate-200">Acerca de Nosotros</p>
+                {previewUrls.about ? (
+                  <img src={previewUrls.about} alt="Vista previa del logotipo" className="mt-4 h-20 w-auto rounded-2xl object-contain" />
+                ) : (
+                  <p className="mt-4 text-sm text-slate-400">Aún no hay logotipo seleccionado.</p>
+                )}
+              </div>              
+
+              <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
                 <p className="text-sm font-semibold text-slate-200">Galería del carrusel principal</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {previewUrls.gallery.length > 0 ? previewUrls.gallery.map((item) => (
                     <span key={item} className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs text-slate-200">
                       {/* {item} */}
-                    <img src={item} alt="Vista previa del carrusel" className="mt-2 h-16 w-auto rounded-2xl object-contain" />
+                      <img src={item} alt="Vista previa del carrusel" className="mt-2 h-16 w-auto rounded-2xl object-contain" />
                     </span>
                   )) : <span className="text-sm text-slate-400">No hay URLs cargadas.</span>}
                 </div>

@@ -13,36 +13,72 @@ import Slider from 'react-slick';
 import '../styles/Homepage.css'
 import ImageCard from '../components/ImageCard';
 import Comments from '../components/Comments';
+import News from '../components/News';
 import Faq from '../components/Faq';
 import BigSubTitle from '../components/BigSubTitle';
 import Footer from '../components/Footer';
+import axios from 'axios';
+import { height } from '@fortawesome/free-solid-svg-icons/faUpRightFromSquare';
 
 function Homepage() {
+    const apiUrl = process.env.REACT_APP_API_URL;
+    const defaultSettings = {
+    logoUrl: '',
+    homeCarouselUrls: '',
+    adsCarouselUrls: '',
+    titulo: '',
+    video: ''
+    };    
     const STORAGE_KEY = 'elitefit_settings';
     const [settings, setSettings] = useState({
         logoUrl: '',
         homeCarouselUrls: '',
         adsCarouselUrls: '',
+        titulo: '',
+        video: '',
+        about: ''
     });
 
     useEffect(() => {
+ const fetchSettings = async () => {
+      try {
+        await axios.get(`${apiUrl}/admin/settings`).then((response) => {
+          const { data } = response;
+          if (data) {
+            const {result} = data;
+            const result_arr = result[0];
+            const {logo , title, video} = result_arr;
+            setSettings({
+              logoUrl: result_arr.logo || '',
+              homeCarouselUrls: (JSON.parse(result_arr.gallery) || []).join('\n'),
+              adsCarouselUrls: (JSON.parse(result_arr.ads) || []).join('\n'),
+              titulo: result_arr.title || '',
+              videoUrl: result_arr.video_background || '',
+              aboutUrl: result_arr.about || ''
+            });
+          }
+        });
+        console.log(settings);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        console.log('Ajustes cargados correctamente.');
+      } catch (error) {
+        console.error('Error cargando ajustes:', error);
         const saved = localStorage.getItem(STORAGE_KEY);
         if (!saved) return;
 
         try {
-            const parsed = JSON.parse(saved);
-            setSettings({
-                logoUrl: parsed.logoUrl || '',
-                homeCarouselUrls: parsed.homeCarouselUrls || '',
-                adsCarouselUrls: parsed.adsCarouselUrls || '',
-            });
+          const parsed = JSON.parse(saved);
+          setSettings({ ...defaultSettings, ...parsed });
         } catch (error) {
-            console.error('No se pudieron cargar los ajustes:', error);
+          console.error('No se pudieron recuperar los ajustes:', error);
         }
+      }
+    }
+    fetchSettings();
     }, []);
 
     // NOTE: Replace '/videos/hero-bg.mp4' with the actual path to your video asset.
-    const videoPath1 = '/videos/videoplayback.mp4';
+    const videoPath1 = settings.videoUrl || '/videos/videoplayback.mp4';
     const videoPath2 = '/videos/videoplayback2.mp4';
     const logoPath = settings.logoUrl || '/images/Logo-01-1-1.png';
     const trainerPic = '/images/Image-02.jpg';
@@ -72,10 +108,12 @@ function Homepage() {
         slidesToShow: 3,
         slidesToScroll: 1,
         autoplay: true,
+        
     };
 
     return (
         <div className="homepage-wrapper bg-black ">
+            <title>{settings.titulo}</title>
             <div className="video-background-container ">
 
                 {/* 
@@ -110,7 +148,7 @@ function Homepage() {
                                 <FloatingCard trainerPic={trainerPic} trainerName={trainerName} ></FloatingCard>
                             </div>
                             <div className="w-full md:w-1/2 lg:w-2/3 mr-32">
-                                <BigTitle title=""></BigTitle>
+                                <BigTitle title="ALCANZA TUS METAS JUNTO A NOSOTROS"></BigTitle>
                             </div>
                         </div>
                     </div>
@@ -120,32 +158,32 @@ function Homepage() {
             {/* ABOUT */}
             <div className="flex bg-black" id='about'>
                 <div className="w-2/3 ">
-                    <FloatingText text="ABOUT" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
+                    <FloatingText text="ACERCA DE NOSOTROS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
                 </div>
                 <div className='lg:mr-32'>
-                    <BigTitle title="TARGETED TRAINING IN AN EXCLUSIVE PRIVATE GYM." color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                    <BigTitle title="Entrenamiento específico en un gimnasio privado exclusivo." color="text-white" size="text-4xl lg:text-7xl" uppercase="true"></BigTitle>
                 </div>
             </div>
             <div className="flex-1 lg:flex bg-black">
                 <div className='w-full lg:w-1/3 p-8 lg:ml-32 '>
-                    <img src={pictures[0]} className='rounded-xl shadow-lg justify-end' />
+                    <img src={settings.aboutUrl} className='rounded-xl shadow-lg justify-end' />
                 </div>
                 <div className="flex-1 mt-10 lg:ml-32">
                     <div className="flex lg:mr-32">
                         <div className=''>
-                            <BigTitle title="Work with a dedicated coach in a refined, relaxed space built around your growth and your results." color="text-customYellow " size="text-2xl lg:text-6xl text-left"></BigTitle>
+                            <BigTitle title="Trabaja con un coach dedicado en un espacio refinado y relajado, diseñado en torno a tu crecimiento y tus resultados." color="text-customYellow " size="text-2xl lg:text-5xl text-left"></BigTitle>
                         </div>
                     </div>
                     <div className="lg:flex flex-1 mt-5 gap-12">
-                        <div className='text-white lg:w-1/3 text-lg mb-5'>Curabitur tincidunt, felis a elementum tincidunt, ex felis fermentum dui, eget pulvinar arcu eros eu eros. Vestibulum sollicitudin pretium velit, eget justo sit amet. Pellentesque in nulla in nisi dictum interdum.</div>
-                        <div className='text-white lg:w-1/3 text-lg'>Etiam accumsan urna a mauris dapibus, nec nunc convallis. Phasellus eget justo et libero ultrices posuere. Cras euismod, arcu nec congue convallis, ipsum orci non libero.  amet felis placerat</div>
+                        <div className='text-white lg:w-1/3 text-lg mb-5'>Logra tus objetivos de bienestar a través de un entrenamiento específico en un gimnasio privado exclusivo, un concepto diseñado para quienes buscan máxima efectividad y privacidad. Aquí, trabajas con un coach dedicado en un espacio refinado y relajado, diseñado en torno a tu crecimiento y tus resultados. </div>
+                        <div className='text-white lg:w-1/3 text-lg'>Sin las distracciones ni las aglomeraciones de los centros convencionales, cada sesión se convierte en una experiencia premium totalmente personalizada. Este entorno sofisticado no solo optimiza tu rendimiento físico, sino que también te brinda la tranquilidad necesaria para enfocarte en tu evolución integral, garantizando un camino directo hacia tu mejor versión.</div>
                     </div>
                 </div>
             </div>
             <div className='separator pt-32 bg-black'></div>
             {/* SERVICES */}
             <>
-                <div className='lg:mr-32 bg-black w-full'>
+                {/* <div className='lg:mr-32 bg-black w-full'>
                     <div className="flex-1 lg:flex bg-black lg:mr-32">
                         <div className="w-1/4">
                             <FloatingText text="SERVICES" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
@@ -171,10 +209,10 @@ function Homepage() {
                         </div>
                     </div>
                 </div>
-                <div className='separator pt-32 bg-black'></div>
+                <div className='separator pt-32 bg-black'></div> */}
                 {/* RRSS */}
                 <div className="bg-black w-full flex mr-32">
-                    <span className="text-white ml-32 text-6xl w-1/4 font-semibold">Guided by the Best</span>
+                    <span className="text-white ml-32 text-6xl w-1/4 font-semibold">Guiados por el mejor</span>
                     <img src="/images/Shape-01.png" className='w-1/4' alt="" />
                     <div className='w-1/4 ml-32'>
                         <div className='grid grid-cols-2 relative top-60'>
@@ -193,10 +231,10 @@ function Homepage() {
                 <div className="bg-black w-full flex-1 mr-32">
                     <div className="flex-1 lg:flex bg-black lg:mr-32">
                         <div className="w-1/4">
-                            <FloatingText text="RESULTS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
+                            <FloatingText text="RESULTADOS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
                         </div>
                         <div className='w-3/4'>
-                            <BigTitle title="SEE MY CLIENTS' RESULTS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                            <BigTitle title="RESULTADOS DE MIS CLIENTES" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
                         </div>
                     </div>
                     <div className="flex-1 bg-black">
@@ -204,17 +242,39 @@ function Homepage() {
                             <Slider {...sliderSettings} >
                                 {pictures.map((image, index) => (
                                     <div key={`${image}-${index}`}>
-                                        <img src={image} alt={`Slide ${index + 1}`} className="h-64 w-full object-cover" />
-                                        <span className='mt-3 block font-bold text-center'>Contenido destacado {index + 1}</span>
+                                        <img src={image} alt={`Slide ${index + 1}`} className="h-full w-full " />
+                                        {/* <span className='mt-3 block font-bold text-center'>Contenido destacado {index + 1}</span> */}
                                     </div>
                                 ))}
                             </Slider>
                         </div>
                     </div>
                 </div>
+                <div className="bg-black w-full flex-1 mr-32">
+                    <div className="flex-1 lg:flex bg-black lg:mr-32">
+                        <div className="w-1/4">
+                            <FloatingText text="ADS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
+                        </div>
+                        <div className='w-3/4'>
+                            <BigTitle title="MARCAS Y PATROCINADORES" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                        </div>
+                    </div>
+                    <div className="flex-1 bg-black">
+                        <div id='carousel' className='ml-32 mr-32 mt-10 mb-20 p-10 rounded-lg bg-white '>
+                            <Slider {...sliderSettings} >
+                                {adsImages.map((image, index) => (
+                                    <div key={`${image}-${index}`}>
+                                        <img src={image} alt={`Slide ${index + 1}`} className="h-full w-full " />
+                                        {/* <span className='mt-3 block font-bold text-center'>Contenido destacado {index + 1}</span> */}
+                                    </div>
+                                ))}
+                            </Slider>
+                        </div>
+                    </div>
+                </div>                
                 <div className='separator pt-32 bg-black'></div>
                 {/* RRSS */}
-                <div className="bg-black w-full flex-1 mr-32 h-1/3">
+                {/* <div className="bg-black w-full flex-1 mr-32 h-1/3">
                     <div className="flex-1 lg:flex bg-black lg:mr-32">
                         <div className="w-1/4">
                             <FloatingText text="WHY CHOOSE US" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
@@ -274,24 +334,19 @@ function Homepage() {
                     </div>
 
                 </div>
-                <div className='separator pt-32 bg-black'></div>
-                {/* TESTIMONIALS */}
+                <div className='separator pt-32 bg-black'></div> */}
+                {/* NOTICIAS */}
                 <div className="bg-black w-full flex-1 mr-32">
                     <div className="flex-1 lg:flex bg-black lg:mr-32">
                         <div className="w-1/4">
-                            <FloatingText text="TESTIMONIALS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
+                            <FloatingText text="SECCION INFORMATIVA" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
                         </div>
                         <div className='w-3/4'>
-                            <BigTitle title="WHAT OUR MEMBERS ARE SAYING" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                            <BigTitle title="MUNDO FITNESS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
                         </div>
                     </div>
                     <div className="grid grid-cols-3 ml-32 mr-32 mt-10 ">
-                        <Comments stars={5} text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." account="Emily Roberts" picture="/images/Testimonials-01.jpg" role="members" />
-                        <Comments stars={1} text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." account="Emily Roberts" picture="/images/Testimonials-03.jpg" role="members" />
-                        <Comments stars={3} text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." account="Emily Roberts" picture="/images/Testimonials-04.jpg" role="members" />
-                        <Comments stars={5} text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." account="Emily Roberts" picture="/images/Testimonials-05.jpg" role="members" />
-                        <Comments stars={5} text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." account="Emily Roberts" picture="/images/Testimonials-06.jpg" role="members" />
-                        <Comments stars={5} text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." account="Emily Roberts" picture="/images/Testimonials-07.jpg" role="members" />
+                        <News text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." picture="/images/Testimonials-07.jpg" title="titulo de prueba" />
                     </div>
 
                 </div>

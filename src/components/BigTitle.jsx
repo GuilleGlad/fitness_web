@@ -1,10 +1,11 @@
 import React from 'react';
 
-const BigTitle = ({title, color, size, dir}) => {
+const BigTitle = ({title, color, size, dir, uppercase}) => {
     var defaultTitle = "WE ACHIEVE YOUR GOALS. TOGETHER";
     var defaultColor = "text-white ";
     var defaultSize = "text-4xl lg:text-9xl"
     var defaultDir = "text-right";
+    var defaultUppercase = "";
     if(title){
         defaultTitle = title;
     }
@@ -17,9 +18,12 @@ const BigTitle = ({title, color, size, dir}) => {
     if(dir){
         defaultDir = dir;
     }
+    if(uppercase){
+        defaultUppercase = "uppercase";
+    }
     return (
-        <div className=''>
-            <h1 className={`${defaultSize} ${defaultColor} mr-10 ${defaultDir} font-bold `}>{defaultTitle}</h1>
+        <div>
+            <h1 className={`${defaultUppercase} ${defaultSize} ${defaultColor} mr-10 ${defaultDir} font-bold `}>{defaultTitle}</h1>
         </div>
     )
 }
