@@ -38,9 +38,10 @@ function Homepage() {
         video: '',
         about: ''
     });
+    const [news, setNews] = useState([]);
 
     useEffect(() => {
- const fetchSettings = async () => {
+    const fetchSettings = async () => {
       try {
         await axios.get(`${apiUrl}/admin/settings`).then((response) => {
           const { data } = response;
@@ -74,7 +75,24 @@ function Homepage() {
         }
       }
     }
+
+    const fetchNews = async () => {
+        try{
+            const response = await axios.get(`${apiUrl}/news/list`);
+            const { data } = response;
+            if(data){
+                const {filas} = data;
+                console.log('Noticias cargadas:', filas);
+                setNews(filas);
+            }
+        }
+        catch(error){
+            console.error('Error cargando noticias:', error);
+        }
+    }
+
     fetchSettings();
+    fetchNews();
     }, []);
 
     // NOTE: Replace '/videos/hero-bg.mp4' with the actual path to your video asset.
@@ -102,6 +120,16 @@ function Homepage() {
     }, [settings.adsCarouselUrls]);
 
     const sliderSettings = {
+        dots: true,
+        infinite: true,
+        speed: 500,
+        slidesToShow: 3,
+        slidesToScroll: 1,
+        autoplay: true,
+        
+    };
+
+    const sliderSettingsNews = {
         dots: true,
         infinite: true,
         speed: 500,
@@ -345,8 +373,14 @@ function Homepage() {
                             <BigTitle title="MUNDO FITNESS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
                         </div>
                     </div>
-                    <div className="grid grid-cols-3 ml-32 mr-32 mt-10 ">
-                        <News text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo." picture="/images/Testimonials-07.jpg" title="titulo de prueba" />
+                    <div className="ml-12 mr-12 mt-10 mb-20 p-10 rounded-lg bg-white">
+                        <Slider {...sliderSettingsNews} >
+                        {
+                        news.map((item, index) => (
+                            <News key={index} text={item.text} image={item.image_url} title={item.title}/>
+                        ))
+                        }
+                        </Slider>
                     </div>
 
                 </div>

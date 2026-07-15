@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import TrainerExercises from './pages/TrainerExercises';
 import TrainerLibrary from './pages/TrainerLibrary';
 import TrainerRecipes from './pages/TrainerRecipes';
+import NewsManager from './pages/NewsManager';
 import Settings from './pages/Settings';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
@@ -24,6 +25,7 @@ function App() {
         <Route path="/trainer-exercises" element={<TrainerExercises/>}/>
         <Route path="/trainer-library" element={<TrainerLibrary/>}/>
         <Route path="/trainer-recipes" element={<TrainerRecipes/>}/>
+        <Route path="/news-manager" element={<NewsManager/>}/>
         <Route path="/settings" element={<Settings/>}/>
       </Routes>
     </BrowserRouter>

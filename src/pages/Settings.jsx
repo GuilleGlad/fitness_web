@@ -419,9 +419,9 @@ https://.../ad-2.jpg"
               <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
                 <p className="text-sm font-semibold text-slate-200">Acerca de Nosotros</p>
                 {previewUrls.about ? (
-                  <img src={previewUrls.about} alt="Vista previa del logotipo" className="mt-4 h-20 w-auto rounded-2xl object-contain" />
+                  <img src={previewUrls.about} alt="Vista previa de la Imagen" className="mt-4 h-20 w-auto rounded-2xl object-contain" />
                 ) : (
-                  <p className="mt-4 text-sm text-slate-400">Aún no hay logotipo seleccionado.</p>
+                  <p className="mt-4 text-sm text-slate-400">Aún no hay imagen seleccionada.</p>
                 )}
               </div>              
 

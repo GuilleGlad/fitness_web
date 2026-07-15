@@ -327,12 +327,16 @@ const Dashboard = () => {
                         navigate('/trainer-library');
                         return;
                       }
-                      if (item === 'Recetas' || item === 'Recetas por Entrenador') {
+if (item === 'Recetas' || item === 'Recetas por Entrenador') {
                         navigate('/trainer-recipes');
                         return;
                       }
                       if (item === 'Ajustes') {
                         navigate('/settings');
+                        return;
+                      }
+                      if (item === 'Noticias') {
+                        navigate('/news-manager');
                         return;
                       }
                       setSelectedMenu(item);
