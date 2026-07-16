@@ -1,5 +1,8 @@
 // src/components/News.jsx
 import React, { useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronCircleDown } from '@fortawesome/free-solid-svg-icons';
+import { faChevronCircleUp } from '@fortawesome/free-solid-svg-icons';
 
 const News = ({image, text, title}) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -28,7 +31,7 @@ const News = ({image, text, title}) => {
                         onClick={toggleReadMore}
                         className="ml-2 text-blue-400 hover:text-blue-300 text-sm font-medium focus:outline-none"
                     >
-                        {isExpanded? 'menos...' : 'mas...'}
+                        {isExpanded? <FontAwesomeIcon icon={faChevronCircleUp} className='h-[50%]'/> : <FontAwesomeIcon icon={faChevronCircleDown} className='h-[50%]'/>}
                     </button>
                 )}
             </div>

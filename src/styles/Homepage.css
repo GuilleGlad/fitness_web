@@ -2,9 +2,17 @@
 .slick-slide{
   border-width: 12px;
   border-style: solid;
-  border-color: white;
+  border-color: #1f2937 ;
 }
 
 .slick-prev:before, .slick-next:before{
-    color: black;
+    color: white;
+}
+
+
+.slick-dots li button:before{
+  color:lightgray;
+}
+.slick-dots li.slick-active button:before{
+  color:white;
 }

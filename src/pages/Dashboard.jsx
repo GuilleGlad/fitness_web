@@ -41,11 +41,17 @@ const Dashboard = () => {
   const [selectedMenu, setSelectedMenu] = useState('Perfil de Usuario');
   const roleValue = parseInt(localStorage.getItem('role'), 10) || 3;
   const userName = localStorage.getItem('name') || 'Usuario EliteFit';
-  const userRole = ROLE_MAP[roleValue] || 3;
   const notifications = 4;
-  const roleString = Object.entries(ROLE_MAP).find(([key, value]) => value === userRole)?.[0]?.toUpperCase() || 'CLIENTE';
+  const roleString = Object.entries(ROLE_MAP).find(([key, value]) => value === roleValue)?.[0]?.toUpperCase() || 'CLIENTE';
   const menuLinks = ROLE_MENUS[roleValue] || ROLE_MENUS[3];
   const apiUrl = process.env.REACT_APP_API_URL;
+  const [counts, setCounts] = useState({
+    trainers: 0,
+    clients: 0,
+    recipes: 0,
+    ads: 0,
+    news: 0,
+  });
   const initials = useMemo(() => {
     return userName
       .split(' ')
@@ -81,6 +87,27 @@ const Dashboard = () => {
     }
     verifyToken();
 
+  const fetchCounts = async () => {
+    try{
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      axios.get(`${apiUrl}/admin/counts`, config).then((response) => {
+        if (response.status === 200) {
+          setCounts(response.data.counts);
+          console.log(response.data);
+        }
+      })
+    }catch(error){
+      console.error('Error fetching counts:', error);
+    }
+  }
+
+  fetchCounts();
+
   }, [navigate]);
 
   const handleLogout = () => {
@@ -97,10 +124,10 @@ const Dashboard = () => {
         <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
             {[
-              { label: 'Entrenadores activos', value: 28 },
-              { label: 'Clientes registrados', value: 320 },
-              { label: 'Recetas creadas', value: 86 },
-              { label: 'Patrocinadores activos', value: 12 },
+              { label: 'Entrenadores activos', value: counts.trainers },
+              { label: 'Clientes registrados', value: counts.clients },
+              { label: 'Recetas publicadas', value: counts.recipes },
+              { label: 'Anuncios activos', value: counts.ads },
             ].map((card) => (
               <div key={card.label} className="rounded-3xl bg-[#141820] border border-slate-800 p-5 shadow-xl">
                 <p className="text-sm text-slate-400 uppercase tracking-[0.25em]">{card.label}</p>
@@ -109,22 +136,7 @@ const Dashboard = () => {
             ))}
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
-            <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl">
-              <h2 className="text-xl font-semibold text-white mb-4">Vista rápida de equipos</h2>
-              <ul className="space-y-3 text-slate-300">
-                <li className="rounded-2xl bg-slate-900/70 p-4">
-                  <strong>Entrenadores:</strong> 28 activos / 5 pendientes de revisión
-                </li>
-                <li className="rounded-2xl bg-slate-900/70 p-4">
-                  <strong>Clientes:</strong> 320 inscritos, 48 nuevos esta semana
-                </li>
-                <li className="rounded-2xl bg-slate-900/70 p-4">
-                  <strong>Publicidad:</strong> 6 campañas activas, 3 en espera
-                </li>
-              </ul>
-            </section>
-
+          <div className="grid gap-4 xl:grid-cols-1">
             <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl">
               <h2 className="text-xl font-semibold text-white mb-4">Actividad reciente</h2>
               <div className="space-y-3 text-slate-300">

@@ -136,7 +136,7 @@ function Homepage() {
         slidesToShow: 3,
         slidesToScroll: 1,
         autoplay: true,
-        
+               
     };
 
     return (
@@ -266,7 +266,7 @@ function Homepage() {
                         </div>
                     </div>
                     <div className="flex-1 bg-black">
-                        <div id='carousel' className='ml-32 mr-32 mt-10 mb-20 p-10 rounded-lg bg-white '>
+                        <div id='carousel' className='ml-32 mr-32 mt-10 mb-20 p-10 rounded-lg bg-gray-800 '>
                             <Slider {...sliderSettings} >
                                 {pictures.map((image, index) => (
                                     <div key={`${image}-${index}`}>
@@ -288,7 +288,7 @@ function Homepage() {
                         </div>
                     </div>
                     <div className="flex-1 bg-black">
-                        <div id='carousel' className='ml-32 mr-32 mt-10 mb-20 p-10 rounded-lg bg-white '>
+                        <div id='carousel' className='ml-32 mr-32 mt-10 mb-20 p-10 rounded-lg bg-gray-800 '>
                             <Slider {...sliderSettings} >
                                 {adsImages.map((image, index) => (
                                     <div key={`${image}-${index}`}>
@@ -373,7 +373,7 @@ function Homepage() {
                             <BigTitle title="MUNDO FITNESS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
                         </div>
                     </div>
-                    <div className="ml-12 mr-12 mt-10 mb-20 p-10 rounded-lg bg-white">
+                    <div className="ml-12 mr-12 mt-10 mb-20 p-10 rounded-lg bg-gray-800">
                         <Slider {...sliderSettingsNews} >
                         {
                         news.map((item, index) => (
