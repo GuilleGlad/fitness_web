@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
+import {verifyToken} from '../utils/tokenUtils';
 const ROLE_MAP = {
   'admin': 1,
   'trainer': 2,
@@ -61,31 +61,16 @@ const Dashboard = () => {
       .toUpperCase();
   }, [userName]);
 
-  useEffect(() => {
-    const verifyToken = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-      }
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
-      try{
-      axios.get(`${apiUrl}/auth/check-token`, config).then((response) => {
-        console.log(response);
-        if (response.status !== 200) {
-          navigate('/login');
-        }
-      }).catch((error) => {
-        navigate('/login');
-      })
-      }catch(error){
-        navigate('/login');
-      }
-    }
-    verifyToken();
+  useEffect(() => { 
+    var redirectPath = null;
+    const checkToken = async () => {
+      redirectPath = await verifyToken();
+      if (redirectPath) {
+        navigate(redirectPath);
+      } 
+    };
+
+    checkToken();
 
   const fetchCounts = async () => {
     try{
@@ -95,7 +80,7 @@ const Dashboard = () => {
           Authorization: `Bearer ${token}`,
         },
       };
-      axios.get(`${apiUrl}/admin/counts`, config).then((response) => {
+      await axios.get(`${apiUrl}/admin/counts`, config).then((response) => {
         if (response.status === 200) {
           setCounts(response.data.counts);
           console.log(response.data);
@@ -105,8 +90,9 @@ const Dashboard = () => {
       console.error('Error fetching counts:', error);
     }
   }
-
-  fetchCounts();
+  if(roleValue === 1 && redirectPath == null){
+    fetchCounts();
+  }
 
   }, [navigate]);
 
@@ -367,6 +353,12 @@ if (item === 'Recetas' || item === 'Recetas por Entrenador') {
                 className="w-full rounded-3xl bg-[#1f2937] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
               >
                 Cerrar sesión
+              </button>
+              <button
+                onClick={navigate.bind(null, '/')}
+                className="w-full rounded-3xl bg-[#1f2937] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
+              >
+                Página de Inicio
               </button>
             </div>
           </div>

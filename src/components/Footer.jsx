@@ -36,12 +36,13 @@ const Footer = ({logoPath, email, links}) => {
                         </div>
                     </div>
                 </div>
-                <div className="flex flex-col w-3/4 ">
+                {links && <div className="flex flex-col w-3/4 ">
                     {
                         links.map((link, index) => (
                             <BigLink key={index} text={link} color="text-white" size="text-2xl" />
                     ))}                
-                </div>            
+                </div>
+                }            
             </div>
             <div className='m-20'></div>
             <div className='flex mt-10 justify-around bg-gray-800 rounded-lg p-2 '>

@@ -7,6 +7,7 @@ import { Tooltip } from 'react-tooltip';
 import axios from 'axios';
 import { useServerStatus } from '../hooks/useServerStatus';
 import {useNavigate } from 'react-router-dom';
+import {faHome} from '@fortawesome/free-solid-svg-icons';
 // Simulación del enum para los roles
 
 const ROLES = {
@@ -282,7 +283,9 @@ export default function RegisterForm() {
                         Inicia sesión aquí
                     </Link>
                 </p>
-
+                <p className="text-center text-sm mt-6 text-gray-400">
+                    <Link to="/" className="text-yellow-400 hover:text-yellow-300">Regresar a la página principal <FontAwesomeIcon icon={faHome}/></Link>
+                </p>
             </div>
         </div>
     );

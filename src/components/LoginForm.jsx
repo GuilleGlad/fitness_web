@@ -8,6 +8,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { Tooltip } from 'react-tooltip';
 import {Link, useNavigate} from 'react-router-dom';
 import { useServerStatus } from '../hooks/useServerStatus';
+import {faHome} from '@fortawesome/free-solid-svg-icons';
 
 const LoginForm = () => {
     const ROLE_MAP = {
@@ -155,6 +156,9 @@ const LoginForm = () => {
 
                 <p className="text-center text-sm mt-6 text-gray-400">
                     ¿No tienes cuenta? <Link to="/register" className="text-yellow-400 hover:text-yellow-300">Regístrate aquí</Link>
+                </p>
+                <p className="text-center text-sm mt-6 text-gray-400">
+                    <Link to="/" className="text-yellow-400 hover:text-yellow-300">Regresar a la página principal <FontAwesomeIcon icon={faHome}/></Link>
                 </p>
             </div>
         </div>

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import TrainerLibrary from './TrainerLibrary';
+import { verifyToken } from '../utils/tokenUtils';
 
 const STORAGE_KEY = 'elitefit_settings';
 
@@ -22,8 +23,17 @@ const Settings = () => {
   const [libraryTarget, setLibraryTarget] = useState('logo');
   const token = localStorage.getItem('token');
   const apiUrl = process.env.REACT_APP_API_URL;
-  
+
   useEffect(() => {
+    const checkToken = async () => {
+      const redirectPath = await verifyToken();
+      if (redirectPath) {
+        navigate(redirectPath);
+      } 
+    };
+
+    checkToken();
+
     const fetchSettings = async () => {
       try {
         await axios.get(`${apiUrl}/admin/settings`, {
@@ -34,9 +44,9 @@ const Settings = () => {
         }).then((response) => {
           const { data } = response;
           if (data) {
-            const {result} = data;
+            const { result } = data;
             const result_arr = result[0];
-            const {logo , title, video} = result_arr;
+            const { logo, title, video } = result_arr;
             setSettings({
               logoUrl: result_arr.logo || '',
               homeCarouselUrls: (JSON.parse(result_arr.gallery) || []).join('\n'),
@@ -101,7 +111,7 @@ const Settings = () => {
     const validItems = selectedItems.filter(Boolean);
 
     if (libraryTarget === 'logo' || libraryTarget === 'video' || libraryTarget === 'about') {
-      if(libraryTarget === 'logo'){
+      if (libraryTarget === 'logo') {
         const logoItem = validItems.find((item) => item.mediaType === 'image') || validItems[0];
         if (!logoItem) {
           toast.error('Selecciona una imagen para el logotipo.');
@@ -109,22 +119,22 @@ const Settings = () => {
         }
         setSettings((previous) => ({ ...previous, logoUrl: logoItem.url }));
       }
-      if(libraryTarget === 'video'){
+      if (libraryTarget === 'video') {
         const videoItem = validItems.find((item) => item.mediaType === 'video') || validItems[0];
         if (!videoItem) {
           toast.error('Selecciona un video para el fondo de cabecera.');
           return;
         }
-        setSettings((previous) => ({ ...previous, videoUrl: videoItem.url }));        
+        setSettings((previous) => ({ ...previous, videoUrl: videoItem.url }));
       }
-      if(libraryTarget === 'about'){
+      if (libraryTarget === 'about') {
         const aboutItem = validItems.find((item) => item.mediaType === 'image') || validItems[0];
         if (!aboutItem) {
           toast.error('Selecciona una imagen para el logotipo.');
           return;
         }
         setSettings((previous) => ({ ...previous, aboutUrl: aboutItem.url }));
-      }      
+      }
     } else {
       const urls = validItems.map((item) => item.url).filter(Boolean);
       if (urls.length === 0) {
@@ -423,7 +433,7 @@ https://.../ad-2.jpg"
                 ) : (
                   <p className="mt-4 text-sm text-slate-400">Aún no hay imagen seleccionada.</p>
                 )}
-              </div>              
+              </div>
 
               <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
                 <p className="text-sm font-semibold text-slate-200">Galería del carrusel principal</p>

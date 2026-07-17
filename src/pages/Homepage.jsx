@@ -386,7 +386,7 @@ function Homepage() {
                 </div>
                 <div className='separator pt-32 bg-black'></div>
                 {/* FAQ */}
-                <div className="bg-black w-full flex-1 mr-32">
+                {/* <div className="bg-black w-full flex-1 mr-32">
                     <div className="flex-1 lg:flex bg-black lg:mr-32">
                         <div className="w-1/4">
                             <FloatingText text="FAQS QUESTIONS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
@@ -406,7 +406,8 @@ function Homepage() {
                     </div>
                 </div>
 
-                <div className='separator pt-32 bg-black'></div>
+                <div className='separator pt-32 bg-black'></div> */}
+
                 {/* VIDEO2 */}
                 <div className="video-background-container ">
 
@@ -426,7 +427,7 @@ function Homepage() {
                         <div className='h-[80lvh]'>
                             <div className='items-center absolute bottom-0 flex-col md:flex'>
                                 <div className="w-full ml-32 mr-32">
-                                    <BigSubTitle title="TRANSFORM YOUR BODY STARTING TODAY" subtitle="Take the first step toward a stronger, healthier, and more confident version of yourself." button_text="JOIN THE PROGRAM" />
+                                    <BigSubTitle title="TRANSFORMA TU CUERPO DESDE HOY" subtitle="Da el primer paso hacia una versión de ti más fuerte, saludable y segura." button_text="UNETE YA" />
                                 </div>
                             </div>
                         </div>
@@ -435,7 +436,8 @@ function Homepage() {
                 </div>
                 <div className='separator pt-32 bg-black'></div>
                 <div className="bg-black flex-1 ml-32 mr-32">
-                    <Footer email={defaultEmail} links={["transformations", "about us", "pricing", "how to start", "faq"]}/>
+                    {/* <Footer logoPath={logoPath} email={defaultEmail} links={["transformations", "about us", "pricing", "how to start", "faq"]}/> */}
+                    <Footer logoPath={logoPath} email={defaultEmail}/>
                 </div>
                 <div className='separator pt-32 bg-black'></div>
             </>
