@@ -1,4 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHome } from '@fortawesome/free-solid-svg-icons';
 
 const StepObjectives = ({ formData, updateData, next, prev }) => {
   const handleSelect = (obj) => updateData({ goal: obj });
@@ -44,6 +47,9 @@ const StepObjectives = ({ formData, updateData, next, prev }) => {
           Siguiente
         </button>
       </div>
+                <p className="text-center text-sm mt-6 text-gray-400">
+                    <Link to="/" className="text-yellow-400 hover:text-yellow-300">Regresar a la página principal <FontAwesomeIcon icon={faHome}/></Link>
+                </p>      
     </div>
   );
 };

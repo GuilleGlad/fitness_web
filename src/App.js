@@ -11,24 +11,51 @@ import TrainerLibrary from './pages/TrainerLibrary';
 import TrainerRecipes from './pages/TrainerRecipes';
 import NewsManager from './pages/NewsManager';
 import Settings from './pages/Settings';
+import Clients from './pages/Clients';
+import Trainers from './pages/Trainers';
+import Logout from './pages/Logout';
+import {Toaster} from 'react-hot-toast';
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Homepage/>}/>
-        <Route path="/login" element={<Login/>}/>
-        <Route path="/register" element={<Register/>}/>
-        <Route path="/wizard" element={<OnboardingWizard/>}/>
-        <Route path="/dashboard" element={<Dashboard/>}/>
-        <Route path="/trainer-exercises" element={<TrainerExercises/>}/>
-        <Route path="/trainer-library" element={<TrainerLibrary/>}/>
-        <Route path="/trainer-recipes" element={<TrainerRecipes/>}/>
-        <Route path="/news-manager" element={<NewsManager/>}/>
-        <Route path="/settings" element={<Settings/>}/>
-      </Routes>
-    </BrowserRouter>
+    <>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            color: 'white',
+            background: 'green'
+          },
+          success: {
+            icon: '👍',
+          },
+          error: {
+            icon: '👎',
+            background: 'red',
+          }
+        }
+        } />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Homepage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/wizard" element={<OnboardingWizard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/trainer-exercises" element={<TrainerExercises />} />
+          <Route path="/trainer-library" element={<TrainerLibrary />} />
+          <Route path="/trainer-recipes" element={<TrainerRecipes />} />
+          <Route path="/news-manager" element={<NewsManager />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/clients" element={<Clients />} /> {/* Added Clients Route */}
+          <Route path="/trainers" element={<Trainers />} /> {/* Added Trainers Route */}
+          <Route path="/auth/logout" element={<Logout />} />
+        </Routes>
+      </BrowserRouter>
+    </>
   );
 }
 

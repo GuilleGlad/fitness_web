@@ -19,6 +19,7 @@ import BigSubTitle from '../components/BigSubTitle';
 import Footer from '../components/Footer';
 import axios from 'axios';
 import { height } from '@fortawesome/free-solid-svg-icons/faUpRightFromSquare';
+import { Helmet } from 'react-helmet-async';
 
 function Homepage() {
     const apiUrl = process.env.REACT_APP_API_URL;
@@ -140,8 +141,11 @@ function Homepage() {
     };
 
     return (
+        <>
+        <Helmet>
+            <title>{settings.titulo || "Elite Fit Training"}</title>
+        </Helmet>
         <div className="homepage-wrapper bg-black ">
-            <title>{settings.titulo}</title>
             <div className="video-background-container ">
 
                 {/* 
@@ -169,7 +173,7 @@ function Homepage() {
                 <div className="video-content-overlay lg:ml-16">
                     {/* PARENT COMPONENTS SHOULD PLACE THEIR CONTENT HERE */}
                     {/* Example Content: */}
-                    <div className='h-[80lvh]'>
+                    <div className='min-h-[80vh]'>
                         <Navbar logoPath={logoPath}></Navbar>
                         <div className='items-center absolute bottom-0 flex-1 md:flex'>
                             <div className="w-full lg:w-1/2">
@@ -184,7 +188,7 @@ function Homepage() {
             </div>
             <div className='separator pt-32 bg-black'></div>
             {/* ABOUT */}
-            <div className="flex bg-black" id='about'>
+            {/* <div className="flex bg-black" id='about'>
                 <div className="w-2/3 ">
                     <FloatingText text="ACERCA DE NOSOTROS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
                 </div>
@@ -208,7 +212,7 @@ function Homepage() {
                     </div>
                 </div>
             </div>
-            <div className='separator pt-32 bg-black'></div>
+            <div className='separator pt-32 bg-black'></div> */}
             {/* SERVICES */}
             <>
                 {/* <div className='lg:mr-32 bg-black w-full'>
@@ -269,8 +273,8 @@ function Homepage() {
                         <div id='carousel' className='ml-32 mr-32 mt-10 mb-20 p-10 rounded-lg bg-gray-800 '>
                             <Slider {...sliderSettings} >
                                 {pictures.map((image, index) => (
-                                    <div key={`${image}-${index}`}>
-                                        <img src={image} alt={`Slide ${index + 1}`} className="h-full w-full " />
+                                    <div key={`${image}-${index}`} className='shadow-lg shadow-black drop-shadow-lg'>
+                                        <img src={image} alt={`Slide ${index + 1}`} className="h-full w-full shadow-lg" />
                                         {/* <span className='mt-3 block font-bold text-center'>Contenido destacado {index + 1}</span> */}
                                     </div>
                                 ))}
@@ -291,7 +295,7 @@ function Homepage() {
                         <div id='carousel' className='ml-32 mr-32 mt-10 mb-20 p-10 rounded-lg bg-gray-800 '>
                             <Slider {...sliderSettings} >
                                 {adsImages.map((image, index) => (
-                                    <div key={`${image}-${index}`}>
+                                    <div key={`${image}-${index}`} className='shadow-lg shadow-black drop-shadow-lg'>
                                         <img src={image} alt={`Slide ${index + 1}`} className="h-full w-full " />
                                         {/* <span className='mt-3 block font-bold text-center'>Contenido destacado {index + 1}</span> */}
                                     </div>
@@ -409,7 +413,7 @@ function Homepage() {
                 <div className='separator pt-32 bg-black'></div> */}
 
                 {/* VIDEO2 */}
-                <div className="video-background-container ">
+                {/* <div className="video-background-container ">
 
                     <video
                         className="video-background"
@@ -420,7 +424,6 @@ function Homepage() {
                         playsInline
                         poster="/path/to/placeholder.jpg" // Optional: shows an image before video loads
                     >
-                        {/* Fallback for older browsers */}
                         Your browser does not support the video tag.
                     </video>
                     <div className="video-content-overlay lg:ml-16">
@@ -433,8 +436,8 @@ function Homepage() {
                         </div>
 
                     </div>
-                </div>
-                <div className='separator pt-32 bg-black'></div>
+                </div> */}
+                {/* <div className='separator pt-32 bg-black'></div> */}
                 <div className="bg-black flex-1 ml-32 mr-32">
                     {/* <Footer logoPath={logoPath} email={defaultEmail} links={["transformations", "about us", "pricing", "how to start", "faq"]}/> */}
                     <Footer logoPath={logoPath} email={defaultEmail}/>
@@ -443,6 +446,7 @@ function Homepage() {
             </>
 
         </div>
+        </>        
     );
 }
 

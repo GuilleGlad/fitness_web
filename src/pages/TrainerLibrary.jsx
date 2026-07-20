@@ -202,21 +202,6 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
 
     return (
         <div className={isModal ? 'w-full h-full' : 'min-h-screen bg-gray-900 text-white'}>
-      <Toaster
-        toastOptions={{
-          style: {
-            color: 'white',
-            background: 'green'
-          },
-          success: {
-            icon: '👍',
-          },
-          error: {
-            icon: '👎',
-            background: 'red',
-          }
-        }
-        } />
             <div className={isModal ? 'mx-auto flex h-full max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-slate-800 bg-[#141820] p-4 shadow-2xl sm:p-6' : 'mx-auto flex min-h-screen max-w-5xl flex-col p-4 sm:p-6'}>
                 <div className="flex flex-col gap-4 rounded-[32px] border border-slate-800 bg-[#141820] p-4 shadow-2xl sm:p-6 lg:flex-row lg:items-center lg:justify-between">
                     <div className="min-w-0">

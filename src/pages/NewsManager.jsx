@@ -235,17 +235,6 @@ const NewsManager = () => {
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white">
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#111827',
-            color: '#fff',
-            border: '1px solid #334155',
-          },
-        }}
-      />
       <div className="mx-auto max-w-[1400px] space-y-6 p-6 lg:p-8">
         <div className="flex flex-col gap-4 rounded-[40px] border border-slate-800 bg-[#141820] p-6 shadow-2xl lg:flex-row lg:items-center lg:justify-between">
           <div>

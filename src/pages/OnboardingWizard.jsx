@@ -69,10 +69,12 @@ const OnboardingWizard = () => {
     const response_progress = axios.post(apiUrl + "/progress/add", formData, config)
       .then((res) => {
         console.log("Respuesta del servidor:", res.data);
+        localStorage.setItem('status',1);
         registroSuccessNotif("Registro de datos Exitoso, redirigiendo...");
+      }).then(() => { 
         setTimeout(() => {
             navigate('/dashboard');
-        }, 1200);        
+        }, 1200);         
       })
       .catch((err) => {
         console.error("Error al enviar datos:", err);
@@ -85,7 +87,6 @@ const OnboardingWizard = () => {
     <div className="flex min-h-screen items-center justify-center bg-[#0d1117] p-4 font-sans select-none">
       {/* Contenedor con la estética exacta de la tarjeta en image_8be3de.png */}
       <div className="w-full max-w-md rounded-2xl bg-[#1e222b] p-8 shadow-2xl relative border border-slate-800/40">
-<Toaster />
         {/* Encabezado */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-extrabold tracking-wide text-white">EliteFit</h1>

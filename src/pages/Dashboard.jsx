@@ -40,6 +40,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [selectedMenu, setSelectedMenu] = useState('Perfil de Usuario');
   const roleValue = parseInt(localStorage.getItem('role'), 10) || 3;
+  const status = localStorage.getItem('status') || 0;
   const userName = localStorage.getItem('name') || 'Usuario EliteFit';
   const notifications = 4;
   const roleString = Object.entries(ROLE_MAP).find(([key, value]) => value === roleValue)?.[0]?.toUpperCase() || 'CLIENTE';
@@ -89,6 +90,9 @@ const Dashboard = () => {
     }catch(error){
       console.error('Error fetching counts:', error);
     }
+  }
+  if(roleValue === 3 && status === 0){
+    navigate('/wizard');
   }
   if(roleValue === 1 && redirectPath == null){
     fetchCounts();
@@ -317,6 +321,14 @@ const Dashboard = () => {
                   <button
                     key={item}
                     onClick={() => {
+                      if (item === 'Clientes'){
+                        navigate('/clients');
+                        return;
+                      }
+                      if (item == 'Entrenadores'){
+                        navigate('/trainers');
+                        return;
+                      }
                       if (item === 'Ejercicios' || item === 'Ejercicios por Entrenador') {
                         navigate('/trainer-exercises');
                         return;
@@ -325,7 +337,7 @@ const Dashboard = () => {
                         navigate('/trainer-library');
                         return;
                       }
-if (item === 'Recetas' || item === 'Recetas por Entrenador') {
+                      if (item === 'Recetas' || item === 'Recetas por Entrenador') {
                         navigate('/trainer-recipes');
                         return;
                       }

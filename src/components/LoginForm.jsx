@@ -70,6 +70,7 @@ const LoginForm = () => {
                 : ROLE_MAP[roleFromResponse?.toLowerCase()] || 3;
             localStorage.setItem('role', role);
             localStorage.setItem('name', user.name || user.email || 'Usuario EliteFit');
+            localStorage.setItem('status',user.status);
             loginSuccessNotif();
             setTimeout(() => {
                 if (role === 3 && user.status === 0) {
@@ -93,7 +94,6 @@ const LoginForm = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
             <div className="w-full max-w-md bg-gray-800 p-8 rounded-xl shadow-2xl">
                 <div className="text-center mb-10">
-                    <Toaster />
                     <div className='text-right'>
                         {
                             !isServerOnline && <a id='serverStatus'><FontAwesomeIcon icon={faDotCircle} color='gray' /></a>

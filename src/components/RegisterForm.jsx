@@ -142,7 +142,6 @@ export default function RegisterForm() {
     return (
         <div className="flex min-h-screen items-center justify-center bg-[#0d1424] p-4">
             <div className="w-full max-w-md rounded-2xl bg-[#1e2638] p-8 shadow-xl text-center relative">
-                <Toaster />
                 {/* Indicador visual de la esquina superior derecha */}
                 {isServerOnline && <FontAwesomeIcon id='serverStatus' icon={faDotCircle} className='absolute top-6 right-6 text-green-400 animate-pulse' />}
                 {!isServerOnline && <FontAwesomeIcon id='serverStatus' icon={faDotCircle} className='absolute top-6 right-6 text-gray-400 animate-pulse' />}

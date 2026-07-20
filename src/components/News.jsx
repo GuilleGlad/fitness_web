@@ -15,7 +15,7 @@ const News = ({image, text, title}) => {
     const displayText = isExpanded? text : `${text.substring(0, textLimit)}...`;
 
     return (
-        <div className='flex-col bg-gray-700 rounded-xl p-4 m-5'>
+        <div className='flex-col bg-gray-700 rounded-xl p-4 m-5 shadow-lg shadow-black drop-shadow-lg' >
             <div className='flex gap-4 mt-4 mb-4 '>
                 <span className='text-white font-semibold text-lg uppercase'>{title}</span>
             </div>

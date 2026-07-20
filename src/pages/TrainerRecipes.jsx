@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import TrainerLibrary from './TrainerLibrary';
+import { green } from '@mui/material/colors';
 
 const initialForm = {
   trainer_id: '',
@@ -233,17 +234,6 @@ const TrainerRecipes = () => {
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white">
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#111827',
-            color: '#fff',
-            border: '1px solid #334155',
-          },
-        }}
-      />
       <div className="mx-auto max-w-[1400px] space-y-6 p-6 lg:p-8">
         <div className="flex flex-col gap-4 rounded-[40px] border border-slate-800 bg-[#141820] p-6 shadow-2xl lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -276,13 +266,16 @@ const TrainerRecipes = () => {
 
               {recipes.map((r) => (
                 <article key={r.id} className="rounded-3xl border border-slate-700 bg-slate-900/70 p-5">
+                  <div className='m-4'>
+                  <img src={r.image_url} className='rounded-lg w-1/2'/>
+                  </div>
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-2">
+                    <div className="space-y-2 ">
                       <h3 className="text-xl font-semibold text-white">{r.title}</h3>
                       <p className="text-sm text-slate-300">{r.ingredients}</p>
                       <div className="flex flex-wrap gap-2 text-xs text-slate-400">
-                        {r.image_url && <span className="rounded-full bg-slate-800 px-3 py-1">Con imagen</span>}
-                        {r.is_public && <span className="rounded-full bg-slate-800 px-3 py-1">Pública</span>}
+                        {/* {r.image_url && <span className="rounded-full bg-slate-800 px-3 py-1">Con imagen</span>} */}
+                        <span className={`rounded-full bg-slate-800 px-3 py-1 ${r.is_public ? 'text-green-400' : 'text-red-400'}`}>{r.is_public ? 'Activa' : 'Inactiva'}</span>
                       </div>
                     </div>
                     <div className="flex gap-3">
@@ -327,7 +320,7 @@ const TrainerRecipes = () => {
 
               <label className="flex items-center gap-3 text-sm text-slate-200">
                 <input type="checkbox" name="is_public" checked={form.is_public} onChange={handleChange} className="h-4 w-4" />
-                <span>Es pública</span>
+                <span>Activa</span>
               </label>
 
               <div className="grid gap-4 lg:grid-cols-2">

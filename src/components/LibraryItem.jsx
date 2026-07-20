@@ -118,21 +118,6 @@ const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUpload
 
     return (
         <div className="relative overflow-hidden rounded bg-gray-800 p-2">
-            <Toaster
-                toastOptions={{
-                    style: {
-                        color: 'white',
-                        background: 'green'
-                    },
-                    success: {
-                        icon: '👍',
-                    },
-                    error: {
-                        icon: '👎',
-                        background: 'red',
-                    }
-                }
-                } />
             <div className="mb-2">
                 {/* <span className="text-xs text-slate-400">{item.id}</span> */}
                 {item.file_type === 'image' ? (

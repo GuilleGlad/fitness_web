@@ -5,11 +5,13 @@ import ContactUs from './ContactUs';
 import FloatingButton from './FloatingButton';
 import { verifyToken } from '../utils/tokenUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPerson } from '@fortawesome/free-solid-svg-icons';
+import { faRunning } from '@fortawesome/free-solid-svg-icons';
+import { faClose } from '@fortawesome/free-solid-svg-icons';
 
 const Navbar = ({ logoPath: providedLogoPath }) => {
   // Estado para controlar si el menú está abierto o cerrado en móvil
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const CerrarSesionTexto = "Salir";
   const logoPath = providedLogoPath || '/images/Logo-01-1-1.png';
   // Función para cambiar el estado del menú
   const toggleMenu = () => {
@@ -51,9 +53,10 @@ const Navbar = ({ logoPath: providedLogoPath }) => {
       </div>
 
       {/* COLUMNA 3: CONTACT US */}
-      <div className="w-1/4 flex items-center justify-end gap-2">
-        <FloatingButton link="/login" title={ingresarTexto} icon={logged?faPerson:null}/>
+      <div className="w-1/4 flex items-center justify-end gap-2 mr-28">
+        <FloatingButton link="/login" title={ingresarTexto} icon={logged?faRunning:null}/>
         {!logged && <FloatingButton link="/register" title="Registro" />}
+        {logged && <FloatingButton link="/auth/logout" title={CerrarSesionTexto} icon={faClose}/>}
       </div>
 
     </header>
