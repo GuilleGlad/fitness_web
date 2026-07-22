@@ -11,8 +11,9 @@ const initialForm = {
   password: '',
   genre: '',
   phone: '',
-  picture: '',
-  status: 1,
+  picture: '/images/avatar.png',
+  status: 'Activo',
+  deleted: 0
 };
 
 const Clients = () => {
@@ -74,6 +75,7 @@ const Clients = () => {
             phone: item.phone || '',
             picture: item.picture || '',
             status: item.status,
+            deleted: item.deleted || false,
             role: 'client',
           }))
         );
@@ -191,7 +193,7 @@ const Clients = () => {
       password: client.password || '',
       genre: client.genre || '',
       phone: client.phone || '',
-      picture: client.picture || '',
+      picture: client.picture || '/images/avatar.png',
       status: client.status,
     });
     setEditingId(client.id);
@@ -202,21 +204,38 @@ const Clients = () => {
     const headers = { Authorization: 'Bearer ' + token };
     try {
       await axios.delete(`${apiUrl}/admin/user/${id}`, { headers });
+      setClients((prevItems) => prevItems.map((item) => 
+        item.id === id ? {...item, deleted: 1} : item
+      ))
       toast.success('Cliente eliminado correctamente.');
-      setClients((previous) => previous.filter((client) => client.id !== id));
-      if (editingId === id) {
-        setForm(initialForm);
-        setEditingId(null);
-      }
     } catch (error) {
       console.error('Error eliminando cliente:', error);
       toast.error('No se pudo eliminar el cliente. Intenta de nuevo.');
     }
   };
 
+const handleRestore = async (id) => {
+    const token = localStorage.getItem('token');
+    const headers = { Authorization: 'Bearer ' + token };
+    try {
+      await axios.put(`${apiUrl}/admin/user-restore/${id}`,null, { headers });
+      toast.success('Cliente restaurado correctamente.');
+      setClients((prevItems) => prevItems.map((item) => 
+        item.id === id ? {...item, deleted: 0} : item
+      ))
+    } catch (error) {
+      console.error('Error restaurnado cliente:', error);
+      toast.error('No se pudo restaurar el cliente. Intenta de nuevo.');
+    }
+}
+
   const handleCancelEdit = () => {
     setForm(initialForm);
     setEditingId(null);
+  };
+
+  const handleClearPicture = () => {
+    setForm((prev) => ({ ...prev, picture: "/images/avatar.png" }));
   };
 
   const triggerYesNoToast = (handle, ...params) => {
@@ -296,12 +315,13 @@ const Clients = () => {
               ) : null}
 
               {clients.map((client) => (
-                <article key={client.id} className="rounded-3xl border border-slate-700 bg-slate-900/70 p-5">
+                <article key={client.id} className={`${client.deleted == 1 ? 'bg-red-900': 'bg-green-900'} rounded-3xl border border-slate-700 bg-slate-900/70 p-5`}>
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
                       <h3 className="text-xl font-semibold text-white">{client.name}</h3>
                       <p className="text-sm text-slate-300">{client.email}</p>
-                      <img src={client.picture} className='h-32 rounded-lg'/>
+                      <img src={client.picture || '/images/avatar.png'} className='h-16 rounded-lg'/>
+                      <span>{client.deleted?'Eliminado':''}</span>
                       <div className="flex flex-wrap gap-2 text-xs text-slate-400">
                         <span
                           className={`rounded-full px-3 py-1 ${
@@ -310,10 +330,11 @@ const Clients = () => {
                               : 'bg-red-500/15 text-yellow-400'
                           }`}
                         >
-                          {client.status}
+                          {client.status == null ? 'Inicial':client.status}
                         </span>
                       </div>
                     </div>
+                    {client.deleted != 1 && 
                     <div className="flex gap-3">
                       <button
                         type="button"
@@ -330,6 +351,18 @@ const Clients = () => {
                         Eliminar
                       </button>
                     </div>
+                    }
+                    {client.deleted == 1 &&
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleRestore(client.id)}
+                        className="rounded-3xl bg-gray-600 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:bg-gray-500"
+                      >
+                        Restaurar
+                      </button>
+                    </div>                    
+                    }
                   </div>
                 </article>
               ))}
@@ -403,6 +436,7 @@ const Clients = () => {
                   placeholder="Ej. +34 600 000 000" />
               </label>
 
+              { editingId && 
               <label className="block space-y-2 text-sm text-slate-200">
                 <span>Foto URL</span>
                 <input
@@ -413,12 +447,13 @@ const Clients = () => {
                   readOnly 
                   className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
                   placeholder="https://ejemplo.com/foto.jpg" />
-                  {form.picture && <img src={form.picture} className='h-32' />}
+                  {form.picture && <img name="preview" src={form.picture} className='h-32' />}
                   <button type="button" onClick={openLibraryPicker} className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200">Biblioteca</button>
-                  <button type="button" className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200">Limpiar</button>
+                  <button type="button" onClick={handleClearPicture} className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200">Limpiar</button>
               </label>
+              }
 
-              <label className="block space-y-2 text-sm text-slate-200">
+              {editingId && <label className="block space-y-2 text-sm text-slate-200">
                 <span>Estado</span>
                 <select
                   name="status"
@@ -430,6 +465,7 @@ const Clients = () => {
                   <option value="Inactivo" className="bg-[#0f172a]">Inactivo</option>
                 </select>
               </label>
+              }
 
               <div className="grid gap-4 lg:grid-cols-2">
                 <button

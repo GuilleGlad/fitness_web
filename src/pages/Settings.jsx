@@ -251,6 +251,7 @@ const Settings = () => {
                   <span>Logotipo</span>
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <input
+                      hidden
                       id="logoUrl"
                       name="logoUrl"
                       value={settings.logoUrl}
@@ -258,7 +259,7 @@ const Settings = () => {
                       className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
                       placeholder="https://.../logo.png"
                     />
-                    <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={() => openLibraryPicker('logo')}
@@ -277,6 +278,7 @@ const Settings = () => {
                   <span>Imagen para la sección Acerca de Nosotros</span>
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <input
+                    hidden 
                       id="aboutUrl"
                       name="aboutUrl"
                       value={settings.aboutUrl}
@@ -284,7 +286,7 @@ const Settings = () => {
                       className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
                       placeholder="https://.../logo.png"
                     />
-                    <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={() => openLibraryPicker('about')}
@@ -303,6 +305,7 @@ const Settings = () => {
                   <span>Video de Fondo</span>
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <input
+                    hidden
                       id="videoUrl"
                       name="videoUrl"
                       value={settings.videoUrl}
@@ -310,7 +313,7 @@ const Settings = () => {
                       className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
                       placeholder="https://.../video.mp4"
                     />
-                    <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={() => openLibraryPicker('video')}
@@ -329,16 +332,16 @@ const Settings = () => {
                   <span>Galería del carrusel principal</span>
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <textarea
+                    hidden
                       id="homeCarouselUrls"
                       name="homeCarouselUrls"
                       value={settings.homeCarouselUrls}
                       onChange={handleChange}
                       rows={5}
                       className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                      placeholder="https://.../foto-1.jpg
-https://.../foto-2.jpg"
+                      placeholder="https://.../foto-1.jpg https://.../foto-2.jpg"
                     />
-                    <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={() => openLibraryPicker('gallery')}
@@ -357,16 +360,16 @@ https://.../foto-2.jpg"
                   <span>Imágenes para anuncios</span>
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <textarea
+                    hidden
                       id="adsCarouselUrls"
                       name="adsCarouselUrls"
                       value={settings.adsCarouselUrls}
                       onChange={handleChange}
                       rows={5}
                       className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                      placeholder="https://.../ad-1.jpg
-https://.../ad-2.jpg"
+                      placeholder="https://.../ad-1.jpg https://.../ad-2.jpg"
                     />
-                    <div className="flex flex-col gap-2">
+                    <div className="flex  gap-2">
                       <button
                         type="button"
                         onClick={() => openLibraryPicker('ads')}
