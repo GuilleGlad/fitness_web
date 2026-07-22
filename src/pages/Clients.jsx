@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
+import TrainerLibrary from './TrainerLibrary';
 
 const initialForm = {
   name: '',
@@ -11,7 +12,7 @@ const initialForm = {
   genre: '',
   phone: '',
   picture: '',
-  status: 'Activo',
+  status: 1,
 };
 
 const Clients = () => {
@@ -21,6 +22,34 @@ const Clients = () => {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [libraryTarget, setLibraryTarget] = useState('image');
+  const [pictureUrl, setPictureUrl] = useState('');
+
+  const openLibraryPicker = () => {
+    setLibraryTarget('image');
+    setIsLibraryOpen(true);
+  };
+
+  const handleSelectLibraryItem = (payload) => {
+    const selectedItems = Array.isArray(payload) ? payload : [payload];
+    const validItems = selectedItems.filter(Boolean);
+    const invalidItem = validItems.find((item) => item.mediaType !== 'image');
+
+    if (invalidItem) {
+      toast.error('Selecciona una imagen.');
+      return;
+    }
+
+    const urls = validItems.map((item) => item.url).filter(Boolean);
+    if (urls.length === 0) {
+      toast.error('No se seleccionó ningún elemento válido.');
+      return;
+    }
+
+    setForm((prev) => ({ ...prev, picture: urls.join('\n') }));
+    setIsLibraryOpen(false);
+  };  
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -44,7 +73,7 @@ const Clients = () => {
             genre: item.genre || '',
             phone: item.phone || '',
             picture: item.picture || '',
-            status: item.status || 'Activo',
+            status: item.status,
             role: 'client',
           }))
         );
@@ -112,7 +141,7 @@ const Clients = () => {
             'Content-Type': 'application/json',
           },
         };
-        await axios.put(`${apiUrl}/admin/clients/${editingId}`, payload, config);
+        await axios.put(`${apiUrl}/admin/user/${editingId}`, payload, config);
         toast.success('Cliente actualizado correctamente.');
       } catch (error) {
         console.error('Error updating client:', error);
@@ -172,7 +201,7 @@ const Clients = () => {
     const token = localStorage.getItem('token');
     const headers = { Authorization: 'Bearer ' + token };
     try {
-      await axios.delete(`${apiUrl}/admin/clients/${id}`, { headers });
+      await axios.delete(`${apiUrl}/admin/user/${id}`, { headers });
       toast.success('Cliente eliminado correctamente.');
       setClients((previous) => previous.filter((client) => client.id !== id));
       if (editingId === id) {
@@ -272,25 +301,18 @@ const Clients = () => {
                     <div className="space-y-2">
                       <h3 className="text-xl font-semibold text-white">{client.name}</h3>
                       <p className="text-sm text-slate-300">{client.email}</p>
-                      <p className="text-sm text-slate-300">{client.status}</p>
+                      <img src={client.picture} className='h-32 rounded-lg'/>
                       <div className="flex flex-wrap gap-2 text-xs text-slate-400">
                         <span
                           className={`rounded-full px-3 py-1 ${
                             client.status === 'Activo'
-                              ? 'bg-[#f1b80c]/15 text-[#f1b80c]'
-                              : 'bg-red-500/15 text-red-400'
+                              ? 'bg-[#f1b80c]/15 text-orange-400'
+                              : 'bg-red-500/15 text-yellow-400'
                           }`}
                         >
                           {client.status}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-200">
-                        Genre: {client.genre || '-'}
-                        <br />
-                        Phone: {client.phone || '-'}
-                        <br />
-                        Picture: {client.picture || '-'}
-                      </p>
                     </div>
                     <div className="flex gap-3">
                       <button
@@ -357,12 +379,17 @@ const Clients = () => {
 
               <label className="block space-y-2 text-sm text-slate-200">
                 <span>Género</span>
-                <input
+                <select
                   name="genre"
                   value={form.genre}
                   onChange={handleChange}
                   className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                  placeholder="Ej. Masculino, Femenino, Otro" />
+                >
+                  <option value="" disabled className="bg-[#0f172a]">Seleccione un género</option>
+                  <option value="m" className="bg-[#0f172a]">Masculino</option>
+                  <option value="f" className="bg-[#0f172a]">Femenine</option>
+                  <option value="n" className="bg-[#0f172a]">Prefiere no decirlo</option>
+                </select>
               </label>
 
               <label className="block space-y-2 text-sm text-slate-200">
@@ -383,8 +410,12 @@ const Clients = () => {
                   value={form.picture}
                   onChange={handleChange}
                   type="url"
+                  readOnly 
                   className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
                   placeholder="https://ejemplo.com/foto.jpg" />
+                  {form.picture && <img src={form.picture} className='h-32' />}
+                  <button type="button" onClick={openLibraryPicker} className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200">Biblioteca</button>
+                  <button type="button" className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200">Limpiar</button>
               </label>
 
               <label className="block space-y-2 text-sm text-slate-200">
@@ -421,6 +452,18 @@ const Clients = () => {
           </section>
         </div>
       </div>
+      {isLibraryOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+            <div className="w-full max-w-6xl">
+              <TrainerLibrary
+                isModal
+                selectionMode="single"
+                onSelectMedia={handleSelectLibraryItem}
+                onClose={() => setIsLibraryOpen(false)}
+              />
+            </div>
+          </div>
+        )}      
     </div>
   );
 };
