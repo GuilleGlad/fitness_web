@@ -11,7 +11,7 @@ const ROLE_MAP = {
 const ROLE_MENUS = {
   1: [
     'Perfil de Usuario',
-    'Clientes',
+    'Usuarios',
     'Entrenadores',
     'Ejercicios',
     'Recetas',
@@ -91,7 +91,8 @@ const Dashboard = () => {
       console.error('Error fetching counts:', error);
     }
   }
-  if(roleValue === 3 && status === 0){
+
+  if(roleValue === 3 && status == 0){
     navigate('/wizard');
   }
   if(roleValue === 1 && redirectPath == null){
@@ -115,7 +116,7 @@ const Dashboard = () => {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
             {[
               { label: 'Entrenadores activos', value: counts.trainers },
-              { label: 'Clientes registrados', value: counts.clients },
+              { label: 'Usuarios registrados', value: counts.clients },
               { label: 'Recetas publicadas', value: counts.recipes },
               { label: 'Anuncios activos', value: counts.ads },
             ].map((card) => (
@@ -321,7 +322,7 @@ const Dashboard = () => {
                   <button
                     key={item}
                     onClick={() => {
-                      if (item === 'Clientes'){
+                      if (item === 'Clientes' || item === "Usuarios"){
                         navigate('/clients');
                         return;
                       }

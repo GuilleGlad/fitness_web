@@ -27,7 +27,7 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
                     .then((data) => {
                         const lib = data.data.library;
                         lib.map((f) => f.new = false)
-                        console.log(lib);
+                        // console.log(lib);
                         setMedia((m) => [...lib, ...m])
                     })
 
