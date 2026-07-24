@@ -1,356 +1,392 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
 
 const initialTrainerForm = {
-  name: '',
-  email: '',
-  status: 'Activo',
+    name: '',
+    email: '',
+    password: '',
+    role: 'Trainer',
+    genre: '',
+    phone: '',
+    status: 'Activo',
+    deleted: 0,
 };
 
-const Trainers = () => {
-  const navigate = useNavigate();
-  const apiUrl = process.env.REACT_APP_API_URL || '';
-  const [trainers, setTrainers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState(initialTrainerForm);
-  const [editingId, setEditingId] = useState(null);
+/* ───────── Modal Wrapper ───────── */
+const ModalOverlay = ({ isOpen, onClose, title, children }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+            <div
+                className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-[32px] border border-slate-700 bg-[#141820] shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-[#141820] px-6 py-4">
+                    <h3 className="text-lg font-semibold text-white">{title}</h3>
+                    <button onClick={onClose} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white" aria-label="Cerrar modal">✕</button>
+                </div>
+                <div className="p-6">{children}</div>
+            </div>
+        </div>
+    );
+};
 
-  useEffect(() => {
-    const fetchTrainers = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          toast.error('Token no disponible. Inicia sesión.');
-          return;
-        }
-
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        const res = await axios.get(`${apiUrl}/admin/trainers`, config);
-        const list = res.data?.entrenadores || [];
-        console.log(list);
-        setTrainers(
-          list.map((item) => ({
-            id: item.id,
-            name: item.name,
-            email: item.email,
-            status: item.status,
-          }))
-        );
-      } catch (err) {
-        console.error('Error fetching trainers:', err);
-        toast.error('No se pudieron cargar los entrenadores.');
-      } finally {
-        setLoading(false);
-      }
+/* ───────── Trainer Form Component (Adaptado a la especificación) ───────── */
+const TrainerForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel }) => {
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm((prev) => ({ ...prev, [name]: value }));
     };
 
-    fetchTrainers();
-  }, [apiUrl]);
-
-  const title = editingId ? 'Editar entrenador' : 'Crear entrenador';
-  const pageTitle = 'Gestión de entrenadores';
-
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((previous) => ({
-      ...previous,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!form.name.trim() || !form.email.trim()) {
-      toast.error('El nombre y el email son obligatorios.');
-      return;
-    }
-
-    const token = localStorage.getItem('token');
-    if (!token) {
-      toast.error('Token no disponible. Inicia sesión nuevamente.');
-      return;
-    }
-
-    const payload = {
-      name: form.name.trim(),
-      email: form.email.trim(),
-      status: form.status,
-    };
-
-    if (editingId) {
-      // Optimistically update UI
-      setTrainers((previous) =>
-        previous.map((trainer) =>
-          trainer.id === editingId ? { ...trainer, ...form } : trainer
-        )
-      );
-      setForm(initialTrainerForm);
-      setEditingId(null);
-
-      // Make API call for update
-      try {
-        const config = {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        };
-        await axios.put(`${apiUrl}/admin/trainers/${editingId}`, payload, config);
-        toast.success('Entrenador actualizado correctamente.');
-      } catch (error) {
-        console.error('Error updating trainer:', error);
-        toast.error('No se pudo actualizar el entrenador.');
-      }
-      return;
-    }
-
-    try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      };
-
-      const response = await axios.post(`${apiUrl}/admin/trainers/add`, payload, config);
-      const savedTrainer = response.data?.trainer || response.data || {};
-
-      setTrainers((previous) => [
-        ...previous,
-        {
-          id: savedTrainer.id || Date.now(),
-          name: payload.name,
-          email: payload.email,
-          status: payload.status,
-        },
-      ]);
-
-      toast.success('Entrenador guardado correctamente.');
-      setForm(initialTrainerForm);
-      setEditingId(null);
-    } catch (error) {
-      console.error('Error guardando entrenador:', error);
-      toast.error('No se pudo guardar el entrenador. Intenta de nuevo.');
-    }
-  };
-
-  const handleEdit = (trainer) => {
-    setForm({
-      name: trainer.name,
-      email: trainer.email,
-      status: trainer.status,
-    });
-    setEditingId(trainer.id);
-  };
-
-  const handleDelete = async (id) => {
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: 'Bearer ' + token };
-    try {
-      await axios.delete(`${apiUrl}/admin/trainers/${id}`, { headers });
-      toast.success('Entrenador eliminado correctamente.');
-      setTrainers((previous) => previous.filter((trainer) => trainer.id !== id));
-      if (editingId === id) {
-        setForm(initialTrainerForm);
-        setEditingId(null);
-      }
-    } catch (error) {
-      console.error('Error eliminando entrenador:', error);
-      toast.error('No se pudo eliminar el entrenador. Intenta de nuevo.');
-    }
-  };
-
-  const triggerYesNoToast = (handle, ...params) => {
-    toast((t) => (
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-        <span>¿Está seguro de eliminar el entrenador?</span>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              handle(...params);
-            }}
-            style={{ background: '#9a1314', color: 'white', marginRight: '8px', padding: '8px 16px', borderRadius: '9999px', border: 'none', cursor: 'pointer' }}
-          >
-            Si
-          </button>
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-            }}
-            style={{ background: '#c8cfd5', color: '#242526', padding: '8px 16px', borderRadius: '9999px', border: 'none', cursor: 'pointer' }}
-          >
-            No
-          </button>
-        </div>
-      </div>
-    ), {
-      style: {
-        background: '#323',
-      },
-      duration: Infinity,
-    });
-  };
-
-  const handleCancelEdit = () => {
-    setForm(initialTrainerForm);
-    setEditingId(null);
-  };
-
-  return (
-    <div className="min-h-screen bg-[#0d1117] text-white">
-      <div className="mx-auto max-w-[1400px] space-y-6 p-6 lg:p-8">
-        <div className="flex flex-col gap-4 rounded-[40px] border border-slate-800 bg-[#141820] p-6 shadow-2xl lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Admin</p>
-            <h1 className="mt-3 text-4xl font-bold text-white">{pageTitle}</h1>
-            <p className="mt-2 max-w-2xl text-slate-400">
-              Crea, modifica o elimina entrenadores con nombre, email y estado.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard')}
-            className="inline-flex items-center justify-center rounded-3xl bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]"
-          >
-            Volver al dashboard
-          </button>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[1.25fr_0.95fr]">
-          <section className="rounded-[40px] border border-slate-800 bg-[#141820] p-6 shadow-2xl">
-            <div className="flex items-center justify-between gap-4 pb-4">
-              <div>
-                <h2 className="text-2xl font-semibold text-white">Lista de entrenadores</h2>
-                <p className="text-sm text-slate-400">Total registrados: {trainers.length}</p>
-              </div>
-              <span className="rounded-3xl bg-slate-900/70 px-4 py-2 text-sm text-slate-200">
-                {editingId ? 'Modo edición' : 'Nuevo entrenador'}
-              </span>
-            </div>
-            <div className="space-y-4">
-              {loading ? (
-                <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-900/70 p-8 text-center text-slate-400">
-                  Cargando entrenadores...
-                </div>
-              ) : trainers.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-900/70 p-8 text-center text-slate-400">
-                  No hay entrenadores aún. Completa el formulario para crear el primero.
-                </div>
-              ) : null}
-
-              {trainers.map((trainer) => (
-                <article key={trainer.id} className="rounded-3xl border border-slate-700 bg-slate-900/70 p-5">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-semibold text-white">{trainer.name}</h3>
-                      <p className="text-sm text-slate-300">{trainer.email}</p>
-                      <div className="flex flex-wrap gap-2 text-xs text-slate-400">
-                        <span
-                          className={`rounded-full px-3 py-1 ${
-                            trainer.status
-                              ? 'bg-[#f1b80c]/15 text-[#f1b80c]'
-                              : 'bg-red-500/15 text-red-400'
-                          }`}
-                        >
-                          {trainer.status ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </div>
-
-                    </div>
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(trainer)}
-                        className="rounded-3xl bg-customYellow text-gray-900 px-4 py-2 text-sm font-semibold transition hover:bg-yellow-500 hover:text-black"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => triggerYesNoToast(handleDelete, trainer.id)}
-                        className="rounded-3xl bg-gray-600 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:bg-gray-500"
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-[40px] border border-slate-800 bg-[#141820] p-6 shadow-2xl">
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-white">{title}</h2>
-              <p className="text-sm text-slate-400">Rellena los campos y guarda los cambios dentro de esta misma página.</p>
+    return (
+        <form onSubmit={onSubmit} className="space-y-5">
+            {/* Credenciales */}
+            <div className="grid gap-4 md:grid-cols-2">
+                <label className="block space-y-2 text-sm text-slate-200">
+                    Email
+                    <input name="email" value={form.email} type="email" placeholder="entrenador@fit.com" onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+                </label>
+                <label className="block space-y-2 text-sm text-slate-200">
+                    Contraseña
+                    <input name="password" value={form.password} type="password" placeholder={editingId ? "Dejar vacío para mantener actual" : "••••••••"} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+                </label>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <label className="block space-y-2 text-sm text-slate-200">
-                <span>Nombre</span>
-                <input
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                  placeholder="Ej. Juan Pérez"
-                />
-              </label>
+            {/* Datos personales */}
+            <label className="block space-y-2 text-sm text-slate-200">
+                Nombre completo
+                <input name="name" value={form.name} type="text" placeholder="Ej. Carlos García" onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+            </label>
 
-              <label className="block space-y-2 text-sm text-slate-200">
-                <span>Email</span>
-                <input
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  type="email"
-                  className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                  placeholder="juan@email.com"
-                />
-              </label>
+            <div className="grid gap-4 md:grid-cols-3">
+                <label className="block space-y-2 text-sm text-slate-200">
+                    Género
+                    <select name="genre" value={form.genre} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
+                        <option value="" disabled className="bg-[#0f172a]">Seleccione</option>
+                        <option value="m" className="bg-[#0f172a]">Masculino</option>
+                        <option value="f" className="bg-[#0f172a]">Femenino</option>
+                        <option value="n" className="bg-[#0f172a]">Prefiere no decirlo</option>
+                    </select>
+                </label>
 
-              <label className="block space-y-2 text-sm text-slate-200">
-                <span>Estado</span>
-                <select
-                  name="status"
-                  value={form.status}
-                  onChange={handleChange}
-                  className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                >
-                  <option value="Activo" className="bg-[#0f172a]">Activo</option>
-                  <option value="Inactivo" className="bg-[#0f172a]">Inactivo</option>
+                <label className="block space-y-2 text-sm text-slate-200">
+                    Teléfono
+                    <input name="phone" value={form.phone} type="tel" placeholder="+34 600 000 000" onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+                </label>
+
+                <label className="hidden block space-y-2 text-sm text-slate-200">
+                    Rol
+                    <input name="role" value={form.role} readOnly disabled className="w-full rounded-3xl border border-slate-700 bg-[#1e293b] px-4 py-3 text-slate-400 cursor-not-allowed" />
+                </label>
+            </div>
+
+
+            <label className="hidden *:block space-y-2 text-sm text-slate-200">
+                Estado
+                <select name="status" value={form.status} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
+                    <option value="Activo" className="bg-[#0f172a]">Activo</option>
+                    <option value="Inactivo" className="bg-[#0f172a]">Inactivo</option>
                 </select>
-              </label>
+            </label>
 
-              <div className="grid gap-4 lg:grid-cols-2">
-                <button
-                  type="submit"
-                  className="rounded-3xl bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]"
-                >
-                  {editingId ? 'Guardar cambios' : 'Crear entrenador'}
+
+            <div className="grid gap-3 pt-2">
+                <button type="submit" className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]">
+                    {editingId ? 'Guardar cambios' : 'Crear entrenador'}
                 </button>
                 {editingId && (
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    className="rounded-3xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
-                  >
-                    Cancelar edición
-                  </button>
+                    <button type="button" onClick={onCancel} className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700">
+                        Cancelar edición
+                    </button>
                 )}
-              </div>
-            </form>
-          </section>
+            </div>
+        </form>
+    );
+};
+
+/* ───────── Main Component ───────── */
+const Trainers = () => {
+    const navigate = useNavigate();
+    const apiUrl = process.env.REACT_APP_API_URL || '';
+
+    const [trainers, setTrainers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [form, setForm] = useState(initialTrainerForm);
+    const [editingId, setEditingId] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showNewModal, setShowNewModal] = useState(false);
+
+    useEffect(() => {
+        const fetchTrainers = async () => {
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return toast.error('Token no disponible. Inicia sesión.');
+                const config = { headers: { Authorization: `Bearer ${token}` } };
+                const res = await axios.get(`${apiUrl}/admin/trainers`, config);
+                const list = res.data?.entrenadores || [];
+                setTrainers(
+                    list.map((item) => ({
+                        id: item.id,
+                        name: item.name || '',
+                        email: item.email || '',
+                        password: item.password || '',
+                        role: item.role || 'Trainer',
+                        genre: item.genre || '',
+                        phone: item.phone || '',
+                        status: item.status || 'Activo',
+                        deleted: item.deleted || 0,
+                    }))
+                );
+            } catch (err) {
+                console.error('Error fetching trainers:', err);
+                toast.error('No se pudieron cargar los entrenadores.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTrainers();
+    }, [apiUrl]);
+
+    const handleEdit = (trainer) => {
+        setForm({
+            name: trainer.name,
+            email: trainer.email,
+            password: trainer.password || '',
+            role: 'Trainer',
+            genre: trainer.genre || '',
+            phone: trainer.phone || '',
+            status: trainer.status,
+        });
+        setEditingId(trainer.id);
+        setShowEditModal(true);
+    };
+
+    const handleNewTrainer = () => {
+        setForm(initialTrainerForm);
+        setEditingId(null);
+        setShowNewModal(true);
+    };
+
+    const cancelEdit = () => {
+        setForm(initialTrainerForm);
+        setEditingId(null);
+        setShowEditModal(false);
+    };
+
+    const cancelNew = () => {
+        setForm(initialTrainerForm);
+        setEditingId(null);
+        setShowNewModal(false);
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!form.name.trim() || !form.email.trim()) return toast.error('Nombre y email son obligatorios.');
+
+        const token = localStorage.getItem('token');
+        if (!token) return toast.error('Token no disponible.');
+
+        // Solo incluir password si se escribió o estamos creando
+        const payload = {
+            name: form.name.trim(),
+            email: form.email.trim(),
+            password: form.password || (editingId ? null : undefined),
+            role: 'Trainer',
+            genre: form.genre.trim(),
+            phone: form.phone.trim(),
+            status: form.status,
+        };
+
+        const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
+
+        if (editingId) {
+            setTrainers((p) => p.map((t) => t.id === editingId ? { ...t, ...form } : t));
+            cancelEdit();
+            try {
+                await axios.put(`${apiUrl}/admin/user/${editingId}`, payload, config);
+                toast.success('Entrenador actualizado correctamente.');
+            } catch { toast.error('No se pudo actualizar el entrenador.'); }
+        } else {
+            if (!payload.password) return toast.error('La contraseña es obligatoria para crear un entrenador.');
+            try {
+                const res = await axios.post(`${apiUrl}/auth/register`, payload, config);
+                const saved = res.data?.trainer || res.data || {};
+                setTrainers((p) => [...p, { id: saved.id || Date.now(), ...payload }]);
+                toast.success('Entrenador guardado correctamente.');
+                cancelNew();
+            } catch (err) {
+                console.error(err);
+                toast.error('No se pudo guardar el entrenador. Verifique los datos.');
+            }
+        }
+    };
+
+    const handleDelete = async (id) => {
+        const token = localStorage.getItem('token');
+        try {
+            await axios.delete(`${apiUrl}/admin/user/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+            setTrainers((p) => p.map((c) => c.id === id ? { ...c, deleted: 1 } : c));
+            toast.success('Entrenador eliminado correctamente.');
+        } catch { toast.error('No se pudo eliminar el entrenador.'); }
+    };
+    const handleRestore = async (id) => {
+        const token = localStorage.getItem('token');
+        try {
+            await axios.put(`${apiUrl}/admin/user-restore/${id}`, null, { headers: { Authorization: `Bearer ${token}` } });
+            setTrainers((p) => p.map((c) => c.id === id ? { ...c, deleted: 0 } : c));
+            toast.success('Entrenador restaurado correctamente.');
+        } catch { toast.error('No se pudo restaurar el entrenador.'); }
+    };
+    const yesNo = (msg, onConfirm) => {
+        toast((t) => (
+            <div className="flex items-center gap-3 px-4 py-2">
+                <span>{msg}</span>
+                <div className="flex gap-2">
+                    <button onClick={() => { toast.dismiss(t.id); onConfirm(); }} className="rounded-full bg-[#9a1314] px-4 py-1.5 text-sm font-semibold text-white border-none cursor-pointer">Sí</button>
+                    <button onClick={() => toast.dismiss(t.id)} className="rounded-full bg-slate-600 px-4 py-1.5 text-sm font-semibold text-white border-none cursor-pointer">No</button>
+                </div>
+            </div>
+        ), { duration: Infinity });
+    };
+
+    const totalActive = trainers.filter((t) => t.status === 'Activo').length;
+    const totalInactive = trainers.filter((t) => t.status !== 'Activo').length;
+
+    return (
+        <div className="min-h-screen bg-[#0d1117] text-white">
+            <div className="mx-auto max-w-7xl space-y-6 p-4 lg:p-8">
+                {/* Header */}
+                <div className="flex flex-col gap-4 rounded-[40px] border border-slate-800 bg-[#141820] p-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Admin</p>
+                        <h1 className="mt-3 text-3xl font-bold md:text-4xl text-white">Gestión de entrenadores</h1>
+                        <p className="mt-2 max-w-xl text-sm text-slate-400">Crea, modifica o elimina entrenadores con credenciales y datos personales.</p>
+                    </div>
+                    <button onClick={() => navigate('/dashboard')} className="inline-flex items-center justify-center rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]">
+                        Volver al dashboard
+                    </button>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+                    {[
+                        { label: 'Total entrenadores', value: trainers.length, color: 'text-white' },
+                        { label: 'Activos', value: totalActive, color: 'text-[#f1b80c]' },
+                        ...(totalInactive > 0 ? [{ label: 'Inactivos', value: totalInactive, color: 'text-red-400' }] : []),
+                    ].map((s) => (
+                        <div key={s.label} className="rounded-[32px] border border-slate-800 bg-[#141820] p-5 text-center">
+                            <p className="text-xs uppercase tracking-widest text-slate-500">{s.label}</p>
+                            <p className={`mt-1 text-3xl font-bold ${s.color}`}>{s.value}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Table / Cards Container */}
+                <section className="overflow-hidden rounded-[40px] border border-slate-800 bg-[#141820]">
+                    <div className="flex items-center justify-between px-6 py-5">
+                        <h2 className="text-xl font-semibold text-white">Lista de entrenadores</h2>
+                        <button onClick={handleNewTrainer} className="rounded-full bg-[#f1b80c] px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]">
+                            + Nuevo entrenador
+                        </button>
+                    </div>
+
+                    {/* Desktop Table */}
+                    <div className="hidden overflow-x-auto lg:block">
+                        <table className="w-full text-left text-sm">
+                            <thead>
+                                <tr className="border-b border-slate-700/60">
+                                    <th className="px-6 py-4 font-medium text-slate-400">Nombre</th>
+                                    <th className="px-6 py-4 font-medium text-slate-400">Email</th>
+                                    <th className="px-6 py-4 font-medium text-slate-400">Género</th>
+                                    <th className="px-6 py-4 font-medium text-slate-400">Teléfono</th>
+                                    <th className="px-6 py-4 font-medium text-slate-400">Estado</th>
+                                    <th className="px-6 py-4 font-medium text-slate-400">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800/50">
+                                {loading ? (
+                                    <tr><td colSpan="6" className="py-12 text-center text-slate-400">Cargando entrenadores…</td></tr>
+                                ) : trainers.length === 0 ? (
+                                    <tr><td colSpan="6" className="py-12 text-center text-slate-400">No hay entrenadores aún.</td></tr>
+                                ) : trainers.map((trainer) => (
+                                    <tr key={trainer.id} className={`group transition ${trainer.deleted ? 'bg-red-950/30' : 'hover:bg-slate-800/40'}`}>
+                                        <td className="px-6 py-4 font-medium text-white">{trainer.name}</td>
+                                        <td className="px-6 py-4 text-slate-300">{trainer.email}</td>
+                                        <td className="px-6 py-4 text-slate-300">{trainer.genre ? (trainer.genre === 'm' ? 'Masc.' : trainer.genre === 'f' ? 'Fem.' : 'N/D') : '—'}</td>
+                                        <td className="px-6 py-4 text-slate-300">{trainer.phone || '—'}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${trainer.status === 'Activo' ? 'bg-[#f1b80c]/15 text-orange-400' : 'bg-red-500/15 text-yellow-400'}`}>
+                                                {trainer.deleted ? 'Inactivo' : 'Activo'}
+                                                
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex gap-2 opacity-70 group-hover:opacity-100">
+                                                {trainer.deleted ? (
+                                                    <button onClick={() => yesNo('¿Restaurar este entrenador?', () => handleRestore(trainer.id))} className="rounded-full bg-slate-600 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-500">Restaurar</button>
+                                                ) : (
+                                                    <>
+                                                        <button onClick={() => handleEdit(trainer)} className="rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e]">Editar</button>
+                                                        <button onClick={() => yesNo('¿Eliminar este entrenador?', () => handleDelete(trainer.id))} className="rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500">Eliminar</button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Mobile Cards */}
+                    <div className="lg:hidden">
+                        {loading ? (
+                            <p className="py-12 text-center text-slate-400">Cargando…</p>
+                        ) : trainers.length === 0 ? (
+                            <p className="py-12 text-center text-slate-400">No hay entrenadores aún.</p>
+                        ) : (
+                            <div className="divide-y divide-slate-800/50">
+                                {trainers.map((trainer) => (
+                                    <div key={trainer.id} className="flex flex-col gap-3 p-5">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h3 className="font-semibold text-white">{trainer.name}</h3>
+                                                <p className="text-sm text-slate-400">{trainer.email}</p>
+                                            </div>
+                                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${trainer.status === 'Activo' ? 'bg-[#f1b80c]/15 text-orange-400' : 'bg-red-500/15 text-yellow-400'}`}>
+                                                {trainer.status}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-400">
+                                            <span>{trainer.genre ? (trainer.genre === 'm' ? 'Masculino' : trainer.genre === 'f' ? 'Femenino' : 'Prefiere no decirlo') : 'N/D'}</span>
+                                            <span>Tel: {trainer.phone || '—'}</span>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => handleEdit(trainer)} className="flex-1 rounded-full bg-[#f1b80c] py-2.5 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e]">Editar</button>
+                                            <button onClick={() => yesNo('¿Eliminar este entrenador?', () => handleDelete(trainer.id))} className="flex-1 rounded-full bg-red-600 py-2.5 text-xs font-semibold text-white hover:bg-red-500">Eliminar</button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </section>
+            </div>
+
+            {/* Edit Modal */}
+            <ModalOverlay isOpen={showEditModal} onClose={cancelEdit} title="Editar entrenador">
+                <TrainerForm form={form} setForm={setForm} editingId={editingId} initialForm={initialTrainerForm} onSubmit={handleSubmit} onCancel={cancelEdit} />
+            </ModalOverlay>
+
+            {/* New Trainer Modal */}
+            <ModalOverlay isOpen={showNewModal} onClose={cancelNew} title="Nuevo entrenador">
+                <TrainerForm form={form} setForm={setForm} editingId={null} initialForm={initialTrainerForm} onSubmit={handleSubmit} onCancel={cancelNew} />
+            </ModalOverlay>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Trainers;
