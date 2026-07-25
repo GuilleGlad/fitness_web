@@ -40,6 +40,7 @@ function Homepage() {
         about: ''
     });
     const [news, setNews] = useState([]);
+    const [recipes, setRecipes] = useState([]);
 
     useEffect(() => {
     const fetchSettings = async () => {
@@ -92,8 +93,24 @@ function Homepage() {
         }
     }
 
+    const fetchRecipes = async () => {
+        try{
+            const response = await axios.get(`${apiUrl}/recipes/list-public`);
+            const { data } = response;
+            if(data){
+                const {filas} = data;
+                console.log('Recetas cargadas:', filas);
+                setRecipes(filas);
+            }
+        }
+        catch(error){
+            console.error('Error cargando noticias:', error);
+        }        
+    }
+
     fetchSettings();
     fetchNews();
+    fetchRecipes();
     }, []);
 
     // NOTE: Replace '/videos/hero-bg.mp4' with the actual path to your video asset.
@@ -388,6 +405,28 @@ function Homepage() {
                     </div>
 
                 </div>
+                <div className='separator pt-32 bg-black'></div>
+                {/* RECIPES */}
+                <div className="bg-black w-full flex-1 mr-32">
+                    <div className="flex-1 lg:flex bg-black lg:mr-32">
+                        <div className="w-1/4">
+                            <FloatingText text="RECETAS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
+                        </div>
+                        <div className='w-3/4'>
+                            <BigTitle title="FITNESS PARA LLEVAR" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                        </div>
+                    </div>
+                    <div className="ml-12 mr-12 mt-10 mb-20 p-10 rounded-lg bg-gray-800">
+                        <Slider {...sliderSettingsNews} >
+                        {
+                        recipes.map((item, index) => (
+                            
+                        ))
+                        }
+                        </Slider>
+                    </div>
+
+                </div>           
                 <div className='separator pt-32 bg-black'></div>
                 {/* FAQ */}
                 {/* <div className="bg-black w-full flex-1 mr-32">
