@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import TrainerLibrary from './TrainerLibrary';
 
 const initialTrainerForm = {
     name: '',
@@ -10,6 +11,7 @@ const initialTrainerForm = {
     role: 'Trainer',
     genre: '',
     phone: '',
+    picture: '/images/avatar.png',
     status: 'Activo',
     deleted: 0,
 };
@@ -34,7 +36,7 @@ const ModalOverlay = ({ isOpen, onClose, title, children }) => {
 };
 
 /* ───────── Trainer Form Component (Adaptado a la especificación) ───────── */
-const TrainerForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel }) => {
+const TrainerForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel, onOpenLibrary }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
@@ -76,11 +78,24 @@ const TrainerForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel
                     <input name="phone" value={form.phone} type="tel" placeholder="+34 600 000 000" onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
                 </label>
 
-                <label className="hidden block space-y-2 text-sm text-slate-200">
+                <label className="hidden space-y-2 text-sm text-slate-200">
                     Rol
                     <input name="role" value={form.role} readOnly disabled className="w-full rounded-3xl border border-slate-700 bg-[#1e293b] px-4 py-3 text-slate-400 cursor-not-allowed" />
                 </label>
             </div>
+
+            {/* Foto de perfil - solo en edición */}
+            {editingId && (
+                <label className="block space-y-2 text-sm text-slate-200">
+                    Foto de perfil
+                    <input name="picture" value={form.picture} type="url" readOnly placeholder="https://ejemplo.com/foto.jpg" onChange={handleChange} className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+                    {form.picture && form.picture !== '/images/avatar.png' && <img src={form.picture} alt="preview" className="mt-2 w-full rounded-lg object-cover border border-slate-700" />}
+                    <div className="flex gap-3 mt-2">
+                        <button type="button" onClick={() => onOpenLibrary((url) => setForm((p) => ({ ...p, picture: url })))} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">📚 Biblioteca</button>
+                        <button type="button" onClick={() => setForm((p) => ({ ...p, picture: initialForm.picture }))} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">🗑️ Limpiar</button>
+                    </div>
+                </label>
+            )}
 
 
             <label className="hidden *:block space-y-2 text-sm text-slate-200">
@@ -117,6 +132,8 @@ const Trainers = () => {
     const [editingId, setEditingId] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showNewModal, setShowNewModal] = useState(false);
+    const [showLibraryModal, setShowLibraryModal] = useState(false);
+    const [libraryCallback, setLibraryCallback] = useState(null);
 
     useEffect(() => {
         const fetchTrainers = async () => {
@@ -136,6 +153,7 @@ const Trainers = () => {
                         role: item.role || 'Trainer',
                         genre: item.genre || '',
                         phone: item.phone || '',
+                        picture: item.picture || '/images/avatar.png',
                         status: item.status || 'Activo',
                         deleted: item.deleted || 0,
                     }))
@@ -158,6 +176,7 @@ const Trainers = () => {
             role: 'Trainer',
             genre: trainer.genre || '',
             phone: trainer.phone || '',
+            picture: trainer.picture || '/images/avatar.png',
             status: trainer.status,
         });
         setEditingId(trainer.id);
@@ -182,6 +201,25 @@ const Trainers = () => {
         setShowNewModal(false);
     };
 
+    // Library picker handlers
+    const openLibraryPicker = (callback) => {
+        setLibraryCallback(() => callback);
+        setShowLibraryModal(true);
+    };
+
+    const closeLibraryModal = () => {
+        setShowLibraryModal(false);
+        setLibraryCallback(null);
+    };
+
+    const handleSelectLibraryItem = (media) => {
+        if (libraryCallback && media.length > 0) {
+            setForm((prev) => ({ ...prev, picture: media[0].url }));
+            libraryCallback(media[0].url);
+        }
+        closeLibraryModal();
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!form.name.trim() || !form.email.trim()) return toast.error('Nombre y email son obligatorios.');
@@ -197,6 +235,7 @@ const Trainers = () => {
             role: 'Trainer',
             genre: form.genre.trim(),
             phone: form.phone.trim(),
+            picture: form.picture.trim(),
             status: form.status,
         };
 
@@ -313,6 +352,7 @@ const Trainers = () => {
                                     <tr><td colSpan="6" className="py-12 text-center text-slate-400">No hay entrenadores aún.</td></tr>
                                 ) : trainers.map((trainer) => (
                                     <tr key={trainer.id} className={`group transition ${trainer.deleted ? 'bg-red-950/30' : 'hover:bg-slate-800/40'}`}>
+                                        <td className="px-6 py-4"><img src={trainer.picture || '/images/avatar.png'} alt={trainer.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-700" /></td>
                                         <td className="px-6 py-4 font-medium text-white">{trainer.name}</td>
                                         <td className="px-6 py-4 text-slate-300">{trainer.email}</td>
                                         <td className="px-6 py-4 text-slate-300">{trainer.genre ? (trainer.genre === 'm' ? 'Masc.' : trainer.genre === 'f' ? 'Fem.' : 'N/D') : '—'}</td>
@@ -378,13 +418,22 @@ const Trainers = () => {
 
             {/* Edit Modal */}
             <ModalOverlay isOpen={showEditModal} onClose={cancelEdit} title="Editar entrenador">
-                <TrainerForm form={form} setForm={setForm} editingId={editingId} initialForm={initialTrainerForm} onSubmit={handleSubmit} onCancel={cancelEdit} />
+                <TrainerForm form={form} setForm={setForm} editingId={editingId} initialForm={initialTrainerForm} onSubmit={handleSubmit} onCancel={cancelEdit} onOpenLibrary={openLibraryPicker} />
             </ModalOverlay>
 
             {/* New Trainer Modal */}
             <ModalOverlay isOpen={showNewModal} onClose={cancelNew} title="Nuevo entrenador">
-                <TrainerForm form={form} setForm={setForm} editingId={null} initialForm={initialTrainerForm} onSubmit={handleSubmit} onCancel={cancelNew} />
+                <TrainerForm form={form} setForm={setForm} editingId={null} initialForm={initialTrainerForm} onSubmit={handleSubmit} onCancel={cancelNew} onOpenLibrary={openLibraryPicker} />
             </ModalOverlay>
+
+            {/* Library Modal */}
+            {showLibraryModal && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4">
+                    <div className="w-full max-w-6xl">
+                        <TrainerLibrary isModal selectionMode="single" onSelectMedia={handleSelectLibraryItem} onClose={closeLibraryModal} />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

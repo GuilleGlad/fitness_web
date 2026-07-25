@@ -79,9 +79,9 @@ const ClientForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel,
       {editingId && (
         <>
           <label className="block space-y-2 text-sm text-slate-200">
-            Foto URL
+            Foto
             <input name="picture" value={form.picture} type="url" readOnly placeholder="https://ejemplo.com/foto.jpg" onChange={handleChange} className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
-            {form.picture && form.picture !== '/images/avatar.png' && <img src={form.picture} alt="preview" className="mt-2 h-32 rounded-lg object-cover border border-slate-700" />}
+            {form.picture && form.picture !== '/images/avatar.png' && <img src={form.picture} alt="preview" className="mt-2 w-full rounded-lg object-cover border border-slate-700" />}
             <div className="flex gap-3 mt-2">
               <button type="button" onClick={onOpenLibrary} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">📚 Biblioteca</button>
               <button type="button" onClick={() => setForm((p) => ({ ...p, picture: initialForm.picture }))} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">🗑️ Limpiar</button>

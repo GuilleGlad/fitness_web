@@ -11,7 +11,8 @@ const initialForm = {
   ingredients: '',
   instructions: '',
   image_url: '',
-  is_public: false,
+  status: false,
+  is_public: 0,
 };
 
 /* ───────── Reusable Modal Wrapper ───────── */
@@ -78,27 +79,36 @@ const RecipeForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel,
       </label>
 
       <label className="block space-y-2 text-sm text-slate-200">
-        <span>Imagen (URL)</span>
+        <span>Imagen</span>
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
             name="image_url"
             value={form.image_url}
             onChange={handleChange}
-            className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+            className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
             placeholder="https://.../imagen.jpg"
           />
+          {form.image_url && <img src={form.image_url} alt="preview" className="mt-2 w-full rounded-lg object-cover border border-slate-700" />}
+        </div>
+        <div className="block space-y-2 text-sm text-slate-200">
           <button
             type="button"
             onClick={onOpenLibrary}
             className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800"
           >
             📚 Biblioteca
+          </button>        
+          <button 
+            type="button" 
+            onClick={() => setForm((p) => ({ ...p, image_url: initialForm.image_url }))}
+            className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">
+              🗑️ Limpiar
           </button>
         </div>
       </label>
 
       <label className="flex items-center gap-3 text-sm text-slate-200">
-        <input type="checkbox" name="is_public" checked={form.is_public} onChange={handleChange} className="h-4 w-4 rounded border-slate-700 bg-[#0f172a] text-[#f1b80c] focus:ring-[#f1b80c]" />
+        <input type="checkbox" name="status" checked={form.status} onChange={handleChange} className="h-4 w-4 rounded border-slate-700 bg-[#0f172a] text-[#f1b80c] focus:ring-[#f1b80c]" />
         <span>Activa</span>
       </label>
 
@@ -154,7 +164,7 @@ const TrainerRecipes = () => {
             ingredients: r.ingredients,
             instructions: r.instructions,
             image_url: r.image_url,
-            is_public: !!r.is_public,
+            status: !!r.status,
           }))
         );
       } catch (err) {
@@ -216,7 +226,7 @@ const TrainerRecipes = () => {
       ingredients: form.ingredients.trim(),
       instructions: form.instructions.trim(),
       image_url: form.image_url.trim(),
-      is_public: form.is_public ? '1' : '0',
+      status: form.status ? '1' : '0',
     };
 
     if (editingId) {
@@ -224,7 +234,7 @@ const TrainerRecipes = () => {
     }
 
     if (editingId) {
-      setRecipes((prev) => prev.map((r) => (r.id === editingId ? { ...r, ...payload, is_public: payload.is_public === '1' } : r)));
+      setRecipes((prev) => prev.map((r) => (r.id === editingId ? { ...r, ...payload, status: payload.status === '1' } : r)));
       cancelEdit();
       try {
         const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
@@ -251,7 +261,7 @@ const TrainerRecipes = () => {
         {
           id: saved.id || Date.now(),
           ...payload,
-          is_public: payload.is_public === '1',
+          status: payload.status === '1',
         },
       ]);
 
@@ -270,7 +280,7 @@ const TrainerRecipes = () => {
       ingredients: recipe.ingredients,
       instructions: recipe.instructions,
       image_url: recipe.image_url,
-      is_public: !!recipe.is_public,
+      status: !!recipe.status,
     });
     setEditingId(recipe.id);
     setShowEditModal(true);
@@ -337,8 +347,8 @@ const TrainerRecipes = () => {
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           {[
             { label: 'Total', value: recipes.length, color: 'text-white' },
-            { label: 'Activas', value: recipes.filter(r => r.is_public).length, color: 'text-[#f1b80c]' },
-            { label: 'Inactivas', value: recipes.filter(r => !r.is_public).length, color: 'text-red-400' },
+            { label: 'Activas', value: recipes.filter(r => r.status).length, color: 'text-[#f1b80c]' },
+            { label: 'Inactivas', value: recipes.filter(r => !r.status).length, color: 'text-red-400' },
           ].map((s) => (
             <div key={s.label} className="rounded-[32px] border border-slate-800 bg-[#141820] p-5 text-center">
               <p className="text-xs uppercase tracking-widest text-slate-500">{s.label}</p>
@@ -385,8 +395,8 @@ const TrainerRecipes = () => {
                     <td className="px-6 py-4 font-medium text-white">{r.title}</td>
                     <td className="px-6 py-4 text-slate-300 max-w-xs truncate">{r.ingredients}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${r.is_public ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}`}>
-                        {r.is_public ? 'Activa' : 'Inactiva'}
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${r.status ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}`}>
+                        {r.status ? 'Activa' : 'Inactiva'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -419,8 +429,8 @@ const TrainerRecipes = () => {
                         <h3 className="font-semibold text-white truncate">{r.title}</h3>
                         <p className="text-sm text-slate-300 truncate">{r.ingredients}</p>
                         <div className="flex flex-wrap gap-2 mt-1 text-xs text-slate-400">
-                          <span className={`rounded-full px-3 py-1 ${r.is_public ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}`}>
-                            {r.is_public ? 'Activa' : 'Inactiva'}
+                          <span className={`rounded-full px-3 py-1 ${r.status ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}`}>
+                            {r.status ? 'Activa' : 'Inactiva'}
                           </span>
                         </div>
                       </div>

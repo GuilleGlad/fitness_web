@@ -10,6 +10,7 @@ const initialForm = {
   description: '',
   photoUrl: '',
   videoUrl: '',
+  publico: 0,
 };
 
 /* ───────── Reusable Modal Wrapper ───────── */
@@ -57,50 +58,87 @@ const ExerciseForm = ({ form, setForm, editingId, initialForm, onSubmit, onCance
           name="description"
           value={form.description}
           onChange={handleChange}
-          rows={4}
+          rows={10}
           className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
           placeholder="Escribe los detalles del ejercicio..."
         />
       </label>
 
-      <label className="block space-y-2 text-sm text-slate-200">
-        <span>Foto (URL)</span>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input
-            name="photoUrl"
-            value={form.photoUrl}
-            onChange={handleChange}
-            className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-            placeholder="https://.../foto.jpg"
-          />
-          <button
-            type="button"
-            onClick={() => onOpenLibrary('photo')}
-            className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800"
-          >
-            📚 Biblioteca
-          </button>
-        </div>
-      </label>
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="block space-y-2 text-sm text-slate-200">
+          <span className='mr-2'>Foto</span>
+          {
+          form.photoUrl && <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              name="photoUrl"
+              value={form.photoUrl}
+              onChange={handleChange}
+              className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+              placeholder="https://.../foto.jpg"
+            />
+            <img src={form.photoUrl} className='w-full'/>
+          </div>
+          }
+          <div className="block space-y-2 text-sm text-slate-200">
+            <button
+              type="button"
+              onClick={() => onOpenLibrary('photo')}
+              className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800"
+            >
+              📚 Biblioteca
+            </button>      
+            <button 
+              type="button" 
+              onClick={() => setForm((p) => ({ ...p, photoUrl: initialForm.photoUrl }))} 
+              className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">
+                🗑️ Limpiar
+            </button>  
+          </div>
+        </label>
+
+        <label className="block space-y-2 text-sm text-slate-200">
+          <span className='mr-2'>Video</span>
+          {
+          form.videoUrl != "" && <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              name="videoUrl"
+              value={form.videoUrl}
+              onChange={handleChange}
+              className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+              placeholder="https://.../video.mp4"
+            />
+            <video key={form.videoUrl} name="videoEjercicio" src={form.videoUrl} className="mt-4 w-auto rounded-2xl object-contain " autoPlay loop muted playsInline/>
+          </div>
+          }
+          <div className="block space-y-2 text-sm text-slate-200">
+            <button
+              type="button"
+              onClick={() => onOpenLibrary('video')}
+              className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800"
+            >
+              📚 Biblioteca
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setForm((p) => ({ ...p, videoUrl: initialForm.videoUrl }))}
+              className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">
+                🗑️ Limpiar
+            </button>                  
+          </div>
+        </label>
+      </div>
 
       <label className="block space-y-2 text-sm text-slate-200">
-        <span>Video (URL)</span>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input
-            name="videoUrl"
-            value={form.videoUrl}
-            onChange={handleChange}
-            className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-            placeholder="https://.../video.mp4"
-          />
-          <button
-            type="button"
-            onClick={() => onOpenLibrary('video')}
-            className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800"
-          >
-            📚 Biblioteca
-          </button>
-        </div>
+        <span>Público</span>
+        <select
+          name="publico"
+          value={form.publico}
+          onChange={handleChange}
+          className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+        >
+          <option value="1" className="bg-[#0f172a]">En Pagina Principal</option>
+          <option value="0" className="bg-[#0f172a]">Solo a los Clientes</option>
+        </select>
       </label>
 
       <div className="grid gap-3 pt-2">
@@ -158,6 +196,7 @@ const TrainerExercises = () => {
             description: item.description,
             photoUrl: item.photo_url,
             videoUrl: item.video_url,
+            publico: Number(item.publico),
           }))
         );
       } catch (err) {
@@ -215,6 +254,7 @@ const TrainerExercises = () => {
       description: exercise.description,
       photoUrl: exercise.photoUrl,
       videoUrl: exercise.videoUrl,
+      publico: exercise.publico,
     });
     setEditingId(exercise.id);
     setShowEditModal(true);
@@ -263,12 +303,13 @@ const TrainerExercises = () => {
       description: form.description.trim(),
       photo_url: form.photoUrl.trim(),
       video_url: form.videoUrl.trim(),
+      publico: form.publico,
     };
 
     if (editingId) {
       setExercises((previous) =>
         previous.map((exercise) =>
-          exercise.id === editingId ? { ...exercise, ...form } : exercise
+          exercise.id === editingId ? { ...exercise, ...form, publico: Number(form.publico) } : exercise
         )
       );
       cancelEdit();
@@ -302,6 +343,7 @@ const TrainerExercises = () => {
           description: payload.description,
           photoUrl: payload.photo_url,
           videoUrl: payload.video_url,
+          publico: Number(payload.publico)
         },
       ]);
 
@@ -384,6 +426,7 @@ const TrainerExercises = () => {
                   <th className="px-6 py-4 font-medium text-slate-400">Título</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Descripción</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Video</th>
+                  <th className="px-6 py-4 font-medium text-slate-400">Público</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Acciones</th>
                 </tr>
               </thead>
@@ -409,6 +452,10 @@ const TrainerExercises = () => {
                       ) : (
                         <span className="text-slate-500 text-xs">—</span>
                       )}
+                    </td>
+                    <td>
+                    {exercise.publico === 1 && <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-green-400">Página Principal</span>}
+                    {exercise.publico === 0 && <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-yellow-400">Solo para Clientes</span>}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2 opacity-70 group-hover:opacity-100">
