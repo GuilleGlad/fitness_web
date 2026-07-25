@@ -17,6 +17,7 @@ import News from '../components/News';
 import Faq from '../components/Faq';
 import BigSubTitle from '../components/BigSubTitle';
 import Footer from '../components/Footer';
+import RecipeCardGrid from '../components/RecipeCardGrid';
 import axios from 'axios';
 import { height } from '@fortawesome/free-solid-svg-icons/faUpRightFromSquare';
 import { Helmet } from 'react-helmet-async';
@@ -417,16 +418,20 @@ function Homepage() {
                         </div>
                     </div>
                     <div className="ml-12 mr-12 mt-10 mb-20 p-10 rounded-lg bg-gray-800">
-                        <Slider {...sliderSettingsNews} >
-                        {
-                        recipes.map((item, index) => (
-                            
-                        ))
-                        }
-                        </Slider>
+                        <RecipeCardGrid 
+                            recipes={recipes.map(r => ({
+                                id: r.id,
+                                title: r.title,
+                                ingredients: r.ingredients,
+                                instructions: r.instructions,
+                                image_url: r.image_url,
+                                status: true
+                            }))} 
+                            title=""
+                        />
                     </div>
 
-                </div>           
+                </div>
                 <div className='separator pt-32 bg-black'></div>
                 {/* FAQ */}
                 {/* <div className="bg-black w-full flex-1 mr-32">
