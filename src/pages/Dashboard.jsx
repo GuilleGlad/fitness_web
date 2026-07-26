@@ -2,6 +2,8 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {verifyToken} from '../utils/tokenUtils';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHome } from '@fortawesome/free-solid-svg-icons';
 const ROLE_MAP = {
   'admin': 1,
   'trainer': 2,
@@ -371,7 +373,7 @@ const Dashboard = () => {
                 onClick={navigate.bind(null, '/')}
                 className="w-full rounded-3xl bg-[#1f2937] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
               >
-                Página de Inicio
+                <FontAwesomeIcon icon={faHome} className='mr-2'></FontAwesomeIcon><span>Página de Inicio</span>
               </button>
             </div>
           </div>

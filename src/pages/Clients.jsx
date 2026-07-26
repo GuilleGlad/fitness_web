@@ -198,7 +198,7 @@ const Clients = () => {
       try {
         const res = await axios.post(`${apiUrl}/auth/register`, payload, config);
         const saved = res.data?.cliente || res.data || {};
-        setClients((p) => [...p, { id: saved.id || Date.now(), ...payload }]);
+        setClients((p) => [...p, { id: saved.user.id || Date.now(), ...payload }]);
         toast.success('Cliente guardado correctamente.');
         cancelNew();
       } catch { toast.error('No se pudo guardar el cliente.'); }

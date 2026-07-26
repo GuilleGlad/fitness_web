@@ -253,7 +253,7 @@ const Trainers = () => {
             try {
                 const res = await axios.post(`${apiUrl}/auth/register`, payload, config);
                 const saved = res.data?.trainer || res.data || {};
-                setTrainers((p) => [...p, { id: saved.id || Date.now(), ...payload }]);
+                setTrainers((p) => [...p, { id: saved.user.id || Date.now(), ...payload }]);
                 toast.success('Entrenador guardado correctamente.');
                 cancelNew();
             } catch (err) {

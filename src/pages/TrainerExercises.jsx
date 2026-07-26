@@ -338,7 +338,7 @@ const TrainerExercises = () => {
       setExercises((previous) => [
         ...previous,
         {
-          id: savedExercise.id || Date.now(),
+          id: savedExercise.insert_id || Date.now(),
           title: payload.title,
           description: payload.description,
           photoUrl: payload.photo_url,

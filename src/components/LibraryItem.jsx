@@ -11,56 +11,62 @@ const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUpload
     const uploadStartedRef = useRef(false);
 
     useEffect(() => {
-        if (!item?.file || !apiUrl || !trainerId || !token) {
-            if (!item?.new) {
-                setStatus('uploaded');
-            }
-            return;
-        }
 
-        if (!item.new) {
-            setStatus('uploaded');
-            return;
-        }
-
-        if (uploadStartedRef.current) {
-            return;
-        }
-
-        uploadStartedRef.current = true;
-        setStatus('uploading');
-
-        const formData = new FormData();
-        formData.append('trainerId', trainerId);
-        formData.append('file', item.file);
-
-        axios
-            .post(`${apiUrl}/library/add`,
-                formData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'multipart/form-data',
-                    },
-                    onUploadProgress: (progressEvent) => {
-                        const total = progressEvent.total || item.size || 1;
-                        const percent = Math.min(100, Math.round((progressEvent.loaded / total) * 100));
-                        setProgress(percent);
-                    },
-                })
-            .then((res) => {
-                const serverItemId = res?.data?.itemId;
-                if (serverItemId !== undefined && serverItemId !== null && typeof onUploadSuccess === 'function') {
-                    onUploadSuccess(item.id, serverItemId);
+        const uploadItem = async () => {
+            if (!item?.file || !apiUrl || !trainerId || !token) {
+                if (!item?.new) {
+                    setStatus('uploaded');
                 }
+                return;
+            }
+
+            if (!item.new) {
                 setStatus('uploaded');
-            })
-            .catch((uploadError) => {
-                const message = uploadError?.response?.data?.message || uploadError.message || 'Error al subir el archivo';
-                setError(message);
-                setStatus('error');
-                toast.error(`Error subiendo ${item.filename || item.name}: ${message}`);
-            });
+                return;
+            }
+
+            if (uploadStartedRef.current) {
+                return;
+            }
+
+            uploadStartedRef.current = true;
+            setStatus('uploading');
+
+            const formData = new FormData();
+            formData.append('trainerId', trainerId);
+            formData.append('file', item.file);
+
+            await axios
+                .post(`${apiUrl}/library/add`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'multipart/form-data',
+                        },
+                        onUploadProgress: (progressEvent) => {
+                            const total = progressEvent.total || item.size || 1;
+                            const percent = Math.min(100, Math.round((progressEvent.loaded / total) * 100));
+                            setProgress(percent);
+                        },
+                    })
+                .then((res) => {
+                    const serverItemId = res?.data?.itemId;
+                    const serverUrl = res?.data?.url;
+                    if (serverItemId !== undefined && serverItemId !== null && typeof onUploadSuccess === 'function') {
+                        onUploadSuccess(item.id, serverItemId,serverUrl);
+                    }
+                    setStatus('uploaded');
+                })
+                .catch((uploadError) => {
+                    const message = uploadError?.response?.data?.message || uploadError.message || 'Error al subir el archivo';
+                    setError(message);
+                    setStatus('error');
+                    toast.error(`Error subiendo ${item.filename || item.name}: ${message}`);
+                });
+        }
+        uploadItem();
+
     }, [apiUrl, item?.file, item?.id, item?.new, item?.size, item?.filename, onUploadSuccess, token, trainerId]);
 
     const triggerYesNoToast = (handle, ...params) => {

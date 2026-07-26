@@ -64,6 +64,7 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
             filename: file.name,
             new: true
         }));
+        console.log(newItems);
         setMedia((m) => [...newItems, ...m]);
 
         if (fileInputRef.current) {
@@ -76,9 +77,9 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
         setSelectedItems((items) => items.filter((it) => it.id !== id && (it.uploadId || it.id) !== id));
     };
 
-    const handleUploadSuccess = (tempId, serverId) => {
+    const handleUploadSuccess = (tempId, serverId, serverUrl) => {
         setMedia((items) =>
-            items.map((item) => (item.id === tempId ? { ...item, id: serverId, new: false } : item))
+            items.map((item) => (item.id === tempId ? { ...item, id: serverId, new: false, file_path: serverUrl } : item))
         );
         setSelectedItems((items) =>
             items.map((item) => (item.id === tempId ? { ...item, id: serverId, new: false } : item))
