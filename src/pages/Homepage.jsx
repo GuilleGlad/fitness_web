@@ -1,26 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import VideoBackground from '../components/VideoBackgrounds';
 import Navbar from '../components/Navbar';
 import FloatingCard from '../components/FloatingCard';
 import BigTitle from '../components/BigTitle';
-import Logo from '../components/Logo';
 import FloatingText from '../components/FloatingText';
-import BigLink from '../components/BigLink';
 import ContadorRRSS from '../components/ContadorRRSS';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Slider from 'react-slick';
 import '../styles/Homepage.css'
-import ImageCard from '../components/ImageCard';
-import Comments from '../components/Comments';
 import News from '../components/News';
-import Faq from '../components/Faq';
-import BigSubTitle from '../components/BigSubTitle';
 import Footer from '../components/Footer';
 import RecipeCardGrid from '../components/RecipeCardGrid';
 import axios from 'axios';
-import { height } from '@fortawesome/free-solid-svg-icons/faUpRightFromSquare';
 import { Helmet } from 'react-helmet-async';
+import ImageCard from '../components/ImageCard';
+
 
 function Homepage() {
     const apiUrl = process.env.REACT_APP_API_URL;
@@ -42,6 +36,7 @@ function Homepage() {
     });
     const [news, setNews] = useState([]);
     const [recipes, setRecipes] = useState([]);
+    const [exercises, setExercises] = useState([]);
 
     useEffect(() => {
     const fetchSettings = async () => {
@@ -107,6 +102,21 @@ function Homepage() {
         catch(error){
             console.error('Error cargando noticias:', error);
         }        
+    }
+
+    const fetchExercises = async() => {
+        try{
+            const response = await axios.get(`${apiUrl}/exercises/list-public`);
+            const { data } = response;
+            if(data){
+                const {filas} = data;
+                console.log('Ejercicios cargados:', filas);
+                setExercises(filas);
+            }
+        }
+        catch(error){
+            console.error('Error cargando noticias:', error);
+        }                
     }
 
     fetchSettings();
@@ -300,7 +310,7 @@ function Homepage() {
                         </div>
                     </div>
                 </div>
-                <div className="bg-black w-full flex-1 mr-32">
+                {/* <div className="bg-black w-full flex-1 mr-32">
                     <div className="flex-1 lg:flex bg-black lg:mr-32">
                         <div className="w-1/4">
                             <FloatingText text="ADS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
@@ -315,22 +325,21 @@ function Homepage() {
                                 {adsImages.map((image, index) => (
                                     <div key={`${image}-${index}`} className='shadow-lg shadow-black drop-shadow-lg'>
                                         <img src={image} alt={`Slide ${index + 1}`} className="h-full w-full " />
-                                        {/* <span className='mt-3 block font-bold text-center'>Contenido destacado {index + 1}</span> */}
                                     </div>
                                 ))}
                             </Slider>
                         </div>
                     </div>
                 </div>                
-                <div className='separator pt-32 bg-black'></div>
+                <div className='separator pt-32 bg-black'></div> */}
                 {/* RRSS */}
-                {/* <div className="bg-black w-full flex-1 mr-32 h-1/3">
+                <div className="bg-black w-full flex-1 mr-32 h-1/3">
                     <div className="flex-1 lg:flex bg-black lg:mr-32">
                         <div className="w-1/4">
-                            <FloatingText text="WHY CHOOSE US" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
+                            <FloatingText text="ADS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
                         </div>
                         <div className='w-3/4'>
-                            <BigTitle title="WAYS I HELP YOU TRANSFORM FASTER" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                            <BigTitle title="MARCAS Y PATROCINADORES" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
                         </div>
                     </div>
                     <div className='separator pt-32 bg-black'></div>
@@ -353,13 +362,14 @@ function Homepage() {
                                 altText="Nutrition guidance"
                             />
                         </div>
-                        <div className="row-span-2 flex items-center justify-center font-bold text-xl">
+                        {/* <div className="row-span-2 flex items-center justify-center font-bold text-xl"> */}
+                        <div className="row-span-2 h-full flex">
                             <ImageCard
                                 title="Flexible training times"
                                 description="Encuentra el horario perfecto que se ajuste a tus compromisos diarios."
-                                isCTA={true} // === ESTADO CTA ===
-                                ctaText="Ver Disponibilidad"
-                                ctaLink="/horarios"
+                                // isCTA={true} // === ESTADO CTA ===
+                                // ctaText="Ver Disponibilidad"
+                                // ctaLink="/horarios"
                                 imageUrl={adsImages[2] || '/images/Shape-016.png'}
                             />
                         </div>
@@ -384,7 +394,7 @@ function Homepage() {
                     </div>
 
                 </div>
-                <div className='separator pt-32 bg-black'></div> */}
+                <div className='separator pt-32 bg-black'></div>
                 {/* NOTICIAS */}
                 <div className="bg-black w-full flex-1 mr-32">
                     <div className="flex-1 lg:flex bg-black lg:mr-32">
@@ -433,6 +443,34 @@ function Homepage() {
 
                 </div>
                 <div className='separator pt-32 bg-black'></div>
+
+                {/* EJERCICIOS PUBLICOS */}
+                <div className="bg-black w-full flex-1 mr-32">
+                    <div className="flex-1 lg:flex bg-black lg:mr-32">
+                        <div className="w-1/4">
+                            <FloatingText text="EJERCICIOS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
+                        </div>
+                        <div className='w-3/4'>
+                            <BigTitle title="DESTACADOS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                        </div>
+                    </div>
+                    <div className="ml-12 mr-12 mt-10 mb-20 p-10 rounded-lg bg-gray-800">
+                        <RecipeCardGrid 
+                            recipes={recipes.map(r => ({
+                                id: r.id,
+                                title: r.title,
+                                ingredients: r.ingredients,
+                                instructions: r.instructions,
+                                image_url: r.image_url,
+                                status: true
+                            }))} 
+                            title=""
+                        />
+                    </div>
+
+                </div>
+                <div className='separator pt-32 bg-black'></div>
+
                 {/* FAQ */}
                 {/* <div className="bg-black w-full flex-1 mr-32">
                     <div className="flex-1 lg:flex bg-black lg:mr-32">

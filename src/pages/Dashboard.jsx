@@ -13,12 +13,12 @@ const ROLE_MAP = {
 const ROLE_MENUS = {
   1: [
     'Perfil de Usuario',
-    'Usuarios',
-    'Entrenadores',
-    'Ejercicios',
-    'Recetas',
-    'Noticias',
-    'Ajustes',
+    '👤 Usuarios',
+    '💪 Entrenadores',
+    '🏋️ Ejercicios',
+    '🍎 Recetas',
+    '📰 Noticias',
+    '⚙️ Ajustes',
   ],
   2: [
     'Perfil de Usuario',
@@ -94,14 +94,14 @@ const Dashboard = () => {
     }
   }
 
-  if(roleValue === 3 && status == 0){
+  if(roleValue === 3 && status === 0){
     navigate('/wizard');
   }
-  if(roleValue === 1 && redirectPath == null){
+  if(roleValue === 1 && redirectPath === null){
     fetchCounts();
   }
 
-  }, [navigate]);
+  }, [navigate, apiUrl, roleValue, status]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -324,37 +324,37 @@ const Dashboard = () => {
                   <button
                     key={item}
                     onClick={() => {
-                      if (item === 'Clientes' || item === "Usuarios"){
+                      if (item.indexOf('Clientes') !== -1 || item.indexOf("Usuarios") !== -1){
                         navigate('/clients');
                         return;
                       }
-                      if (item == 'Entrenadores'){
+                      if (item.indexOf('Entrenadores') !== -1){
                         navigate('/trainers');
                         return;
                       }
-                      if (item === 'Ejercicios' || item === 'Ejercicios por Entrenador') {
+                      if (item.indexOf('Ejercicios') !== -1 || item.indexOf('Ejercicios por Entrenador') !== -1 ){
                         navigate('/trainer-exercises');
                         return;
                       }
-                      if (item === 'Fotos/Videos') {
+                      if (item.indexOf('Fotos/Videos') !== -1) {
                         navigate('/trainer-library');
                         return;
                       }
-                      if (item === 'Recetas' || item === 'Recetas por Entrenador') {
+                      if (item.indexOf('Recetas') !== -1 || item.indexOf('Recetas por Entrenador') !== -1) {
                         navigate('/trainer-recipes');
                         return;
                       }
-                      if (item === 'Ajustes') {
+                      if (item.indexOf('Ajustes') !== -1) {
                         navigate('/settings');
                         return;
                       }
-                      if (item === 'Noticias') {
+                      if (item.indexOf('Noticias') !== -1){
                         navigate('/news-manager');
                         return;
                       }
                       setSelectedMenu(item);
                     }}
-                    className={`w-full rounded-3xl px-4 py-3 text-left text-sm font-semibold transition-all ${selectedMenu === item ? 'bg-[#f1b80c] text-[#1e222b]' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                    className={`w-full rounded-3xl px-4 py-3 text-left text-md font-semibold transition-all ${selectedMenu === item ? 'bg-[#f1b80c] text-[#1e222b]' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
                   >
                     {item}
                   </button>

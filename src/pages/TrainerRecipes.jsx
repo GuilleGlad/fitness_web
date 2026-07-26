@@ -107,6 +107,19 @@ const RecipeForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel,
         </div>
       </label>
 
+      <label className="block space-y-2 text-sm text-slate-200">
+        <span>Pública</span>
+        <select
+          name="is_public"
+          value={form.is_public}
+          onChange={handleChange}
+          className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+        >
+          <option value="1" className="bg-[#0f172a]">En Pagina Principal</option>
+          <option value="0" className="bg-[#0f172a]">Solo a los Clientes</option>
+        </select>
+      </label>
+
       <label className="flex items-center gap-3 text-sm text-slate-200">
         <input type="checkbox" name="status" checked={form.status} onChange={handleChange} className="h-4 w-4 rounded border-slate-700 bg-[#0f172a] text-[#f1b80c] focus:ring-[#f1b80c]" />
         <span>Activa</span>
@@ -165,6 +178,7 @@ const TrainerRecipes = () => {
             instructions: r.instructions,
             image_url: r.image_url,
             status: !!r.status,
+            is_public: Number(r.is_public)
           }))
         );
       } catch (err) {
@@ -227,6 +241,7 @@ const TrainerRecipes = () => {
       instructions: form.instructions.trim(),
       image_url: form.image_url.trim(),
       status: form.status ? '1' : '0',
+      is_public: form.is_public
     };
 
     if (editingId) {
@@ -234,7 +249,7 @@ const TrainerRecipes = () => {
     }
 
     if (editingId) {
-      setRecipes((prev) => prev.map((r) => (r.id === editingId ? { ...r, ...payload, status: payload.status === '1' } : r)));
+      setRecipes((prev) => prev.map((r) => (r.id === editingId ? { ...r, ...payload, status: payload.status === '1', is_public: Number(form.is_public) } : r)));
       cancelEdit();
       try {
         const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
@@ -262,6 +277,7 @@ const TrainerRecipes = () => {
           id: saved.id || Date.now(),
           ...payload,
           status: payload.status === '1',
+          is_public: Number(form.is_public)
         },
       ]);
 
@@ -281,6 +297,7 @@ const TrainerRecipes = () => {
       instructions: recipe.instructions,
       image_url: recipe.image_url,
       status: !!recipe.status,
+      is_public: recipe.is_public
     });
     setEditingId(recipe.id);
     setShowEditModal(true);
@@ -375,6 +392,7 @@ const TrainerRecipes = () => {
                   <th className="px-6 py-4 font-medium text-slate-400">Título</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Ingredientes</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Estado</th>
+                  <th className="px-6 py-4 font-medium text-slate-400">Pública</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Acciones</th>
                 </tr>
               </thead>
@@ -399,6 +417,10 @@ const TrainerRecipes = () => {
                         {r.status ? 'Activa' : 'Inactiva'}
                       </span>
                     </td>
+                    <td>
+                    {r.is_public === 1 && <span className="rounded-full bg-slate-800 text-xs text-green-400">Página Principal</span>}
+                    {r.is_public === 0 && <span className="rounded-full bg-slate-800 text-xs text-yellow-400">Para Clientes</span>}
+                    </td>                    
                     <td className="px-6 py-4">
                       <div className="flex gap-2 opacity-70 group-hover:opacity-100">
                         <button onClick={() => handleEdit(r)} className="rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e]">Editar</button>

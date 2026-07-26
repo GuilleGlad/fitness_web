@@ -455,7 +455,7 @@ const TrainerExercises = () => {
                     </td>
                     <td>
                     {exercise.publico === 1 && <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-green-400">Página Principal</span>}
-                    {exercise.publico === 0 && <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-yellow-400">Solo para Clientes</span>}
+                    {exercise.publico === 0 && <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-yellow-400">Para Clientes</span>}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2 opacity-70 group-hover:opacity-100">
