@@ -27,6 +27,7 @@
        cropping the edges if necessary to maintain aspect ratio. */
     object-fit: cover; 
     z-index: 1; /* Place the video below any foreground content */
+    overflow: hidden;
 }
 
 /* Optional: Styling for content that might sit on top of the video */

@@ -1,67 +1,84 @@
 import React from 'react';
 import Logo from './Logo';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faPhone, faLocationDot } from '@fortawesome/free-solid-svg-icons';
+import { faFacebook, faXTwitter, faYoutube, faInstagram, faTiktok } from '@fortawesome/free-brands-svg-icons';
 import BigLink from './BigLink';
-import { faFacebook } from '@fortawesome/free-brands-svg-icons';
-import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
-import { faYoutube } from '@fortawesome/free-brands-svg-icons';
-import { faInstagram } from '@fortawesome/free-brands-svg-icons';
-import { faTiktok } from '@fortawesome/free-brands-svg-icons';
-import { faPhone } from '@fortawesome/free-solid-svg-icons';
-import { faLocation } from '@fortawesome/free-solid-svg-icons';
 
-const Footer = ({logoPath, email, links}) => {
-    var defaultlogoPath = '/images/Logo-01-1-1.png';
-    if(logoPath){
-        defaultlogoPath = logoPath;
-    }
-    return (
-        <div className="flex flex-col">
-            <div className="flex bg-black mr-32">
-                <div className="flex flex-col w-1/4">
-                    <img className="w-1/3" src={defaultlogoPath} alt='AdrianFitness'></img>
-                    <span className='text-white text-sm mt-2'>Have any question? Reach out to us!</span>
-                    <div className="flex gap-2 items-center">
-                        <FontAwesomeIcon icon={faEnvelope} className='text-customYellow'/><span className='text-white font-bold text-2xl'>{email}</span>
-                    </div>
-                    <div className="flex flex-col mt-20">
-                        <span className='text-white text-sm'>Folow us on</span>
-                        <div className="flex gap-2">
-                            <button className="bg-gray-200 rounded p-2"><FontAwesomeIcon icon={faFacebook} color='black' size='2x'></FontAwesomeIcon></button>
-                            <button className="bg-gray-200 rounded p-2"><FontAwesomeIcon icon={faXTwitter} color='black' size='2x'></FontAwesomeIcon></button>
-                            <button className="bg-gray-200 rounded p-2"><FontAwesomeIcon icon={faYoutube} color='black' size='2x'></FontAwesomeIcon></button>
-                            <button className="bg-gray-200 rounded p-2"><FontAwesomeIcon icon={faInstagram} color='black' size='2x'></FontAwesomeIcon></button>
-                            <button className="bg-gray-200 rounded p-2"><FontAwesomeIcon icon={faTiktok} color='black' size='2x'></FontAwesomeIcon></button>
-                        </div>
-                    </div>
-                </div>
-                {links && <div className="flex flex-col w-3/4 ">
-                    {
-                        links.map((link, index) => (
-                            <BigLink key={index} text={link} color="text-white" size="text-2xl" />
-                    ))}                
-                </div>
-                }            
+const Footer = ({ logoPath, email, links }) => {
+  const defaultLogoPath = logoPath || '/images/Logo-01-1-1.png';
+
+  return (
+    <footer className="bg-black text-white w-full px-6 py-16">
+
+      {/* GRID PRINCIPAL */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
+
+        {/* Columna 1: Logo + Contacto */}
+        <div className="flex flex-col gap-6">
+          <img src={defaultLogoPath} alt="Logo" className="w-32" />
+
+          <p className="text-sm opacity-80">
+            ¿Alguna pregunta? No dude en contactarnos.
+          </p>
+
+          <div className="flex items-center gap-3">
+            <FontAwesomeIcon icon={faEnvelope} className="text-customYellow" />
+            <span className="text-xl font-bold">{email}</span>
+          </div>
+
+          {/* Redes sociales */}
+          <div className="flex flex-col gap-3 mt-4">
+            <span className="text-sm opacity-80">Síguenos en</span>
+            <div className="flex gap-3">
+              {[faFacebook, faXTwitter, faYoutube, faInstagram, faTiktok].map((icon, i) => (
+                <button
+                  key={i}
+                  className="bg-gray-200 hover:bg-customYellow transition p-3 rounded-lg"
+                >
+                  <FontAwesomeIcon icon={icon} className="text-black" size="lg" />
+                </button>
+              ))}
             </div>
-            <div className='m-20'></div>
-            <div className='flex mt-10 justify-around bg-gray-800 rounded-lg p-2 '>
-                <div className="w-1/2 flex">
-                    <div className='ml-2'>
-                        <FontAwesomeIcon icon={faPhone} className='text-customYellow'/> 
-                        <span className='text-white text-sm'>+1 (888) 807-5000</span>
-                    </div>
-                    <div className='ml-2'>
-                        <FontAwesomeIcon icon={faLocation} className='text-customYellow'/> 
-                        <span className='text-white text-sm'>Jl. Soekarno-hatta</span>                        
-                    </div>
-                </div>
-                <div className="w-1/32 ">
-                    <span className='text-white text-sm'>Copyright © 2025 Musclefit | Powered by Onecontributor</span>
-                </div>
-            </div>
+          </div>
         </div>
-    )
-}
+
+        {/* Columna 2: Links */}
+        {links && (
+          <div className="flex flex-col gap-4">
+            {links.map((link, index) => (
+              <BigLink
+                key={index}
+                text={link}
+                color="text-white"
+                size="text-xl"
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Columna 3: Información */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <FontAwesomeIcon icon={faPhone} className="text-customYellow" />
+            <span className="text-sm">+1 (888) 807-5000</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <FontAwesomeIcon icon={faLocationDot} className="text-customYellow" />
+            <span className="text-sm">Jl. Soekarno-hatta</span>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Línea inferior */}
+      <div className="mt-16 border-t border-gray-700 pt-6 text-center text-sm opacity-70">
+        Copyright © 2025 Musclefit | Powered by Onecontributor
+      </div>
+
+    </footer>
+  );
+};
 
 export default Footer;

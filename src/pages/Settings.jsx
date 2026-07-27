@@ -57,9 +57,7 @@ const Settings = () => {
             });
           }
         });
-        // console.log(settings);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-        // console.log('Ajustes cargados correctamente.');
       } catch (error) {
         console.error('Error cargando ajustes:', error);
         const saved = localStorage.getItem(STORAGE_KEY);
@@ -72,7 +70,7 @@ const Settings = () => {
           console.error('No se pudieron recuperar los ajustes:', error);
         }
       }
-    }
+    };
     fetchSettings();
   }, []);
 
@@ -130,7 +128,7 @@ const Settings = () => {
       if (libraryTarget === 'about') {
         const aboutItem = validItems.find((item) => item.mediaType === 'image') || validItems[0];
         if (!aboutItem) {
-          toast.error('Selecciona una imagen para el logotipo.');
+          toast.error('Selecciona una imagen para Acerca de Nosotros.');
           return;
         }
         setSettings((previous) => ({ ...previous, aboutUrl: aboutItem.url }));
@@ -143,10 +141,6 @@ const Settings = () => {
       }
 
       if (libraryTarget === 'gallery') {
-        // setSettings((previous) => ({
-        //   ...previous,
-        //   homeCarouselUrls: previous.homeCarouselUrls ? `${previous.homeCarouselUrls}\n${urls.join('\n')}` : urls.join('\n'),
-        // }));
         setSettings((previous) => ({
           ...previous,
           homeCarouselUrls: urls.join('\n'),
@@ -201,271 +195,268 @@ const Settings = () => {
     }
   };
 
+  // ---- reusable pair row component ----
+  const PairRow = ({ icon, label, description, controlsLeft, previewRight }) => (
+    <div className="rounded-[32px] border border-slate-800 bg-[#141820]/90 shadow-xl overflow-hidden transition-all hover:border-slate-700/60">
+      <div className="flex flex-col md:flex-row">
+        {/* LEFT — controls */}
+        <div className="flex-1 p-6 lg:p-8 border-b md:border-b-0 md:border-r border-slate-800/50">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f1b80c]/15 text-lg">
+              {icon}
+            </span>
+            <div>
+              <h3 className="text-base font-semibold text-white">{label}</h3>
+              {description && <p className="mt-0.5 text-xs text-slate-500">{description}</p>}
+            </div>
+          </div>
+          <div className="flex flex-col gap-3">{controlsLeft}</div>
+        </div>
+
+        {/* RIGHT — preview */}
+        <div className="flex-[1.2] p-6 lg:p-8 bg-gradient-to-br from-slate-900/40 to-transparent">
+          <p className="mb-3 text-xs uppercase tracking-[0.25em] text-slate-500">Vista previa</p>
+          {previewRight}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
+      <Toaster position="top-center" toastOptions={{ duration: 3000, style: { background: '#1e293b', color: '#fff', borderRadius: 16 } }} />
       <div className="min-h-screen bg-[#0d1117] text-white">
-        <div className="mx-auto max-w-[1400px] space-y-6 p-6 lg:p-8">
-          <div className="flex flex-col gap-4 rounded-[40px] border border-slate-800 bg-[#141820] p-6 shadow-2xl lg:flex-row lg:items-center lg:justify-between">
+        <div className="mx-auto max-w-4xl space-y-6 p-6 lg:p-8">
+
+          {/* Header */}
+          <div className="flex flex-col gap-5 rounded-[40px] border border-slate-800 bg-[#141820] p-6 lg:p-8 shadow-2xl">
             <div>
               <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Admin</p>
               <h1 className="mt-3 text-4xl font-bold text-white">Ajustes de la web</h1>
-              <p className="mt-2 max-w-2xl text-slate-400">
-                Configura el logotipo, la galería del carrusel principal y las imágenes de anuncios desde la biblioteca.
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-400">
+                Configura el logotipo, títulos, galerías y anuncios. Cada control muestra su vista previa en tiempo real.
               </p>
             </div>
             <button
               type="button"
               onClick={() => navigate('/dashboard')}
-              className="inline-flex items-center justify-center rounded-3xl bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]"
+              className="w-fit rounded-3xl bg-[#f1b80c] px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]"
             >
               Volver al dashboard
             </button>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <section className="rounded-[40px] border border-slate-800 bg-[#141820] p-6 shadow-2xl">
-              <div className="mb-6">
-                <h2 className="text-2xl font-semibold text-white">Configuración</h2>
-                <p className="text-sm text-slate-400">Cada campo acepta URLs directas que puedes seleccionar desde la biblioteca modal.</p>
-              </div>
+          {/* ---- SINGLE COLUMN PAIRED ROWS ---- */}
+          <form onSubmit={handleSubmit}>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <label htmlFor="titulo" className="block space-y-2 text-sm text-slate-200">
-                  <span>Titulo</span>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
-                      id="titulo"
-                      name="titulo"
-                      value={settings.titulo}
-                      onChange={handleChange}
-                      className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                      placeholder="Ejemplo de título"
-                    />
-                    <button type="button" onClick={() => handleClear('titulo')} className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
+            {/* 1 — Título */}
+            <PairRow
+              icon="📝"
+              label="Título"
+              description="El título principal de la página."
+              controlsLeft={
+                <>
+                  <input
+                    name="titulo"
+                    value={settings.titulo}
+                    onChange={handleChange}
+                    className="w-full rounded-2xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-sm text-white outline-none transition focus:border-[#f1b80c]"
+                    placeholder="Ejemplo de título"
+                  />
+                  <button type="button" onClick={() => handleClear('titulo')} className="w-fit rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                    Limpiar
+                  </button>
+                </>
+              }
+              previewRight={
+                settings.titulo ? (
+                  <div className="rounded-2xl border border-slate-700/50 bg-slate-900/60 px-4 py-3">
+                    <p className="text-lg font-extrabold text-white leading-tight">{settings.titulo}</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
+                    <span className="text-xl text-slate-600">⚠️</span>
+                    <p className="text-sm text-slate-500">Sin título establecido.</p>
+                  </div>
+                )
+              }
+            />
+
+            {/* 2 — Logotipo */}
+            <PairRow
+              icon="🖼"
+              label="Logotipo"
+              description="Imagen del logotipo principal."
+              controlsLeft={
+                <>
+                  <input hidden name="logoUrl" value={settings.logoUrl} onChange={handleChange} />
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => openLibraryPicker('logo')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                      📚 Biblioteca
+                    </button>
+                    <button type="button" onClick={() => handleClear('logoUrl')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
                       Limpiar
                     </button>
                   </div>
-                </label>
-
-                <label htmlFor="logoUrl" className="block space-y-2 text-sm text-slate-200">
-                  <span>Logotipo</span>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
-                      hidden
-                      id="logoUrl"
-                      name="logoUrl"
-                      value={settings.logoUrl}
-                      onChange={handleChange}
-                      className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                      placeholder="https://.../logo.png"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openLibraryPicker('logo')}
-                        className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-                      >
-                        Biblioteca
-                      </button>
-                      <button type="button" onClick={() => handleClear('logoUrl')} className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
-                        Limpiar
-                      </button>
-                    </div>
+                </>
+              }
+              previewRight={
+                previewUrls.logo ? (
+                  <div className="flex items-center gap-4 rounded-2xl border border-slate-700/50 bg-slate-900/60 px-4 py-3">
+                    <img src={previewUrls.logo} alt="Logotipo" className="h-14 w-auto rounded-xl object-contain" />
                   </div>
-                </label>
-
-                <label htmlFor="logoUrl" className="block space-y-2 text-sm text-slate-200">
-                  <span>Imagen para la sección Acerca de Nosotros</span>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
-                    hidden 
-                      id="aboutUrl"
-                      name="aboutUrl"
-                      value={settings.aboutUrl}
-                      onChange={handleChange}
-                      className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                      placeholder="https://.../logo.png"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openLibraryPicker('about')}
-                        className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-                      >
-                        Biblioteca
-                      </button>
-                      <button type="button" onClick={() => handleClear('aboutUrl')} className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
-                        Limpiar
-                      </button>
-                    </div>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
+                    <span className="text-xl text-slate-600">🖼</span>
+                    <p className="text-sm text-slate-500">Sin logotipo seleccionado.</p>
                   </div>
-                </label>
+                )
+              }
+            />
 
-                <label htmlFor="logoUrl" className="block space-y-2 text-sm text-slate-200">
-                  <span>Video de Fondo</span>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
-                    hidden
-                      id="videoUrl"
-                      name="videoUrl"
-                      value={settings.videoUrl}
-                      onChange={handleChange}
-                      className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                      placeholder="https://.../video.mp4"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openLibraryPicker('video')}
-                        className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-                      >
-                        Biblioteca
-                      </button>
-                      <button type="button" onClick={() => handleClear('videoUrl')} className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
-                        Limpiar
-                      </button>
-                    </div>
+            {/* 3 — Acerca de Nosotros */}
+            <PairRow
+              icon="ℹ️"
+              label="Acerca de Nosotros"
+              description="Imagen para la sección 'Acerca de Nosotros'."
+              controlsLeft={
+                <>
+                  <input hidden name="aboutUrl" value={settings.aboutUrl} onChange={handleChange} />
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => openLibraryPicker('about')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                      📚 Biblioteca
+                    </button>
+                    <button type="button" onClick={() => handleClear('aboutUrl')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                      Limpiar
+                    </button>
                   </div>
-                </label>
-
-                <label htmlFor="homeCarouselUrls" className="block space-y-2 text-sm text-slate-200">
-                  <span>Galería del carrusel principal</span>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <textarea
-                    hidden
-                      id="homeCarouselUrls"
-                      name="homeCarouselUrls"
-                      value={settings.homeCarouselUrls}
-                      onChange={handleChange}
-                      rows={5}
-                      className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                      placeholder="https://.../foto-1.jpg https://.../foto-2.jpg"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openLibraryPicker('gallery')}
-                        className="rounded-3xl border border-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-                      >
-                        Biblioteca
-                      </button>
-                      <button type="button" onClick={() => handleClear('homeCarouselUrls')} className="rounded-3xl border border-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
-                        Limpiar
-                      </button>
-                    </div>
+                </>
+              }
+              previewRight={
+                previewUrls.about ? (
+                  <div className="flex items-center gap-4 rounded-2xl border border-slate-700/50 bg-slate-900/60 px-4 py-3">
+                    <img src={previewUrls.about} alt="Acerca de nosotros" className="h-14 w-auto rounded-xl object-contain" />
                   </div>
-                </label>
-
-                <label htmlFor="adsCarouselUrls" className="block space-y-2 text-sm text-slate-200">
-                  <span>Imágenes para anuncios</span>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <textarea
-                    hidden
-                      id="adsCarouselUrls"
-                      name="adsCarouselUrls"
-                      value={settings.adsCarouselUrls}
-                      onChange={handleChange}
-                      rows={5}
-                      className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                      placeholder="https://.../ad-1.jpg https://.../ad-2.jpg"
-                    />
-                    <div className="flex  gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openLibraryPicker('ads')}
-                        className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-                      >
-                        Biblioteca
-                      </button>
-                      <button type="button" onClick={() => handleClear('adsCarouselUrls')} className="rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
-                        Limpiar
-                      </button>
-                    </div>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
+                    <span className="text-xl text-slate-600">ℹ️</span>
+                    <p className="text-sm text-slate-500">Sin imagen seleccionada.</p>
                   </div>
-                </label>
+                )
+              }
+            />
 
-                <button
-                  type="submit"
-                  className="w-full rounded-3xl bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]"
-                >
-                  Guardar ajustes
-                </button>
-              </form>
-            </section>
-
-            <section className="rounded-[40px] border border-slate-800 bg-[#141820] p-6 shadow-2xl">
-              <div className="mb-6">
-                <h2 className="text-2xl font-semibold text-white">Vista previa</h2>
-                <p className="text-sm text-slate-400">Así se verán las URLs seleccionadas en la página principal.</p>
-              </div>
-
-              <div className="space-y-5">
-                <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
-                  <p className="text-sm font-semibold text-slate-200">Titulo</p>
-                  {settings.titulo ? (
-                    <p className="mt-4 text-lg text-gray-400 font-extrabold">{settings.titulo}</p>
-                  ) : (
-                    <p className="mt-4 text-sm text-slate-400">Aún no hay titlo establecido.</p>
-                  )}
-                </div>
-
-                <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
-                  <p className="text-sm font-semibold text-slate-200">Logotipo</p>
-                  {previewUrls.logo ? (
-                    <img src={previewUrls.logo} alt="Vista previa del logotipo" className="mt-4 h-20 w-auto rounded-2xl object-contain" />
-                  ) : (
-                    <p className="mt-4 text-sm text-slate-400">Aún no hay logotipo seleccionado.</p>
-                  )}
-                </div>
-
-                <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
-                  <p className="text-sm font-semibold text-slate-200">Acerca de Nosotros</p>
-                  {previewUrls.about ? (
-                    <img src={previewUrls.about} alt="Vista previa de la Imagen" className="mt-4 h-20 w-auto rounded-2xl object-contain" />
-                  ) : (
-                    <p className="mt-4 text-sm text-slate-400">Aún no hay imagen seleccionada.</p>
-                  )}
-                </div>
-
-                <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
-                  <p className="text-sm font-semibold text-slate-200">Acerca de Nosotros</p>
-                  {settings.videoUrl ? (
-                    <video src={settings.videoUrl} className="mt-4 w-auto rounded-2xl object-contain " autoPlay loop muted playsInline/>
-                  ) : (
-                    <p className="mt-4 text-sm text-slate-400">Aún no hay video seleccionado.</p>
-                  )}
-                </div>
-
-                <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
-                  <p className="text-sm font-semibold text-slate-200">Galería del carrusel principal</p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {previewUrls.gallery.length > 0 ? previewUrls.gallery.map((item) => (
-                      <span key={item} className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs text-slate-200">
-                        {/* {item} */}
-                        <img src={item} alt="Vista previa del carrusel" className="mt-2 h-16 w-auto rounded-2xl object-contain" />
-                      </span>
-                    )) : <span className="text-sm text-slate-400">No hay URLs cargadas.</span>}
+            {/* 4 — Video de Fondo */}
+            <PairRow
+              icon="🎬"
+              label="Video de Fondo"
+              description="URL del video para el fondo de cabecera."
+              controlsLeft={
+                <>
+                  <input hidden name="videoUrl" value={settings.videoUrl} onChange={handleChange} />
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => openLibraryPicker('video')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                      📚 Biblioteca
+                    </button>
+                    <button type="button" onClick={() => handleClear('videoUrl')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                      Limpiar
+                    </button>
                   </div>
-                </div>
-
-                <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
-                  <p className="text-sm font-semibold text-slate-200">Imágenes para anuncios</p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {previewUrls.ads.length > 0 ? previewUrls.ads.map((item) => (
-                      <span key={item} className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs text-slate-200">
-                        {/* {item} */}
-                        <img src={item} alt="Vista previa del anuncio" className="mt-2 h-16 w-auto rounded-2xl object-contain" />
-                      </span>
-                    )) : <span className="text-sm text-slate-400">No hay URLs cargadas.</span>}
+                </>
+              }
+              previewRight={
+                settings.videoUrl ? (
+                  <video src={settings.videoUrl} className="w-full max-w-xs rounded-xl object-cover" autoPlay loop muted playsInline />
+                ) : (
+                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
+                    <span className="text-xl text-slate-600">🎬</span>
+                    <p className="text-sm text-slate-500">Sin video seleccionado.</p>
                   </div>
-                </div>
-              </div>
-            </section>
-          </div>
+                )
+              }
+            />
 
+            {/* 5 — Galería del carrusel principal */}
+            <PairRow
+              icon="🖼"
+              label="Galería del Carrusel Principal"
+              description="Imágenes para el slider principal. Puedes pegar URLs separadas por coma."
+              controlsLeft={
+                <>
+                  <textarea hidden name="homeCarouselUrls" value={settings.homeCarouselUrls} onChange={handleChange} rows={3} className="w-full rounded-2xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-sm text-white outline-none transition focus:border-[#f1b80c]" placeholder="https://.../foto-1.jpg, https://.../foto-2.jpg" />
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => openLibraryPicker('gallery')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                      📚 Biblioteca
+                    </button>
+                    <button type="button" onClick={() => handleClear('homeCarouselUrls')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                      Limpiar
+                    </button>
+                  </div>
+                </>
+              }
+              previewRight={
+                previewUrls.gallery.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {previewUrls.gallery.map((item) => (
+                      <img key={item} src={item} alt="Carrusel" className="h-16 w-16 rounded-xl border border-slate-700/50 object-cover bg-slate-900" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
+                    <span className="text-xl text-slate-600">🖼</span>
+                    <p className="text-sm text-slate-500">Sin imágenes cargadas.</p>
+                  </div>
+                )
+              }
+            />
+
+            {/* 6 — Imágenes para anuncios */}
+            <PairRow
+              icon="📢"
+              label="Imágenes para Anuncios"
+              description="URLs de las imágenes promocionales del carrusel de anuncios."
+              controlsLeft={
+                <>
+                  <textarea hidden name="adsCarouselUrls" value={settings.adsCarouselUrls} onChange={handleChange} rows={3} className="w-full rounded-2xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-sm text-white outline-none transition focus:border-[#f1b80c]" placeholder="https://.../ad-1.jpg, https://.../ad-2.jpg" />
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => openLibraryPicker('ads')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                      📚 Biblioteca
+                    </button>
+                    <button type="button" onClick={() => handleClear('adsCarouselUrls')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                      Limpiar
+                    </button>
+                  </div>
+                </>
+              }
+              previewRight={
+                previewUrls.ads.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {previewUrls.ads.map((item) => (
+                      <img key={item} src={item} alt="Anuncio" className="h-16 w-16 rounded-xl border border-slate-700/50 object-cover bg-slate-900" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
+                    <span className="text-xl text-slate-600">📢</span>
+                    <p className="text-sm text-slate-500">Sin anuncios cargados.</p>
+                  </div>
+                )
+              }
+            />
+
+            {/* Submit */}
+            <button
+              type="submit"
+              className="w-full rounded-3xl bg-gradient-to-r from-[#f1b80c] to-[#e5a50a] px-6 py-4 text-sm font-bold tracking-wide text-slate-950 shadow-lg shadow-[#f1b80c]/20 transition hover:from-[#d69e2e] hover:to-[#c7940a]"
+            >
+              Guardar ajustes
+            </button>
+          </form>
+
+          {/* Library Modal */}
           {isLibraryOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-              <div className="w-full max-w-6xl">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-6xl animate-[scaleIn_0.25s_ease-out]">
                 <TrainerLibrary
                   isModal
                   selectionMode={libraryTarget === 'gallery' || libraryTarget === 'ads' ? 'multiple' : 'single'}
@@ -477,6 +468,14 @@ const Settings = () => {
           )}
         </div>
       </div>
+
+      {/* scale-in animation for modal */}
+      <style>{`
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </>
   );
 };

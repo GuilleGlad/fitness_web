@@ -23,12 +23,12 @@ import ImageCard from '../components/ImageCard';
 function Homepage() {
     const apiUrl = process.env.REACT_APP_API_URL;
     const defaultSettings = {
-    logoUrl: '',
-    homeCarouselUrls: '',
-    adsCarouselUrls: '',
-    titulo: '',
-    video: ''
-    };    
+        logoUrl: '',
+        homeCarouselUrls: '',
+        adsCarouselUrls: '',
+        titulo: '',
+        video: ''
+    };
     const STORAGE_KEY = 'elitefit_settings';
     const [settings, setSettings] = useState({
         logoUrl: '',
@@ -43,90 +43,90 @@ function Homepage() {
     const [exercises, setExercises] = useState([]);
 
     useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        await axios.get(`${apiUrl}/admin/settings`).then((response) => {
-          const { data } = response;
-          if (data) {
-            const {result} = data;
-            const result_arr = result[0];
-            const {logo , title, video} = result_arr;
-            setSettings({
-              logoUrl: result_arr.logo || '',
-              homeCarouselUrls: (JSON.parse(result_arr.gallery) || []).join('\n'),
-              adsCarouselUrls: (JSON.parse(result_arr.ads) || []).join('\n'),
-              titulo: result_arr.title || '',
-              videoUrl: result_arr.video_background || '',
-              aboutUrl: result_arr.about || ''
-            });
-          }
-        });
-        console.log(settings);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-        console.log('Ajustes cargados correctamente.');
-      } catch (error) {
-        console.error('Error cargando ajustes:', error);
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (!saved) return;
+        const fetchSettings = async () => {
+            try {
+                await axios.get(`${apiUrl}/admin/settings`).then((response) => {
+                    const { data } = response;
+                    if (data) {
+                        const { result } = data;
+                        const result_arr = result[0];
+                        const { logo, title, video } = result_arr;
+                        setSettings({
+                            logoUrl: result_arr.logo || '',
+                            homeCarouselUrls: (JSON.parse(result_arr.gallery) || []).join('\n'),
+                            adsCarouselUrls: (JSON.parse(result_arr.ads) || []).join('\n'),
+                            titulo: result_arr.title || '',
+                            videoUrl: result_arr.video_background || '',
+                            aboutUrl: result_arr.about || ''
+                        });
+                    }
+                });
+                console.log(settings);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+                console.log('Ajustes cargados correctamente.');
+            } catch (error) {
+                console.error('Error cargando ajustes:', error);
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (!saved) return;
 
-        try {
-          const parsed = JSON.parse(saved);
-          setSettings({ ...defaultSettings, ...parsed });
-        } catch (error) {
-          console.error('No se pudieron recuperar los ajustes:', error);
-        }
-      }
-    }
-
-    const fetchNews = async () => {
-        try{
-            const response = await axios.get(`${apiUrl}/news/list`);
-            const { data } = response;
-            if(data){
-                const {filas} = data;
-                console.log('Noticias cargadas:', filas);
-                setNews(filas);
+                try {
+                    const parsed = JSON.parse(saved);
+                    setSettings({ ...defaultSettings, ...parsed });
+                } catch (error) {
+                    console.error('No se pudieron recuperar los ajustes:', error);
+                }
             }
         }
-        catch(error){
-            console.error('Error cargando noticias:', error);
-        }
-    }
 
-    const fetchRecipes = async () => {
-        try{
-            const response = await axios.get(`${apiUrl}/recipes/list-public`);
-            const { data } = response;
-            if(data){
-                const {filas} = data;
-                console.log('Recetas cargadas:', filas);
-                setRecipes(filas);
+        const fetchNews = async () => {
+            try {
+                const response = await axios.get(`${apiUrl}/news/list`);
+                const { data } = response;
+                if (data) {
+                    const { filas } = data;
+                    console.log('Noticias cargadas:', filas);
+                    setNews(filas);
+                }
+            }
+            catch (error) {
+                console.error('Error cargando noticias:', error);
             }
         }
-        catch(error){
-            console.error('Error cargando noticias:', error);
-        }        
-    }
 
-    const fetchExercises = async() => {
-        try{
-            const response = await axios.get(`${apiUrl}/exercises/list-public`);
-            const { data } = response;
-            if(data){
-                const {exercises} = data;
-                console.log('Ejercicios cargados:', exercises);
-                setExercises(exercises);
+        const fetchRecipes = async () => {
+            try {
+                const response = await axios.get(`${apiUrl}/recipes/list-public`);
+                const { data } = response;
+                if (data) {
+                    const { filas } = data;
+                    console.log('Recetas cargadas:', filas);
+                    setRecipes(filas);
+                }
+            }
+            catch (error) {
+                console.error('Error cargando noticias:', error);
             }
         }
-        catch(error){
-            console.error('Error cargando noticias:', error);
-        }                
-    }
 
-    fetchSettings();
-    fetchNews();
-    fetchRecipes();
-    fetchExercises();
+        const fetchExercises = async () => {
+            try {
+                const response = await axios.get(`${apiUrl}/exercises/list-public`);
+                const { data } = response;
+                if (data) {
+                    const { exercises } = data;
+                    console.log('Ejercicios cargados:', exercises);
+                    setExercises(exercises);
+                }
+            }
+            catch (error) {
+                console.error('Error cargando noticias:', error);
+            }
+        }
+
+        fetchSettings();
+        fetchNews();
+        fetchRecipes();
+        fetchExercises();
     }, []);
 
     // NOTE: Replace '/videos/hero-bg.mp4' with the actual path to your video asset.
@@ -160,7 +160,19 @@ function Homepage() {
         slidesToShow: 3,
         slidesToScroll: 1,
         autoplay: true,
-        
+        responsive: [
+            {
+                breakpoint: 480, // Tablet and below
+                settings: {
+                    dots: true,
+                    infinite: true,
+                    speed: 500,
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                    autoPlay: true
+                }
+            },
+        ]
     };
 
     const sliderSettingsNews = {
@@ -170,58 +182,81 @@ function Homepage() {
         slidesToShow: 3,
         slidesToScroll: 1,
         autoplay: true,
-               
+        responsive: [
+            {
+                breakpoint: 480, // Tablet and below
+                settings: {
+                    dots: true,
+                    infinite: true,
+                    speed: 500,
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                    autoPlay: true
+                }
+            },
+            {
+                breakpoint: 830, // Tablet and below
+                settings: {
+                    dots: true,
+                    infinite: true,
+                    speed: 500,
+                    slidesToShow: 2,
+                    slidesToScroll: 1,
+                    autoPlay: true
+                }
+            },            
+        ]
     };
 
     return (
         <>
-        <Helmet>
-            <title>{settings.titulo || "Elite Fit Training"}</title>
-        </Helmet>
-        <div className="homepage-wrapper bg-black ">
-            <div className="video-background-container ">
+            <Helmet>
+                <title>{settings.titulo || "Elite Fit Training"}</title>
+            </Helmet>
+            <div className="homepage-wrapper bg-black overflow-x-hidden">
+                <div className="video-background-container ">
 
-                {/* 
+                    {/* 
                     The <video> element handles the background media.
                     - autoPlay, loop, muted: Standard practices for background video players. 
                     (It's highly recommended to mute background videos).
                 */}
-                <video
-                    className="video-background"
-                    src={videoPath1}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    poster="/path/to/placeholder.jpg" // Optional: shows an image before video loads
-                >
-                    {/* Fallback for older browsers */}
-                    Your browser does not support the video tag.
-                </video>
+                    <video
+                        className="video-background"
+                        src={videoPath1}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        poster="/path/to/placeholder.jpg" // Optional: shows an image before video loads
+                    >
+                        {/* Fallback for older browsers */}
+                        Your browser does not support the video tag.
+                    </video>
 
-                {/* 
+                    {/* 
                     This wrapper div is crucial for placing foreground content (text, buttons, etc.) 
                     on top of the video background, using z-index.
                 */}
-                <div className="video-content-overlay lg:ml-16">
-                    {/* PARENT COMPONENTS SHOULD PLACE THEIR CONTENT HERE */}
-                    {/* Example Content: */}
-                    <div className='min-h-[80vh]'>
-                        <Navbar logoPath={logoPath}></Navbar>
-                        <div className='items-center absolute bottom-0 flex-1 md:flex'>
-                            <div className="w-full lg:w-1/2">
-                                <FloatingCard trainerPic={trainerPic} trainerName={trainerName} ></FloatingCard>
-                            </div>
-                            <div className="w-full md:w-1/2 lg:w-2/3 mr-32">
-                                <BigTitle title="ALCANZA TUS METAS JUNTO A NOSOTROS"></BigTitle>
+                    <div className="video-content-overlay lg:ml-16">
+                        {/* PARENT COMPONENTS SHOULD PLACE THEIR CONTENT HERE */}
+                        {/* Example Content: */}
+                        <div className='min-h-[80vh]'>
+                            <Navbar logoPath={logoPath}></Navbar>
+                            <div className='items-center absolute bottom-0 flex-1 md:flex'>
+                                <div className="w-full lg:w-1/2 mb-10">
+                                    <FloatingCard trainerPic={trainerPic} trainerName={trainerName} ></FloatingCard>
+                                </div>
+                                <div className="w-full md:w-1/2 lg:w-2/3 mr-32">
+                                    <BigTitle title="ALCANZA TUS METAS JUNTO A NOSOTROS"></BigTitle>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div className='separator pt-32 bg-black'></div>
-            {/* ABOUT */}
-            {/* <div className="flex bg-black" id='about'>
+                <div className='separator lg:pt-32 pt-12 bg-black'></div>
+                {/* ABOUT */}
+                {/* <div className="flex bg-black" id='about'>
                 <div className="w-2/3 ">
                     <FloatingText text="ACERCA DE NOSOTROS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
                 </div>
@@ -245,10 +280,10 @@ function Homepage() {
                     </div>
                 </div>
             </div>
-            <div className='separator pt-32 bg-black'></div> */}
-            {/* SERVICES */}
-            <>
-                {/* <div className='lg:mr-32 bg-black w-full'>
+            <div className='separator lg:pt-32 pt-12 bg-black'></div> */}
+                {/* SERVICES */}
+                <>
+                    {/* <div className='lg:mr-32 bg-black w-full'>
                     <div className="flex-1 lg:flex bg-black lg:mr-32">
                         <div className="w-1/4">
                             <FloatingText text="SERVICES" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
@@ -274,209 +309,298 @@ function Homepage() {
                         </div>
                     </div>
                 </div>
-                <div className='separator pt-32 bg-black'></div> */}
-                {/* RRSS */}
-                <div className="bg-black w-full flex mr-32">
-                    <span className="text-white ml-32 text-6xl w-1/4 font-semibold">Guiados por el mejor</span>
-                    <img src="/images/Shape-01.png" className='w-1/4' alt="" />
-                    <div className='w-1/4 ml-32'>
-                        <div className='grid grid-cols-2 relative top-60'>
-                            <ContadorRRSS logo="youtube" title="youtube" account="sergiozane" count="2,1M" />
-                            <ContadorRRSS logo="x" title="X" account="sergiozane" count="2,1M" />
-                            <ContadorRRSS logo="facebook" title="facebook" account="sergiozane" count="2,1M" />
-                            <ContadorRRSS logo="instagram" title="instagram" account="sergiozane" count="2,1M" />
-                        </div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                    </div>
-                </div>
-                <div className='separator pt-32 bg-black'></div>
-                {/* RESULTS */}
-                <div className="bg-black w-full flex-1 mr-32">
-                    <div className="flex-1 lg:flex bg-black lg:mr-32">
-                        <div className="w-1/4">
-                            <FloatingText text="RESULTADOS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
-                        </div>
-                        <div className='w-3/4'>
-                            <BigTitle title="RESULTADOS DE MIS CLIENTES" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
-                        </div>
-                    </div>
-                    <div className="flex-1 bg-black">
-                        <div id='carousel' className='ml-32 mr-32 mt-10 mb-20 p-10 rounded-lg bg-gray-800 '>
-                            <Slider {...sliderSettings} >
-                                {pictures.map((image, index) => (
-                                    <div key={`${image}-${index}`} className='shadow-lg shadow-black drop-shadow-lg'>
-                                        <img src={image} alt={`Slide ${index + 1}`} className="h-full w-full shadow-lg" />
-                                        {/* <span className='mt-3 block font-bold text-center'>Contenido destacado {index + 1}</span> */}
-                                    </div>
-                                ))}
-                            </Slider>
-                        </div>
-                    </div>
-                </div>
-                {/* <div className="bg-black w-full flex-1 mr-32">
-                    <div className="flex-1 lg:flex bg-black lg:mr-32">
-                        <div className="w-1/4">
-                            <FloatingText text="ADS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
-                        </div>
-                        <div className='w-3/4'>
-                            <BigTitle title="MARCAS Y PATROCINADORES" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
-                        </div>
-                    </div>
-                    <div className="flex-1 bg-black">
-                        <div id='carousel' className='ml-32 mr-32 mt-10 mb-20 p-10 rounded-lg bg-gray-800 '>
-                            <Slider {...sliderSettings} >
-                                {adsImages.map((image, index) => (
-                                    <div key={`${image}-${index}`} className='shadow-lg shadow-black drop-shadow-lg'>
-                                        <img src={image} alt={`Slide ${index + 1}`} className="h-full w-full " />
-                                    </div>
-                                ))}
-                            </Slider>
-                        </div>
-                    </div>
-                </div>                
-                <div className='separator pt-32 bg-black'></div> */}
-                {/* RRSS */}
-                <div className="bg-black w-full flex-1 mr-32 h-1/3">
-                    <div className="flex-1 lg:flex bg-black lg:mr-32">
-                        <div className="w-1/4">
-                            <FloatingText text="ADS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
-                        </div>
-                        <div className='w-3/4'>
-                            <BigTitle title="MARCAS Y PATROCINADORES" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
-                        </div>
-                    </div>
-                    <div className='separator pt-32 bg-black'></div>
+                <div className='separator lg:pt-32 pt-12 bg-black'></div> */}
+                    {/* RRSS */}
+<div className="bg-black w-full flex flex-col items-center px-6 lg:px-0">
 
-                    <div className="max-w-7xl mx-auto grid grid-cols-3 grid-rows-2 gap-6">
+  {/* TÍTULO */}
+  <div className="w-full flex justify-center mb-10">
+    <BigTitle
+      title="GUIADOS POR EL MEJOR"
+      color="text-white"
+      size="text-4xl lg:text-8xl"
+    />
+  </div>
 
-                        <div className="">
+  {/* BLOQUE IMAGEN + CONTADORES (solo horizontal en desktop) */}
+  <div className="w-full flex flex-col lg:flex-row lg:items-center lg:justify-center gap-10">
+
+    {/* Imagen */}
+    <div className="w-full lg:w-1/2 flex justify-center">
+      <img
+        src="/images/Shape-01.png"
+        className="w-full max-w-sm lg:max-w-md"
+        alt=""
+      />
+    </div>
+
+    {/* Contadores */}
+    <div className="w-full lg:w-1/2 flex justify-center">
+      <div className="grid grid-cols-2 gap-4 w-full max-w-md">
+        <ContadorRRSS logo="youtube" title="youtube" account="sergiozane" count="2,1M" />
+        <ContadorRRSS logo="x" title="X" account="sergiozane" count="2,1M" />
+        <ContadorRRSS logo="facebook" title="facebook" account="sergiozane" count="2,1M" />
+        <ContadorRRSS logo="instagram" title="instagram" account="sergiozane" count="2,1M" />
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+
+
+                    <div className='separator lg:pt-32 pt-12 bg-black'></div>
+                    {/* RESULTS */}
+                    <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
+
+                        {/* Encabezado */}
+                        <div className="flex flex-col lg:flex-row bg-black lg:mr-32">
+
+                            <div className="lg:w-1/4 w-full mb-4 lg:mb-0">
+                                {/* <FloatingText
+                                    text="RESULTADOS"
+                                    color="text-white lg:ml-32"
+                                    iconColor="#b8fb00"
+                                /> */}
+                            </div>
+
+                            <div className="lg:w-3/4 w-full">
+                                <BigTitle
+                                    title="RESULTADOS DE MIS CLIENTES"
+                                    color="text-white"
+                                    size="text-4xl lg:text-8xl"
+                                />
+                            </div>
+
+                        </div>
+
+                        {/* Carrusel */}
+                        <div className="flex-1 bg-black">
+                            <div
+                                id="carousel"
+                                className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800"
+                            >
+                                <Slider {...sliderSettings}>
+                                    {pictures.map((image, index) => (
+                                        <div
+                                            key={`${image}-${index}`}
+                                            className="shadow-lg shadow-black drop-shadow-lg"
+                                        >
+                                            <img
+                                                src={image}
+                                                alt={`Slide ${index + 1}`}
+                                                className="w-full h-auto object-cover rounded-md"
+                                            />
+                                        </div>
+                                    ))}
+                                </Slider>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div className="bg-black w-full flex-1 mr-32">
+                        <div className="flex-1 lg:flex bg-black lg:mr-32">
+                            <div className="w-1/4">
+                                {/* <FloatingText text="ADS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText> */}
+                            </div>
+                            <div className="flex flex-col lg:flex-row bg-black lg:mr-32">
+                                <BigTitle title="MARCAS Y PATROCINADORES" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                            </div>
+                        </div>
+                        <div className="flex-1 bg-black">
+                            <div id='adsDiv' className='w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800'>
+                                <div className="w-full flex justify-center">
+                                    <div
+                                        className="
+          columns-1
+          sm:columns-2
+          md:columns-3
+          lg:columns-4
+          gap-4
+          p-4
+          max-w-7xl
+        "
+                                    >
+                                        {adsImages.map((src, index) => (
+                                            <div
+                                                key={index}
+                                                className="
+              mb-4
+              break-inside-avoid
+              overflow-hidden
+              rounded-xl
+              shadow-lg
+              bg-white
+              animate-fadeIn
+            "
+                                                style={{
+                                                    animationDelay: `${index * 120}ms`,
+                                                }}
+                                            >
+                                                <img
+                                                    src={src}
+                                                    alt={`brand-${index}`}
+                                                    className="
+                w-full
+                h-auto
+                object-cover
+                hover:scale-105
+                transition-transform
+                duration-300
+              "
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='separator lg:pt-32 pt-12 bg-black'></div>
+                    {/* RRSS */}
+                    {/* <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
+
+                        <div className="flex flex-col lg:flex-row bg-black lg:mr-32">
+                            <div className="lg:w-1/4 w-full mb-4 lg:mb-0">
+                                <FloatingText text="ADS" color="text-white lg:ml-32" iconColor="#b8fb00" />
+                            </div>
+
+                            <div className="lg:w-3/4 w-full">
+                                <BigTitle
+                                    title="MARCAS Y PATROCINADORES"
+                                    color="text-white"
+                                    size="text-4xl lg:text-8xl"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="separator pt-20 bg-black"></div>
+
+                        <div
+                            className="
+      max-w-7xl mx-auto
+      grid
+      grid-cols-1
+      sm:grid-cols-2
+      lg:grid-cols-3
+      gap-6
+      px-4 lg:px-0
+    "
+                        >
                             <ImageCard
                                 title="Individual training plan"
                                 description="Diseño personalizado para alcanzar tus metas físicas y de salud."
                                 imageUrl={adsImages[0] || '/images/cards/Image-07.jpg'}
-                                altText="Individual training plan"
                             />
-                        </div>
-                        <div className="">
+
                             <ImageCard
                                 title="Nutrition guidance"
                                 description="Guía nutricional balanceada y planes alimenticios adaptados a tu estilo de vida."
                                 imageUrl={adsImages[1] || '/images/cards/Image-08.jpg'}
-                                altText="Nutrition guidance"
                             />
-                        </div>
-                        {/* <div className="row-span-2 flex items-center justify-center font-bold text-xl"> */}
-                        <div className="row-span-2 h-full flex">
-                            <ImageCard
-                                title="Flexible training times"
-                                description="Encuentra el horario perfecto que se ajuste a tus compromisos diarios."
-                                // isCTA={true} // === ESTADO CTA ===
-                                // ctaText="Ver Disponibilidad"
-                                // ctaLink="/horarios"
-                                imageUrl={adsImages[2] || '/images/Shape-016.png'}
-                            />
-                        </div>
 
-                        <div className="">
+                            <div className="lg:row-span-2 h-full">
+                                <ImageCard
+                                    title="Flexible training times"
+                                    description="Encuentra el horario perfecto que se ajuste a tus compromisos diarios."
+                                    imageUrl={adsImages[2] || '/images/Shape-016.png'}
+                                />
+                            </div>
+
                             <ImageCard
                                 title="Training in a private gym"
                                 description="Máxima privacidad y equipamiento de vanguardia para tu comodidad."
                                 imageUrl={adsImages[3] || '/images/cards/Image-09.jpg'}
-                                altText="Training in a private gym"
                             />
-                        </div>
-                        <div className="">
+
                             <ImageCard
                                 title="Training in a private gym"
                                 description="Máxima privacidad y equipamiento de vanguardia para tu comodidad."
                                 imageUrl={adsImages[4] || '/images/cards/Image-010-1.jpg'}
-                                altText="Training in a private gym"
+                            />
+                        </div>
+                    </div> 
+
+                    <div className='separator lg:pt-32 pt-12 bg-black'></div>
+                    {/* NOTICIAS */}
+                    <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
+                        <div className="flex-1 lg:flex bg-black lg:mr-32">
+                            <div className="w-1/4">
+                                {/* <FloatingText text="SECCION INFORMATIVA" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText> */}
+                            </div>
+                            <div className='w-3/4'>
+                                <BigTitle title="MUNDO FITNESS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                            </div>
+                        </div>
+                        <div className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
+                            <Slider {...sliderSettingsNews} >
+                                {
+                                    news.map((item, index) => (
+                                        <News key={index} text={item.text} image={item.image_url} title={item.title} />
+                                    ))
+                                }
+                            </Slider>
+                        </div>
+
+                    </div>
+                    <div className='separator lg:pt-32 pt-12 bg-black'></div>
+                    {/* RECIPES */}
+                    <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
+                        <div className="flex-1 lg:flex bg-black lg:mr-32">
+                            <div className="w-1/4">
+                                {/* <FloatingText text="RECETAS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText> */}
+                            </div>
+                            <div className='w-3/4'>
+                                <BigTitle title="FITNESS PARA LLEVAR" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                            </div>
+                        </div>
+                        <div className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
+                            <RecipeCardGrid
+                                recipes={recipes.map(r => ({
+                                    id: r.id,
+                                    title: r.title,
+                                    ingredients: r.ingredients,
+                                    instructions: r.instructions,
+                                    image_url: r.image_url,
+                                    status: true
+                                }))}
+                                title=""
                             />
                         </div>
 
                     </div>
+                    <div className='separator lg:pt-32 pt-12 bg-black'></div>
 
-                </div>
-                <div className='separator pt-32 bg-black'></div>
-                {/* NOTICIAS */}
-                <div className="bg-black w-full flex-1 mr-32">
-                    <div className="flex-1 lg:flex bg-black lg:mr-32">
-                        <div className="w-1/4">
-                            <FloatingText text="SECCION INFORMATIVA" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
+                    {/* EJERCICIOS PUBLICOS */}
+                    <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
+                        <div className="flex-1 lg:flex bg-black lg:mr-32">
+                            <div className="w-1/4">
+                                {/* <FloatingText text="EJERCICIOS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText> */}
+                            </div>
+                            <div className='w-3/4'>
+                                <BigTitle title="DESTACADOS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                            </div>
                         </div>
-                        <div className='w-3/4'>
-                            <BigTitle title="MUNDO FITNESS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                        <div className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
+                            <ExerciseCardGrid
+                                exercises={exercises.map(e => ({
+                                    id: e.id,
+                                    title: e.title,
+                                    description: e.description,
+                                    photo_url: e.photo_url,
+                                    video_url: e.video_url
+                                }))}
+                                title=""
+                            />
                         </div>
-                    </div>
-                    <div className="ml-12 mr-12 mt-10 mb-20 p-10 rounded-lg bg-gray-800">
-                        <Slider {...sliderSettingsNews} >
-                        {
-                        news.map((item, index) => (
-                            <News key={index} text={item.text} image={item.image_url} title={item.title}/>
-                        ))
-                        }
-                        </Slider>
-                    </div>
 
-                </div>
-                <div className='separator pt-32 bg-black'></div>
-                {/* RECIPES */}
-                <div className="bg-black w-full flex-1 mr-32">
-                    <div className="flex-1 lg:flex bg-black lg:mr-32">
-                        <div className="w-1/4">
-                            <FloatingText text="RECETAS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
-                        </div>
-                        <div className='w-3/4'>
-                            <BigTitle title="FITNESS PARA LLEVAR" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
-                        </div>
                     </div>
-                    <div className="ml-12 mr-12 mt-10 mb-20 p-10 rounded-lg bg-gray-800">
-                        <RecipeCardGrid 
-                            recipes={recipes.map(r => ({
-                                id: r.id,
-                                title: r.title,
-                                ingredients: r.ingredients,
-                                instructions: r.instructions,
-                                image_url: r.image_url,
-                                status: true
-                            }))} 
-                            title=""
-                        />
-                    </div>
+                    <div className='separator lg:pt-32 pt-12 bg-black'></div>
 
-                </div>
-                <div className='separator pt-32 bg-black'></div>
-
-                {/* EJERCICIOS PUBLICOS */}
-                <div className="bg-black w-full flex-1 mr-32">
-                    <div className="flex-1 lg:flex bg-black lg:mr-32">
-                        <div className="w-1/4">
-                            <FloatingText text="EJERCICIOS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
-                        </div>
-                        <div className='w-3/4'>
-                            <BigTitle title="DESTACADOS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
-                        </div>
-                    </div>
-                    <div className="ml-12 mr-12 mt-10 mb-20 p-10 rounded-lg bg-gray-800">
-                        <ExerciseCardGrid 
-                            exercises={exercises.map(e => ({
-                                id: e.id,
-                                title: e.title,
-                                description: e.description,
-                                photo_url: e.photo_url,
-                                video_url: e.video_url
-                            }))} 
-                            title=""
-                        />
-                    </div>
-
-                </div>
-                <div className='separator pt-32 bg-black'></div>
-
-                {/* FAQ */}
-                {/* <div className="bg-black w-full flex-1 mr-32">
+                    {/* FAQ */}
+                    {/* <div className="bg-black w-full flex-1 mr-32">
                     <div className="flex-1 lg:flex bg-black lg:mr-32">
                         <div className="w-1/4">
                             <FloatingText text="FAQS QUESTIONS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText>
@@ -496,10 +620,10 @@ function Homepage() {
                     </div>
                 </div>
 
-                <div className='separator pt-32 bg-black'></div> */}
+                <div className='separator lg:pt-32 pt-12 bg-black'></div> */}
 
-                {/* VIDEO2 */}
-                {/* <div className="video-background-container ">
+                    {/* VIDEO2 */}
+                    {/* <div className="video-background-container ">
 
                     <video
                         className="video-background"
@@ -523,16 +647,16 @@ function Homepage() {
 
                     </div>
                 </div> */}
-                {/* <div className='separator pt-32 bg-black'></div> */}
-                <div className="bg-black flex-1 ml-32 mr-32">
-                    {/* <Footer logoPath={logoPath} email={defaultEmail} links={["transformations", "about us", "pricing", "how to start", "faq"]}/> */}
-                    <Footer logoPath={logoPath} email={defaultEmail}/>
-                </div>
-                <div className='separator pt-32 bg-black'></div>
-            </>
+                    {/* <div className='separator lg:pt-32 pt-12 bg-black'></div> */}
+                    <div className="bg-black flex-1">
+                        {/* <Footer logoPath={logoPath} email={defaultEmail} links={["transformations", "about us", "pricing", "how to start", "faq"]}/> */}
+                        <Footer logoPath={logoPath} email={defaultEmail} />
+                    </div>
+                    <div className='separator lg:pt-32 pt-12 bg-black'></div>
+                </>
 
-        </div>
-        </>        
+            </div>
+        </>
     );
 }
 

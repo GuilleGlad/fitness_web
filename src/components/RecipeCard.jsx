@@ -44,14 +44,14 @@ const RecipeCard = ({ title, ingredients, instructions, image_url, onNavigate, i
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-[#141820]/95 backdrop-blur-sm px-6 py-4">
-          <div className="flex items-center gap-3">
-            <FontAwesomeIcon icon={faUtensils} className="h-6 w-6 text-[#f1b80c]" />
-            <div>
-              <h2 className="text-lg font-semibold text-white truncate max-w-[300px]">{title}</h2>
-              <p className="text-xs text-slate-400">Receta {index + 1} de {total}</p>
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <FontAwesomeIcon icon={faUtensils} className="h-6 w-6 text-[#f1b80c] flex-shrink-0" />
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-white truncate">{title}</h2>
+              <p className="text-xs text-slate-400 truncate">Receta {index + 1} de {total}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => handleNavigate(-1)}
               disabled={index === 0}
@@ -86,7 +86,7 @@ const RecipeCard = ({ title, ingredients, instructions, image_url, onNavigate, i
               <img 
                 src={image_url} 
                 alt={title} 
-                className="w-full h-64 object-cover"
+                className="w-full h-full object-cover"
                 loading="lazy"
               />
             </div>

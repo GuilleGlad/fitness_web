@@ -38,7 +38,7 @@ const Navbar = ({ logoPath: providedLogoPath }) => {
     <header className="sticky top-0 z-50 w-full h-24 flex items-center">
 
       {/* COLUMNA 1: LOGO */}
-      <div className="w-1/4 flex items-center justify-start">
+      <div className="lg:w-1/4 w-full flex items-center justify-start">
         <Logo
           logoPath={logoPath}
           isMenuOpen={isMenuOpen} />
@@ -53,7 +53,7 @@ const Navbar = ({ logoPath: providedLogoPath }) => {
       </div>
 
       {/* COLUMNA 3: CONTACT US */}
-      <div className="w-1/4 flex items-center justify-end gap-2 mr-28">
+      <div className="lg:w-1/4 flex items-center justify-end gap-2 ">
         <FloatingButton link="/login" title={ingresarTexto} icon={logged?faRunning:null}/>
         {!logged && <FloatingButton link="/register" title="Registro" />}
         {logged && <FloatingButton link="/auth/logout" title={CerrarSesionTexto} icon={faClose}/>}

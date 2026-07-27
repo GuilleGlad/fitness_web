@@ -61,11 +61,11 @@ const ExerciseCard = ({ title, description, photo_url, video_url, onNavigate, in
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-[#141820]/95 backdrop-blur-sm px-6 py-4">
-          <div className="flex items-center gap-3">
-            <FontAwesomeIcon icon={faDumbbell} className="h-6 w-6 text-[#f1b80c]" />
-            <div>
-              <h2 className="text-lg font-semibold text-white truncate max-w-[300px]">{title}</h2>
-              <p className="text-xs text-slate-400">Ejercicio {index + 1} de {total}</p>
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <FontAwesomeIcon icon={faDumbbell} className="h-6 w-6 text-[#f1b80c] flex-shrink-0" />
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-white truncate">{title}</h2>
+              <p className="text-xs text-slate-400 truncate">Ejercicio {index + 1} de {total}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
