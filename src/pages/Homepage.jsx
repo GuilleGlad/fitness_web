@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import VideoBackground from '../components/VideoBackgrounds';
+import BigLink from '../components/BigLink';
+import BigSubTitle from '../components/BigSubTitle';
 import Navbar from '../components/Navbar';
 import FloatingCard from '../components/FloatingCard';
 import BigTitle from '../components/BigTitle';
@@ -11,6 +14,7 @@ import '../styles/Homepage.css'
 import News from '../components/News';
 import Footer from '../components/Footer';
 import RecipeCardGrid from '../components/RecipeCardGrid';
+import ExerciseCardGrid from '../components/ExerciseCardGrid';
 import axios from 'axios';
 import { Helmet } from 'react-helmet-async';
 import ImageCard from '../components/ImageCard';
@@ -109,9 +113,9 @@ function Homepage() {
             const response = await axios.get(`${apiUrl}/exercises/list-public`);
             const { data } = response;
             if(data){
-                const {filas} = data;
-                console.log('Ejercicios cargados:', filas);
-                setExercises(filas);
+                const {exercises} = data;
+                console.log('Ejercicios cargados:', exercises);
+                setExercises(exercises);
             }
         }
         catch(error){
@@ -122,6 +126,7 @@ function Homepage() {
     fetchSettings();
     fetchNews();
     fetchRecipes();
+    fetchExercises();
     }, []);
 
     // NOTE: Replace '/videos/hero-bg.mp4' with the actual path to your video asset.
@@ -455,14 +460,13 @@ function Homepage() {
                         </div>
                     </div>
                     <div className="ml-12 mr-12 mt-10 mb-20 p-10 rounded-lg bg-gray-800">
-                        <RecipeCardGrid 
-                            recipes={recipes.map(r => ({
-                                id: r.id,
-                                title: r.title,
-                                ingredients: r.ingredients,
-                                instructions: r.instructions,
-                                image_url: r.image_url,
-                                status: true
+                        <ExerciseCardGrid 
+                            exercises={exercises.map(e => ({
+                                id: e.id,
+                                title: e.title,
+                                description: e.description,
+                                photo_url: e.photo_url,
+                                video_url: e.video_url
                             }))} 
                             title=""
                         />
