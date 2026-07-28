@@ -5,7 +5,7 @@ import { faEnvelope, faPhone, faLocationDot } from '@fortawesome/free-solid-svg-
 import { faFacebook, faXTwitter, faYoutube, faInstagram, faTiktok } from '@fortawesome/free-brands-svg-icons';
 import BigLink from './BigLink';
 
-const Footer = ({ logoPath, email, links }) => {
+const Footer = ({ logoPath, email, trainerPhone, trainerAddress, links }) => {
   const defaultLogoPath = logoPath || '/images/Logo-01-1-1.png';
 
   return (
@@ -24,7 +24,7 @@ const Footer = ({ logoPath, email, links }) => {
 
           <div className="flex items-center gap-3">
             <FontAwesomeIcon icon={faEnvelope} className="text-customYellow" />
-            <span className="text-xl font-bold">{email}</span>
+            <span className="text-xl font-bold"><a href={`mailto:${email}`}>{email}</a></span>
           </div>
 
           {/* Redes sociales */}
@@ -61,12 +61,12 @@ const Footer = ({ logoPath, email, links }) => {
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <FontAwesomeIcon icon={faPhone} className="text-customYellow" />
-            <span className="text-sm">+1 (888) 807-5000</span>
+            <span className="text-sm"><a href={`tel:${trainerPhone}`}>{trainerPhone}</a></span>
           </div>
 
           <div className="flex items-center gap-3">
             <FontAwesomeIcon icon={faLocationDot} className="text-customYellow" />
-            <span className="text-sm">Jl. Soekarno-hatta</span>
+            <span className="text-sm">{trainerAddress}</span>
           </div>
         </div>
 

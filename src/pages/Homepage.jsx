@@ -57,7 +57,11 @@ function Homepage() {
                             adsCarouselUrls: (JSON.parse(result_arr.ads) || []).join('\n'),
                             titulo: result_arr.title || '',
                             videoUrl: result_arr.video_background || '',
-                            aboutUrl: result_arr.about || ''
+                            aboutUrl: result_arr.about || '',
+                            username: result_arr.username || '',
+                            email: result_arr.email || '',
+                            phone: result_arr.phone || '',
+                            address: result_arr.address || ''
                         });
                     }
                 });
@@ -134,9 +138,11 @@ function Homepage() {
     const videoPath2 = '/videos/videoplayback2.mp4';
     const logoPath = settings.logoUrl || '/images/Logo-01-1-1.png';
     const trainerPic = '/images/Image-02.jpg';
-    const trainerName = 'Sergio Zane';
+    const trainerName = settings.username || 'Sergio Zane';
+    const trainerPhone = settings.phone || '';
     const defaultEmail = 'support@musclefit.com';
-
+    const trainerEmail = settings.email || defaultEmail;
+    const trainerAddress = settings.address || '';
     const pictures = useMemo(() => {
         const urls = (settings.homeCarouselUrls || '')
             .split(/\n|,/)
@@ -245,7 +251,7 @@ function Homepage() {
                             <Navbar logoPath={logoPath}></Navbar>
                             <div className='items-center absolute bottom-0 flex-1 md:flex'>
                                 <div className="w-full lg:w-1/2 mb-10">
-                                    <FloatingCard trainerPic={trainerPic} trainerName={trainerName} ></FloatingCard>
+                                    <FloatingCard trainerPic={trainerPic} trainerName={trainerName} trainerPhone={trainerPhone} trainerEmail={trainerEmail} ></FloatingCard>
                                 </div>
                                 <div className="w-full md:w-1/2 lg:w-2/3 mr-32">
                                     <BigTitle title="ALCANZA TUS METAS JUNTO A NOSOTROS"></BigTitle>
@@ -650,7 +656,7 @@ function Homepage() {
                     {/* <div className='separator lg:pt-32 pt-12 bg-black'></div> */}
                     <div className="bg-black flex-1">
                         {/* <Footer logoPath={logoPath} email={defaultEmail} links={["transformations", "about us", "pricing", "how to start", "faq"]}/> */}
-                        <Footer logoPath={logoPath} email={defaultEmail} />
+                        <Footer logoPath={logoPath} email={trainerEmail} trainerPhone={trainerPhone} trainerAddress={trainerAddress} />
                     </div>
                     <div className='separator lg:pt-32 pt-12 bg-black'></div>
                 </>

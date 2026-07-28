@@ -4,11 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import TrainerLibrary from './TrainerLibrary';
 import { verifyToken } from '../utils/tokenUtils';
+import PairRow from '../components/PairRow';
+import PairRowText from '../components/PairRowText';
 
 const STORAGE_KEY = 'elitefit_settings';
 
 const defaultSettings = {
   logoUrl: '',
+  username: '',
+  email: '',
+  phone: '',
+  address: '',
   homeCarouselUrls: '',
   adsCarouselUrls: '',
   titulo: '',
@@ -54,6 +60,10 @@ const Settings = () => {
               titulo: result_arr.title || '',
               videoUrl: result_arr.video_background || '',
               aboutUrl: result_arr.about || '',
+              username: result_arr.username || '',
+              email: result_arr.email || '',
+              phone: result_arr.phone || '',
+              address: result_arr.address || ''
             });
           }
         });
@@ -131,7 +141,7 @@ const Settings = () => {
           toast.error('Selecciona una imagen para Acerca de Nosotros.');
           return;
         }
-        setSettings((previous) => ({ ...previous, aboutUrl: aboutItem.url }));
+        setSettings((previous) => ({ ...previous, aboutUrl: selectedItems[0].url }));
       }
     } else {
       const urls = validItems.map((item) => item.url).filter(Boolean);
@@ -177,6 +187,10 @@ const Settings = () => {
       title: settings.titulo || '',
       video: settings.videoUrl || '',
       about: settings.aboutUrl || '',
+      username: settings.username || '',
+      email: settings.email || '',
+      phone: settings.phone || '',
+      address: settings.address || '',
     };
 
     try {
@@ -194,33 +208,6 @@ const Settings = () => {
       toast.error('No se pudieron guardar los ajustes.');
     }
   };
-
-  // ---- reusable pair row component ----
-  const PairRow = ({ icon, label, description, controlsLeft, previewRight }) => (
-    <div className="rounded-[32px] border border-slate-800 bg-[#141820]/90 shadow-xl overflow-hidden transition-all hover:border-slate-700/60">
-      <div className="flex flex-col md:flex-row">
-        {/* LEFT — controls */}
-        <div className="flex-1 p-6 lg:p-8 border-b md:border-b-0 md:border-r border-slate-800/50">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f1b80c]/15 text-lg">
-              {icon}
-            </span>
-            <div>
-              <h3 className="text-base font-semibold text-white">{label}</h3>
-              {description && <p className="mt-0.5 text-xs text-slate-500">{description}</p>}
-            </div>
-          </div>
-          <div className="flex flex-col gap-3">{controlsLeft}</div>
-        </div>
-
-        {/* RIGHT — preview */}
-        <div className="flex-[1.2] p-6 lg:p-8 bg-gradient-to-br from-slate-900/40 to-transparent">
-          <p className="mb-3 text-xs uppercase tracking-[0.25em] text-slate-500">Vista previa</p>
-          {previewRight}
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <>
@@ -444,6 +431,56 @@ const Settings = () => {
               }
             />
 
+            {/* ============================================== */}
+            {/* 7 — Username                                    */}
+            {/* ============================================== */}
+            <PairRowText
+              icon="👤"
+              label="Username"
+              description="Nombre de usuario público."
+              name="username"
+              placeholder="Ejemplo: johndoe123"
+              settings={settings}
+              handleChange={handleChange}
+              handleClear={handleClear}
+            />
+
+            {/* 8 — Email */}
+            <PairRowText
+              icon="📧"
+              label="Email"
+              description="Correo electrónico de contacto principal."
+              name="email"
+              placeholder="Ejemplo: admin@example.com"
+              settings={settings}
+              handleChange={handleChange}
+              handleClear={handleClear}
+            />
+
+            {/* 9 — Phone */}
+            <PairRowText
+              icon="📞"
+              label="Teléfono"
+              description="Número de teléfono de contacto."
+              name="phone"
+              placeholder="Ejemplo: +52 123 456 7890"
+              settings={settings}
+              handleChange={handleChange}
+              handleClear={handleClear}
+            />
+
+            {/* 10 — Address */}
+            <PairRowText
+              icon="📍"
+              label="Dirección"
+              description="Dirección física de la ubicación."
+              name="address"
+              placeholder="Ejemplo: Av. Reforma 222, CDMX"
+              settings={settings}
+              handleChange={handleChange}
+              handleClear={handleClear}
+            />
+
             {/* Submit */}
             <button
               type="submit"
@@ -451,6 +488,12 @@ const Settings = () => {
             >
               Guardar ajustes
             </button>
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="w-full rounded-3xl bg-gradient-to-r from-[#f1b80c] to-[#e5a50a] px-6 py-4 text-sm font-bold tracking-wide text-slate-950 shadow-lg shadow-[#f1b80c]/20 transition hover:from-[#d69e2e] hover:to-[#c7940a] mt-4">
+              Volver al dashboard
+            </button>            
           </form>
 
           {/* Library Modal */}

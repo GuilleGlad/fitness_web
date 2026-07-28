@@ -17,10 +17,10 @@ const FloatingCard = ({trainerPic, trainerName, trainerPhone, trainerEmail}) => 
             </div>
             <div className='flex gap-2 lg:gap-4 w-16 mr-10 lg:ml-6'>
                 <div id="phoneDiv">
-                    <FontAwesomeIcon icon={faPhone} className='bg-gray-500 rounded-full p-4' />
+                    <a href={`tel:${trainerPhone}`}><FontAwesomeIcon icon={faPhone} className='bg-gray-500 rounded-full p-4' /></a>
                 </div>
                 <div id="emailDiv">
-                    <FontAwesomeIcon icon={faEnvelope} className='bg-gray-500 rounded-full p-4' />
+                    <a href={`mailto:${trainerEmail}`}><FontAwesomeIcon icon={faEnvelope} className='bg-gray-500 rounded-full p-4' /></a>
                 </div>
             </div>
         </div>
