@@ -18,6 +18,7 @@ import ExerciseCardGrid from '../components/ExerciseCardGrid';
 import axios from 'axios';
 import { Helmet } from 'react-helmet-async';
 import ImageCard from '../components/ImageCard';
+import { faRandom } from '@fortawesome/free-solid-svg-icons';
 
 
 function Homepage() {
@@ -133,25 +134,40 @@ function Homepage() {
         fetchNews();
         fetchRecipes();
         fetchExercises();
+
     }, []);
 
-    // Force slider re-initialization on mount and window resize
+    // FIX DEFINITIVO: el mecanismo interno "responsive" de react-slick mide
+    // window.innerWidth en un momento poco confiable del ciclo de montaje, y
+    // solo se recalcula bien ante un evento resize REAL (ej. rotar el
+    // telefono). En vez de depender de eso, calculamos nosotros mismos el
+    // "bucket" de ancho (mobile/tablet/desktop), esperamos a estar montados
+    // en el cliente para recién ahí renderizar el <Slider>, y forzamos un
+    // remount limpio (via `key`) cada vez que cambia el bucket.
+    const getSliderBucket = (width) => {
+        if (width <= 480) return 'mobile';
+        if (width <= 768) return 'tablet';
+        if (width <= 1024) return 'tabletLg';
+        return 'desktop';
+    };
+
+    const [sliderBucket, setSliderBucket] = useState(() =>
+        typeof window !== 'undefined' ? getSliderBucket(window.innerWidth) : 'desktop'
+    );
+    const [slidersReady, setSlidersReady] = useState(false);
+
     useEffect(() => {
-        const handleResize = () => {
-            if (sliderRef.current) {
-                sliderRef.current.innerSlider.setPosition();
-            }
-            if (sliderNewsRef.current) {
-                sliderNewsRef.current.innerSlider.setPosition();
-            }
+        const updateBucket = () => setSliderBucket(getSliderBucket(window.innerWidth));
+        updateBucket();
+        setSlidersReady(true);
+        window.addEventListener('resize', updateBucket);
+        window.addEventListener('orientationchange', updateBucket);
+        return () => {
+            window.removeEventListener('resize', updateBucket);
+            window.removeEventListener('orientationchange', updateBucket);
         };
-
-        // Initial call after mount
-        setTimeout(handleResize, 100);
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
     }, []);
+
 
     // NOTE: Replace '/videos/hero-bg.mp4' with the actual path to your video asset.
     const videoPath1 = settings.videoUrl || '/videos/videoplayback.mp4';
@@ -179,36 +195,52 @@ function Homepage() {
         return urls.length > 0 ? urls : ['/images/cards/Image-07.jpg'];
     }, [settings.adsCarouselUrls]);
 
+    // --- ADS: en mobile se muestran como desplegable ---
+    // Barajamos el orden una sola vez por cada set de adsImages (no en cada
+    // render), para que la imagen "de primero" sea aleatoria pero estable
+    // mientras el usuario interactúa con el botón "Más...".
+    const shuffledAdsImages = useMemo(() => {
+        const arr = [...adsImages];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }, [adsImages]);
+
+    const [adsExpanded, setAdsExpanded] = useState(false);
+    const isMobileAds = sliderBucket === 'mobile';
+
+    // Si el usuario redimensiona/rota y deja de ser mobile, reseteamos el
+    // estado para que la próxima vez que vuelva a mobile arranque colapsado.
+    useEffect(() => {
+        if (sliderBucket !== 'mobile') {
+            setAdsExpanded(false);
+        }
+    }, [sliderBucket]);
+
+    const visibleAdsImages = (isMobileAds && !adsExpanded)
+        ? shuffledAdsImages.slice(0, 1)
+        : shuffledAdsImages;
+
+    // slidesToShow/slidesToScroll ya NO vienen del array "responsive" interno
+    // de slick (que es el que fallaba en la primera carga). Vienen de
+    // sliderBucket, que nosotros calculamos de forma confiable en el useEffect
+    // de arriba.
+    const slidesByBucket = {
+        mobile: 1,
+        tablet: 2,
+        tabletLg: 2,
+        desktop: 3,
+    };
+
     const sliderSettings = {
         dots: true,
         infinite: true,
         speed: 500,
         autoplay: true,
-        slidesToShow: 3,
+        slidesToShow: slidesByBucket[sliderBucket],
         slidesToScroll: 1,
-        responsive: [
-            {
-                breakpoint: 1024, // Desktop
-                settings: {
-                    slidesToShow: 2,
-                    slidesToScroll: 1,
-                }
-            },
-            {
-                breakpoint: 768, // Tablet
-                settings: {
-                    slidesToShow: 2,
-                    slidesToScroll: 1,
-                }
-            },
-            {
-                breakpoint: 480, // Mobile
-                settings: {
-                    slidesToShow: 1,
-                    slidesToScroll: 1,
-                }
-            },
-        ]
     };
 
     const sliderSettingsNews = {
@@ -216,31 +248,8 @@ function Homepage() {
         infinite: true,
         speed: 500,
         autoplay: true,
-        slidesToShow: 3,
+        slidesToShow: slidesByBucket[sliderBucket],
         slidesToScroll: 1,
-        responsive: [
-            {
-                breakpoint: 1024, // Desktop
-                settings: {
-                    slidesToShow: 2,
-                    slidesToScroll: 1,
-                }
-            },
-            {
-                breakpoint: 768, // Tablet
-                settings: {
-                    slidesToShow: 2,
-                    slidesToScroll: 1,
-                }
-            },
-            {
-                breakpoint: 480, // Mobile
-                settings: {
-                    slidesToShow: 1,
-                    slidesToScroll: 1,
-                }
-            },
-        ]
     };
 
     return (
@@ -416,20 +425,22 @@ function Homepage() {
                                 id="carousel"
                                 className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800"
                             >
-                                <Slider {...sliderSettings} ref={sliderRef}>
-                                    {pictures.map((image, index) => (
-                                        <div
-                                            key={`${image}-${index}`}
-                                            className="shadow-lg shadow-black drop-shadow-lg"
-                                        >
-                                            <img
-                                                src={image}
-                                                alt={`Slide ${index + 1}`}
-                                                className="w-full h-auto object-cover rounded-md"
-                                            />
-                                        </div>
-                                    ))}
-                                </Slider>
+                                {slidersReady && (
+                                    <Slider key={sliderBucket} {...sliderSettings} ref={sliderRef}>
+                                        {pictures.map((image, index) => (
+                                            <div
+                                                key={`${image}-${index}`}
+                                                className="shadow-lg shadow-black drop-shadow-lg"
+                                            >
+                                                <img
+                                                    src={image}
+                                                    alt={`Slide ${index + 1}`}
+                                                    className="w-full h-auto object-cover rounded-md"
+                                                />
+                                            </div>
+                                        ))}
+                                    </Slider>
+                                )}
                             </div>
                         </div>
 
@@ -458,7 +469,7 @@ function Homepage() {
           max-w-7xl
         "
                                     >
-                                        {adsImages.map((src, index) => (
+                                        {visibleAdsImages.map((src, index) => (
                                             <div
                                                 key={index}
                                                 className="
@@ -490,6 +501,17 @@ function Homepage() {
                                         ))}
                                     </div>
                                 </div>
+                                {isMobileAds && adsImages.length > 1 && (
+                                    <div className="w-full flex justify-center mt-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setAdsExpanded((prev) => !prev)}
+                                            className="px-6 py-2 rounded-full bg-white text-black font-semibold hover:bg-gray-200 transition-colors"
+                                        >
+                                            {adsExpanded ? 'Ocultar Marcas...' : 'Más Marcas...'}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -570,13 +592,15 @@ function Homepage() {
                             </div>
                         </div>
                         <div className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
-                            <Slider {...sliderSettingsNews} ref={sliderNewsRef}>
-                                {
-                                    news.map((item, index) => (
-                                        <News key={index} text={item.text} image={item.image_url} title={item.title} />
-                                    ))
-                                }
-                            </Slider>
+                            {slidersReady && (
+                                <Slider key={sliderBucket} {...sliderSettingsNews} ref={sliderNewsRef}>
+                                    {
+                                        news.map((item, index) => (
+                                            <News key={index} text={item.text} image={item.image_url} title={item.title} />
+                                        ))
+                                    }
+                                </Slider>
+                            )}
                         </div>
 
                     </div>

@@ -246,7 +246,7 @@ export default function RegisterForm() {
                                 <option value={0}>Seleccionar Rol...</option>
                                 <option value={ROLES.CLIENT}>Cliente</option>
                                 <option value={ROLES.TRAINER}>Entrenador (Trainer)</option>
-                                <option value={ROLES.ADMIN}>Administrador</option>
+                                {/* <option value={ROLES.ADMIN}>Administrador</option> */}
                             </select>
 
                             {/* Contenedor de los Chevrons absolute */}
