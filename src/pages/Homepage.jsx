@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import VideoBackground from '../components/VideoBackgrounds';
 import BigLink from '../components/BigLink';
 import BigSubTitle from '../components/BigSubTitle';
@@ -41,6 +41,8 @@ function Homepage() {
     const [news, setNews] = useState([]);
     const [recipes, setRecipes] = useState([]);
     const [exercises, setExercises] = useState([]);
+    const sliderRef = useRef(null);
+    const sliderNewsRef = useRef(null);
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -131,6 +133,24 @@ function Homepage() {
         fetchNews();
         fetchRecipes();
         fetchExercises();
+    }, []);
+
+    // Force slider re-initialization on mount and window resize
+    useEffect(() => {
+        const handleResize = () => {
+            if (sliderRef.current) {
+                sliderRef.current.innerSlider.setPosition();
+            }
+            if (sliderNewsRef.current) {
+                sliderNewsRef.current.innerSlider.setPosition();
+            }
+        };
+
+        // Initial call after mount
+        setTimeout(handleResize, 100);
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     // NOTE: Replace '/videos/hero-bg.mp4' with the actual path to your video asset.
@@ -396,7 +416,7 @@ function Homepage() {
                                 id="carousel"
                                 className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800"
                             >
-                                <Slider {...sliderSettings}>
+                                <Slider {...sliderSettings} ref={sliderRef}>
                                     {pictures.map((image, index) => (
                                         <div
                                             key={`${image}-${index}`}
@@ -550,7 +570,7 @@ function Homepage() {
                             </div>
                         </div>
                         <div className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
-                            <Slider {...sliderSettingsNews} >
+                            <Slider {...sliderSettingsNews} ref={sliderNewsRef}>
                                 {
                                     news.map((item, index) => (
                                         <News key={index} text={item.text} image={item.image_url} title={item.title} />
