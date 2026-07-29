@@ -163,19 +163,29 @@ function Homepage() {
         dots: true,
         infinite: true,
         speed: 500,
+        autoplay: true,
         slidesToShow: 3,
         slidesToScroll: 1,
-        autoplay: true,
         responsive: [
             {
-                breakpoint: 480, // Tablet and below
+                breakpoint: 1024, // Desktop
                 settings: {
-                    dots: true,
-                    infinite: true,
-                    speed: 500,
+                    slidesToShow: 2,
+                    slidesToScroll: 1,
+                }
+            },
+            {
+                breakpoint: 768, // Tablet
+                settings: {
+                    slidesToShow: 2,
+                    slidesToScroll: 1,
+                }
+            },
+            {
+                breakpoint: 480, // Mobile
+                settings: {
                     slidesToShow: 1,
                     slidesToScroll: 1,
-                    autoPlay: true
                 }
             },
         ]
@@ -185,32 +195,31 @@ function Homepage() {
         dots: true,
         infinite: true,
         speed: 500,
+        autoplay: true,
         slidesToShow: 3,
         slidesToScroll: 1,
-        autoplay: true,
         responsive: [
             {
-                breakpoint: 480, // Tablet and below
+                breakpoint: 1024, // Desktop
                 settings: {
-                    dots: true,
-                    infinite: true,
-                    speed: 500,
-                    slidesToShow: 1,
+                    slidesToShow: 2,
                     slidesToScroll: 1,
-                    autoPlay: true
                 }
             },
             {
-                breakpoint: 830, // Tablet and below
+                breakpoint: 768, // Tablet
                 settings: {
-                    dots: true,
-                    infinite: true,
-                    speed: 500,
                     slidesToShow: 2,
                     slidesToScroll: 1,
-                    autoPlay: true
                 }
-            },            
+            },
+            {
+                breakpoint: 480, // Mobile
+                settings: {
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                }
+            },
         ]
     };
 
@@ -317,42 +326,42 @@ function Homepage() {
                 </div>
                 <div className='separator lg:pt-32 pt-12 bg-black'></div> */}
                     {/* RRSS */}
-<div className="bg-black w-full flex flex-col items-center px-6 lg:px-0">
+                    <div className="bg-black w-full flex flex-col items-center px-6 lg:px-0">
 
-  {/* TÍTULO */}
-  <div className="w-full flex justify-center mb-10">
-    <BigTitle
-      title="GUIADOS POR EL MEJOR"
-      color="text-white"
-      size="text-4xl lg:text-8xl"
-    />
-  </div>
+                        {/* TÍTULO */}
+                        <div className="w-full flex justify-center mb-10">
+                            <BigTitle
+                                title="GUIADOS POR EL MEJOR"
+                                color="text-white"
+                                size="text-4xl lg:text-8xl"
+                            />
+                        </div>
 
-  {/* BLOQUE IMAGEN + CONTADORES (solo horizontal en desktop) */}
-  <div className="w-full flex flex-col lg:flex-row lg:items-center lg:justify-center gap-10">
+                        {/* BLOQUE IMAGEN + CONTADORES (solo horizontal en desktop) */}
+                        <div className="w-full flex flex-col lg:flex-row lg:items-center lg:justify-center gap-10">
 
-    {/* Imagen */}
-    <div className="w-full lg:w-1/2 flex justify-center">
-      <img
-        src="/images/Shape-01.png"
-        className="w-full max-w-sm lg:max-w-md"
-        alt=""
-      />
-    </div>
+                            {/* Imagen */}
+                            <div className="w-full lg:w-1/2 flex justify-center">
+                                <img
+                                    src="/images/Shape-01.png"
+                                    className="w-full max-w-sm lg:max-w-md"
+                                    alt=""
+                                />
+                            </div>
 
-    {/* Contadores */}
-    <div className="w-full lg:w-1/2 flex justify-center">
-      <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-        <ContadorRRSS logo="youtube" title="youtube" account="sergiozane" count="2,1M" />
-        <ContadorRRSS logo="x" title="X" account="sergiozane" count="2,1M" />
-        <ContadorRRSS logo="facebook" title="facebook" account="sergiozane" count="2,1M" />
-        <ContadorRRSS logo="instagram" title="instagram" account="sergiozane" count="2,1M" />
-      </div>
-    </div>
+                            {/* Contadores */}
+                            <div className="w-full lg:w-1/2 flex justify-center">
+                                <div className="grid grid-cols-2 gap-4 w-full max-w-md">
+                                    <ContadorRRSS logo="youtube" title="youtube" account="sergiozane" count="2,1M" />
+                                    <ContadorRRSS logo="x" title="X" account="sergiozane" count="2,1M" />
+                                    <ContadorRRSS logo="facebook" title="facebook" account="sergiozane" count="2,1M" />
+                                    <ContadorRRSS logo="instagram" title="instagram" account="sergiozane" count="2,1M" />
+                                </div>
+                            </div>
 
-  </div>
+                        </div>
 
-</div>
+                    </div>
 
 
 
