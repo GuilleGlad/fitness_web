@@ -42,7 +42,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [selectedMenu, setSelectedMenu] = useState('Perfil de Usuario');
   const roleValue = parseInt(localStorage.getItem('role'), 10) || 3;
-  const status = localStorage.getItem('status') || 0;
+  const [status, setStatus] = useState(0);
   const userName = localStorage.getItem('name') || 'Usuario EliteFit';
   const notifications = 4;
   const roleString = Object.entries(ROLE_MAP).find(([key, value]) => value === roleValue)?.[0]?.toUpperCase() || 'CLIENTE';
@@ -94,9 +94,28 @@ const Dashboard = () => {
     }
   }
 
-  if(roleValue === 3 && status === 0){
-    navigate('/wizard');
+  const fetchStatus = async () => {
+    try{
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      await axios.get(`${apiUrl}/auth/me`, config).then((response) => {
+        if (response.status === 200) {
+          setStatus(response.data.user.status);
+          if(roleValue === 3 && status === 0){
+            navigate('/wizard');
+          }
+        }
+      })
+    }catch(error){
+      console.error('Error fetching counts:', error);
+    }
   }
+  fetchStatus();
+
   if(roleValue === 1 && redirectPath === null){
     fetchCounts();
   }
@@ -108,6 +127,7 @@ const Dashboard = () => {
     localStorage.removeItem('role');
     localStorage.removeItem('name');
     localStorage.removeItem('client_id');
+    localStorage.removeItem('status');
     navigate('/login');
   };
 

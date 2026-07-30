@@ -15,11 +15,12 @@ const Logout = () => {
       } catch (error) {
         console.error('Error during logout:', error);
       } finally {
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
-        localStorage.removeItem('name');
-        localStorage.removeItem('client_id');
-        localStorage.removeItem('status');
+        // Always clear localStorage regardless of API call success/failure
+        // Always clear localStorage regardless of API call success/failure
+        const keysToClear = ['token', 'role', 'name', 'client_id', 'status'];
+        keysToClear.forEach(key => {
+          localStorage.removeItem(key);
+        });
         navigate('/login', { replace: true });
       }
     };

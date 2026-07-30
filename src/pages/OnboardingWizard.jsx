@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 const OnboardingWizard = () => {
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(3);
   const [formData, setFormData] = useState(
     {
       height: '',
