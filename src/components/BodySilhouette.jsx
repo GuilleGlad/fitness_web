@@ -5,21 +5,21 @@ const BodySilhouette = ({ genre, cadera, cintura, piernas, brazos }) => {
 
     var silhouette;
 
-    var escalaBrazoDer1, escalaBrazoDer2;
+    var escalaBrazoDer1, escalaBrazoDer2, escalaBrazoDer3;
 
     var escalaBrazoIzq1, escalaBrazoIzq2;
 
     var escalaCinturaIzq1, escalaCinturaDer1;
 
-    var escalaCaderaIzq1;
+    var escalaCaderaIzq1, escalaCaderaIzq2;
 
     var escalaPiernaIzq1, escalaPiernaIzq2, escalaPiernaIzq3;
 
     var escalaPiernaDer1, escalaPiernaDer2, escalaPiernaDer3;
 
-    var escalaCaderaDer1;
+    var escalaCaderaDer1, escalaCaderaDer2;
 
-    var escalaCinturaDer1;
+    var escalaCinturaDer1, escalaCinturaDer2;
 
     // Factores de escala para deformar sutilmente la silueta de forma controlada y proporcional
     if (genre == 'f') {
@@ -212,19 +212,43 @@ const BodySilhouette = ({ genre, cadera, cintura, piernas, brazos }) => {
         if (cintura > 200) cintura = 200;
 
         if (piernas < 20) piernas = 20;
-        if (piernas > 100) piernas = 100;
+        if (piernas > 70) piernas = 70;
 
-        if (brazos < 15) brazos = 15;
-        if (brazos > 50) brazos = 50;
+        if (brazos < 25) brazos = 25;
+        if (brazos > 80) brazos = 80;
+
+        escalaBrazoDer1 = 500 + brazos; //629
+        escalaBrazoDer2 = 490 + brazos; //589
+        
+        escalaBrazoIzq1 = 100 - brazos;
+        escalaBrazoIzq2 = 110 - brazos;
+
+        escalaCinturaIzq1 = 260 - cintura;
+
+        escalaCaderaIzq1 = 250 - cadera;
+        escalaCaderaIzq2 = 240 - cadera;
+
+        escalaPiernaIzq1 = 180 - piernas;
+        escalaPiernaIzq2 = 190 - piernas;
+
+        escalaPiernaDer1 = 429 + piernas;
+        escalaPiernaDer2 = 439 + piernas;
+
+        escalaCaderaDer1 = 370 + cadera;
+        escalaCaderaDer2 = 350 + cadera;
+
+        escalaCinturaDer1 = 340 + cintura;
+        escalaCinturaDer2 = 350 + cintura;
+
 
 silhouette = `M 571.259 801.932
 c -1.493 -1.622 -3.081 -4.537 -4.581 -6.495
 c -17.12 -22.365 -12.849 -24.804 -14.057 -30.796
 c -3.017 -14.863 -1.856 -1.977 0.943 -68.354
-C 556.692 621.782 552.735 607.224 551.072 591.358
-C 542.284 544.715 541.361 549.525 537.658 512.23
-C 522.796 409.283 524.323 388.637 525.692 380.333
-c 3.447 -20.979 -1.841 -52.397 -15.704 -74.476
+C 556.692 621.782 552.735 607.224 547 587
+C 543 543 543 558 ${escalaBrazoDer2} 499
+C ${escalaBrazoDer1} 432 524 385 525.692 380.333
+C 529.139 359.354 523.851 327.936 509.988 305.857
 c -20.587 -32.806 -51.283 -36.76 -69.031 -44.574
 c -30.046 -13.221 -81.428 -45.517 -85.792 -61.08
 c -1.052 -3.77 0.651 -31.938 0.651 -31.938
@@ -247,8 +271,8 @@ c -0.375 15.335 0.115 13.459 -0.009 29.778
 c -7.807 17.605 -48.547 41.636 -65.621 50.863
 c -28.545 15.423 -27.447 11.779 -42.978 18.213
 c -22.311 9.241 -38.152 20.114 -49.629 43.289
-c -13.156 26.56 -13.775 57.545 -11.725 69.299
-C 73.617 455.218 72.877 470.44 68.819 511.492
+C 78.866 339.804 73 361 80 380
+C 82 384 ${escalaBrazoIzq1} 431  ${escalaBrazoIzq2} 504
 C 62.728 573.389 56.463 554.749 51.683 623.01
 c 1.844 122.992 0.647 101.675 2.339 121.232
 c 0.979 11.298 -2.029 18.33 -2.08 30.076
@@ -303,11 +327,10 @@ c 1.905 -12.992 2.43 -23.876 4.297 -36.877
 c 5.703 -27.395 16.953 -50.782 16.752 -82.933
 h 0.557
 C 164.215 467.746 168.681 480.814 173.147 503.88
-C 181 576 166.11 695.018 165.453 700.089
-C 152.423 771.882 153.725 760.652 151.372 800.904
-C 150.142 856.885 147.108 841.613 146 902
-C 145 926 146 981 154 1023
-C 157 1050 161.281 1062.169 171.649 1121.005
+C ${escalaCinturaIzq1} 655 ${escalaCinturaIzq1} 668 ${escalaCinturaIzq1} 736
+C ${escalaCaderaIzq1} 812 ${escalaCaderaIzq2} 842 ${escalaPiernaIzq1} 911
+C ${escalaPiernaIzq1} 1000 ${escalaPiernaIzq2} 1000 ${escalaPiernaIzq2} 1006
+C 157 1050 161 1061 171.649 1121.005
 c 10.37 58.829 -7.176 82.36 -6.777 121.312
 c 0.397 38.954 7.974 66.542 23.928 122.938
 c 15.954 56.398 13.959 102.247 13.959 110.363
@@ -338,9 +361,9 @@ c 2.013 -22.116 0.382 -82.528 2.134 -96.522
 c 0.26 -2.057 1.773 -8.642 1.773 -8.642
 c 9.257 -4.735 3.254 69.117 6.141 106.729
 M 307.71 934.044
-s 7.515 43.328 9.109 49.82
-c 1.594 6.493 15.154 92.917 15.154 115.64
-c 0 22.719 20.738 79.927 20.341 98.593
+s 16.29 71.956 15.29 67.956
+C 325 1016 331.973 1076.781 339 1140
+C 339 1156 352.711 1179.431 352.314 1198.097
 c -0.26 12.173 -10.37 60.455 -10.37 60.455
 c -8.375 33.267 -1.197 81.147 4.387 93.316
 c 5.584 12.171 4.786 93.724 4.786 102.654
@@ -363,10 +386,9 @@ c -6.316 -14.136 0 -33.673 -0.397 -55.584
 c -0.399 -21.911 28.315 -129.432 33.897 -161.887
 c 5.588 -32.461 -3.988 -102.654 -6.775 -111.58
 C 430.881 1157.523 436.066 1111.266 445 1066
-C 449.285 1048.979 453 992 457 906
-C 455 857 459 836 453.845 799.196
-C 447 748 449 767 439.295 694.688
-C 426.727 570.198 427.986 518.799 430.872 506.375
+C 449 1030 ${escalaPiernaDer1} 998 ${escalaPiernaDer1} 901
+C ${escalaCaderaDer1} 826 ${escalaCaderaDer2} 814 ${escalaCinturaDer2} 745
+C ${escalaCinturaDer1} 670 ${escalaCinturaDer2} 656 430.872 506.375
 C 446.55 455.631 446.924 455.442 447.293 455.253
 c 0.237 31.302 10.536 53.876 16.193 80.094
 c 1.795 12.388 2.842 25.536 4.639 37.927

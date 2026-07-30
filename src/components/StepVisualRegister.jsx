@@ -23,7 +23,7 @@ const StepVisualRegister = ({ formData, updateData, next, prev }) => {
     <div className="space-y-4 animate-fade-in">
       <h2 className="text-xl font-bold text-center text-white mb-1">Registro Visual Inicial</h2>
 
-      <BodySilhouette genre="f" cadera={cadera} cintura={cintura} piernas={piernas} brazos={brazos} />
+      <BodySilhouette genre="m" cadera={cadera} cintura={cintura} piernas={piernas} brazos={brazos} />
 
 
       {/* Inputs de Medidas Antropométricas */}
