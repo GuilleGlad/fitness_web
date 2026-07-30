@@ -123,11 +123,10 @@ const Dashboard = () => {
   }, [navigate, apiUrl, roleValue, status]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('name');
-    localStorage.removeItem('client_id');
-    localStorage.removeItem('status');
+  const keysToClear = ['token', 'role', 'name', 'client_id', 'status','genre'];
+        keysToClear.forEach(key => {
+          localStorage.removeItem(key);
+        });
     navigate('/login');
   };
 

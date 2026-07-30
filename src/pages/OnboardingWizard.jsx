@@ -26,7 +26,7 @@ const OnboardingWizard = () => {
       arms: '',
       legs: '',
       trainerId: null,
-      client_id: localStorage.getItem('client_id')
+      client_id: localStorage.getItem('client_id'),
     });
   const registroSuccessNotif = (text) => {
     toast(text,

@@ -18,12 +18,12 @@ const StepVisualRegister = ({ formData, updateData, next, prev }) => {
   var piernas = parseFloat(formData.legs) || 20;
   
   const inputMeasureStyle = "px-3 py-2 bg-[#cccccc] text-[#1e222b] font-bold rounded-lg text-xs placeholder-[#555555] w-full text-center focus:outline-none focus:ring-2 focus:ring-[#f1b80c] transition-all";
-
+  const genre = localStorage.getItem('genre') || '';
   return (
     <div className="space-y-4 animate-fade-in">
-      <h2 className="text-xl font-bold text-center text-white mb-1">Registro Visual Inicial</h2>
+      <h2 className="text-xl font-bold text-center text-white mb-1">Registro Visual Inicial {genre}</h2>
 
-      <BodySilhouette genre="m" cadera={cadera} cintura={cintura} piernas={piernas} brazos={brazos} />
+      <BodySilhouette genre={genre} cadera={cadera} cintura={cintura} piernas={piernas} brazos={brazos} />
 
 
       {/* Inputs de Medidas Antropométricas */}

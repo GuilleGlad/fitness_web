@@ -71,6 +71,7 @@ const LoginForm = () => {
             localStorage.setItem('role', role);
             localStorage.setItem('name', user.name || user.email || 'Usuario EliteFit');
             localStorage.setItem('status',user.status);
+            localStorage.setItem('genre',user.genre);
             loginSuccessNotif();
             setTimeout(() => {
                 if (role === 3 && user.status === 0) {
