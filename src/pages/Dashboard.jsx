@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { verifyToken } from '../utils/tokenUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome } from '@fortawesome/free-solid-svg-icons';
+import { faAdd, faHome } from '@fortawesome/free-solid-svg-icons';
+import BodySilhouette from '../components/BodySilhouette';
+import moment from 'moment';
+import FloatingButton from '../components/FloatingButton';
+import { Link } from 'react-router-dom';
 const ROLE_MAP = {
   'admin': 1,
   'trainer': 2,
@@ -44,10 +48,16 @@ const Dashboard = () => {
   const roleValue = parseInt(localStorage.getItem('role'), 10) || 3;
   const [status, setStatus] = useState(localStorage.getItem('status'));
   const userName = localStorage.getItem('name') || 'Usuario EliteFit';
+  const genre = localStorage.getItem('genre');
+  const clientId = localStorage.getItem('client_id');
   const notifications = 4;
   const roleString = Object.entries(ROLE_MAP).find(([key, value]) => value === roleValue)?.[0]?.toUpperCase() || 'CLIENTE';
   const menuLinks = ROLE_MENUS[roleValue] || ROLE_MENUS[3];
   const apiUrl = process.env.REACT_APP_API_URL;
+  const token = localStorage.getItem('token');
+  const [progreso, setProgreso] = useState([{cadera: 100, cintura: 100, piernas: 60, brazos: 30}]);
+  const [profile , setProfile] = useState({});
+
   const [counts, setCounts] = useState({
     trainers: 0,
     clients: 0,
@@ -77,7 +87,6 @@ const Dashboard = () => {
 
     const fetchCounts = async () => {
       try {
-        const token = localStorage.getItem('token');
         const config = {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -86,7 +95,7 @@ const Dashboard = () => {
         await axios.get(`${apiUrl}/admin/counts`, config).then((response) => {
           if (response.status === 200) {
             setCounts(response.data.counts);
-            console.log(response.data);
+            // console.log(response.data);
           }
         })
       } catch (error) {
@@ -94,13 +103,53 @@ const Dashboard = () => {
       }
     }
 
-if(roleString.toLowerCase() === 'client' && status === '0'){
-  navigate('/wizard');
-}
+    if (roleString.toLowerCase() === 'client' && status === '0') {
+      navigate('/wizard');
+    }
 
     if (roleValue === 1 && redirectPath === null) {
       fetchCounts();
     }
+
+    const fetchProfile = async () => {
+      try{
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        };
+        await axios.get(`${apiUrl}/progress/get-profile`, config).then((response) => {
+          if(response.status === 200){
+            setProfile(response.data.profile[0]);
+          }
+        })
+      } catch (error) {
+        console.error('Error fetchin data: ', error);
+      }      
+    }
+
+    fetchProfile();
+
+    const fetchProgress = async () => {
+      try{
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        };
+        await axios.get(`${apiUrl}/progress/get/${clientId}`, config).then((response) => {
+          if(response.status === 200){
+            setProgreso(response.data.filas);
+           console.log(progreso);
+            
+          }
+        })
+      } catch (error) {
+        console.error('Error fetchin data: ', error);
+      }
+    }
+
+    fetchProgress();
 
   }, [navigate, apiUrl, roleValue, status]);
 
@@ -232,7 +281,8 @@ if(roleString.toLowerCase() === 'client' && status === '0'){
               <span className="rounded-full bg-[#f1b80c]/15 px-3 py-1 text-sm text-[#f1b80c] font-semibold">En progreso</span>
             </div>
             <div className="space-y-4">
-              {[
+              <BodySilhouette genre={genre} cadera={Number(progreso[0].hips)} cintura={Number(progreso[0].waist)} piernas={Number(progreso[0].legs)} brazos={Number(progreso[0].arms)} />
+              {/* {[
                 { label: 'IMC', value: '23.5', percent: 75 },
                 { label: 'Grasa corporal', value: '18%', percent: 60 },
                 { label: 'Masa muscular', value: '42%', percent: 86 },
@@ -246,29 +296,72 @@ if(roleString.toLowerCase() === 'client' && status === '0'){
                     <div className="h-full rounded-full bg-[#f1b80c]" style={{ width: `${item.percent}%` }} />
                   </div>
                 </div>
-              ))}
+              ))} */}
             </div>
           </section>
 
           <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl">
-            <h2 className="text-xl font-semibold text-white mb-4">Datos biométricos</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Datos Iniciales</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm text-slate-300">
                 <tbody>
-                  {[
-                    { label: 'Altura', value: '175 cm' },
-                    { label: 'Peso', value: '72 kg' },
-                    { label: 'Cintura', value: '78 cm' },
-                    { label: 'Cadera', value: '96 cm' },
-                  ].map((item) => (
-                    <tr key={item.label} className="border-b border-slate-800">
-                      <td className="py-3 font-medium text-white">{item.label}</td>
-                      <td className="py-3">{item.value}</td>
+                    <tr className="border-b border-slate-800">
+                      <td className="py-3 font-medium text-white">Edad</td>
+                      <td className="py-3">{profile.age}</td>
                     </tr>
-                  ))}
+                    <tr className="border-b border-slate-800">
+                      <td className="py-3 font-medium text-white">Altura</td>
+                      <td className="py-3">{profile.height}</td>
+                    </tr>                    
+                    <tr className="border-b border-slate-800">
+                      <td className="py-3 font-medium text-white">Peso</td>
+                      <td className="py-3">{profile.initial_weight}</td>
+                    </tr>                    
+                    <tr className="border-b border-slate-800">
+                      <td className="py-3 font-medium text-white">Objetivo</td>
+                      <td className="py-3">{profile.goal?.replace('_',' ').toUpperCase()}</td>
+                    </tr>                                     
+                    <tr className="border-b border-slate-800">
+                      <td className="py-3 font-medium text-white">Dias a Entrenar</td>
+                      <td className="py-3">{profile.training_days}</td>
+                    </tr>                                                            
                 </tbody>
               </table>
             </div>
+            <hr></hr>
+            <div className="flex justify-evenly">
+              <h2 className="text-xl font-semibold text-white mb-4 mt-1">Datos Biometricos</h2>
+              <div className="text-center">
+                  <Link to='#' className="uppercase text-white-600 hover:text-customYellow transition">
+                      <div className="text-nowrap flex items-center gap-2 bg-yellow-200 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 my-2 hover:bg-customYellow transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"> Agregar<FontAwesomeIcon icon={faAdd}/>
+                      </div>
+                  </Link>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm text-slate-300">
+                <tbody>
+                    <tr className="border-b border-slate-800">
+                      <td className="py-3 font-medium text-white">Cintura</td>
+                      <td className="py-3 font-medium text-white">Cadera</td>
+                      <td className="py-3 font-medium text-white">Brazos</td>
+                      <td className="py-3 font-medium text-white">Piernas</td>
+                      <td className="py-3 font-medium text-white">Fecha</td>
+                    </tr>                                             
+                    {
+                      progreso.map((item) => (
+                        <tr className="border-b border-slate-800">
+                          <td className="py-3 font-medium text-white">{item.hips}</td>
+                          <td className="py-3 font-medium text-white">{item.waist}</td>
+                          <td className="py-3 font-medium text-white">{item.arms}</td>
+                          <td className="py-3 font-medium text-white">{item.legs}</td>
+                          <td className="py-3 font-medium text-white">{moment(item.log_date).format('DD-MM-YYYY')}</td>
+                        </tr>
+                      ))
+                    }               
+                </tbody>
+              </table>
+            </div>            
           </section>
         </div>
 
