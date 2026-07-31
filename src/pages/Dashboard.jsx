@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import {verifyToken} from '../utils/tokenUtils';
+import { verifyToken } from '../utils/tokenUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome } from '@fortawesome/free-solid-svg-icons';
 const ROLE_MAP = {
@@ -42,7 +42,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [selectedMenu, setSelectedMenu] = useState('Perfil de Usuario');
   const roleValue = parseInt(localStorage.getItem('role'), 10) || 3;
-  const [status, setStatus] = useState(0);
+  const [status, setStatus] = useState(localStorage.getItem('status'));
   const userName = localStorage.getItem('name') || 'Usuario EliteFit';
   const notifications = 4;
   const roleString = Object.entries(ROLE_MAP).find(([key, value]) => value === roleValue)?.[0]?.toUpperCase() || 'CLIENTE';
@@ -64,69 +64,51 @@ const Dashboard = () => {
       .toUpperCase();
   }, [userName]);
 
-  useEffect(() => { 
+  useEffect(() => {
     var redirectPath = null;
     const checkToken = async () => {
       redirectPath = await verifyToken();
       if (redirectPath) {
         navigate(redirectPath);
-      } 
+      }
     };
 
     checkToken();
 
-  const fetchCounts = async () => {
-    try{
-      const token = localStorage.getItem('token');
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
-      await axios.get(`${apiUrl}/admin/counts`, config).then((response) => {
-        if (response.status === 200) {
-          setCounts(response.data.counts);
-          console.log(response.data);
-        }
-      })
-    }catch(error){
-      console.error('Error fetching counts:', error);
-    }
-  }
-
-  const fetchStatus = async () => {
-    try{
-      const token = localStorage.getItem('token');
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
-      await axios.get(`${apiUrl}/auth/me`, config).then((response) => {
-        if (response.status === 200) {
-          setStatus(response.data.user.status);
-          if(roleValue === 3 && status === 0){
-            navigate('/wizard');
+    const fetchCounts = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+        await axios.get(`${apiUrl}/admin/counts`, config).then((response) => {
+          if (response.status === 200) {
+            setCounts(response.data.counts);
+            console.log(response.data);
           }
-        }
-      })
-    }catch(error){
-      console.error('Error fetching counts:', error);
+        })
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+      }
     }
-  }
-  fetchStatus();
 
-  if(roleValue === 1 && redirectPath === null){
-    fetchCounts();
-  }
+if(roleString.toLowerCase() === 'client' && status === '0'){
+  navigate('/wizard');
+}
+
+    if (roleValue === 1 && redirectPath === null) {
+      fetchCounts();
+    }
 
   }, [navigate, apiUrl, roleValue, status]);
 
   const handleLogout = () => {
-  const keysToClear = ['token', 'role', 'name', 'client_id', 'status','genre'];
-        keysToClear.forEach(key => {
-          localStorage.removeItem(key);
-        });
+    const keysToClear = ['token', 'role', 'name', 'client_id', 'status', 'genre'];
+    keysToClear.forEach(key => {
+      localStorage.removeItem(key);
+    });
     navigate('/login');
   };
 
@@ -343,15 +325,15 @@ const Dashboard = () => {
                   <button
                     key={item}
                     onClick={() => {
-                      if (item.indexOf('Clientes') !== -1 || item.indexOf("Usuarios") !== -1){
+                      if (item.indexOf('Clientes') !== -1 || item.indexOf("Usuarios") !== -1) {
                         navigate('/clients');
                         return;
                       }
-                      if (item.indexOf('Entrenadores') !== -1){
+                      if (item.indexOf('Entrenadores') !== -1) {
                         navigate('/trainers');
                         return;
                       }
-                      if (item.indexOf('Ejercicios') !== -1 || item.indexOf('Ejercicios por Entrenador') !== -1 ){
+                      if (item.indexOf('Ejercicios') !== -1 || item.indexOf('Ejercicios por Entrenador') !== -1) {
                         navigate('/trainer-exercises');
                         return;
                       }
@@ -367,7 +349,7 @@ const Dashboard = () => {
                         navigate('/settings');
                         return;
                       }
-                      if (item.indexOf('Noticias') !== -1){
+                      if (item.indexOf('Noticias') !== -1) {
                         navigate('/news-manager');
                         return;
                       }

@@ -113,23 +113,29 @@ export default function RegisterForm() {
             return;
         }
         // Si todo está correcto
-        try{
-            const response = await axios.post(apiUrl + "/auth/register",formData);
-            console.log('Datos enviados con éxito:', formData);
-            console.log(response.data);
-            localStorage.setItem('client_id', response.data.user.id);
-            setSuccess(true);
-            registroSuccessNotif("Registro Exitoso, redirigiendo...");
-            //guardar el token en localStorage o en un contexto global para futuras solicitudes
-            localStorage.setItem('token', response.data.token);
-            localStorage.setItem('role', formData.role);
-            localStorage.setItem('name', formData.name);
-            const redirectUrl = formData.role === ROLES.CLIENT ? "/wizard" : "/dashboard";
-            //redireccionar al dashboard o a la página principal después del login exitoso
-            setTimeout(() => {
-                navigate(redirectUrl);
-            }, 1500);            
-        }catch(e){
+            try{
+                const response = await axios.post(apiUrl + "/auth/register",formData);
+                console.log('Datos enviados con éxito:', formData);
+                console.log(response.data);
+                const { token, user } = response.data;
+                localStorage.setItem('client_id', user.id);
+                localStorage.setItem('token', token);
+                localStorage.setItem('role', user.role);
+                localStorage.setItem('name', user.name || user.email || 'Usuario EliteFit');
+                localStorage.setItem('status', user.status);
+                localStorage.setItem('genre', user.genre);
+                setSuccess(true);
+                registroSuccessNotif("Registro Exitoso, redirigiendo...");
+                // Verificar si es cliente (rol 3) y status 0 para redirigir a wizard
+                const role = typeof user.role === 'string' && /^\d+$/.test(user.role)
+                    ? Number(user.role)
+                    : user.role;
+                const redirectUrl = (role === 3 && user.status === 0) ? "/wizard" : "/dashboard";
+                //redireccionar al dashboard o a la página principal después del login exitoso
+                setTimeout(() => {
+                    navigate(redirectUrl);
+                }, 1500);            
+            }catch(e){
             // console.error("error: " + e.status);
             setSuccess(false);
             if(e.status == 409)
