@@ -8,6 +8,8 @@ import BodySilhouette from '../components/BodySilhouette';
 import moment from 'moment';
 import FloatingButton from '../components/FloatingButton';
 import { Link } from 'react-router-dom';
+import ProgressModal from '../components/ProgressModal';
+import { yellow } from '@mui/material/colors';
 const ROLE_MAP = {
   'admin': 1,
   'trainer': 2,
@@ -45,6 +47,7 @@ const ROLE_MENUS = {
 const Dashboard = () => {
   const navigate = useNavigate();
   const [selectedMenu, setSelectedMenu] = useState('Perfil de Usuario');
+  const [showProgressModal, setShowProgressModal] = useState(false);
   const roleValue = parseInt(localStorage.getItem('role'), 10) || 3;
   const [status, setStatus] = useState(localStorage.getItem('status'));
   const userName = localStorage.getItem('name') || 'Usuario EliteFit';
@@ -328,14 +331,16 @@ const Dashboard = () => {
                 </tbody>
               </table>
             </div>
-            <hr></hr>
+<hr></hr>
             <div className="flex justify-evenly">
               <h2 className="text-xl font-semibold text-white mb-4 mt-1">Datos Biometricos</h2>
               <div className="text-center">
-                  <Link to='#' className="uppercase text-white-600 hover:text-customYellow transition">
-                      <div className="text-nowrap flex items-center gap-2 bg-yellow-200 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 my-2 hover:bg-customYellow transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"> Agregar<FontAwesomeIcon icon={faAdd}/>
-                      </div>
-                  </Link>
+                  <button
+                    onClick={() => setShowProgressModal(true)}
+                    className="text-nowrap flex items-center gap-2 bg-yellow-200 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 my-2 hover:bg-yellow-300 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
+                  >
+                    Agregar <FontAwesomeIcon icon={faAdd} />
+                  </button>
               </div>
             </div>
             <div className="overflow-x-auto">
@@ -347,15 +352,22 @@ const Dashboard = () => {
                       <td className="py-3 font-medium text-white">Brazos</td>
                       <td className="py-3 font-medium text-white">Piernas</td>
                       <td className="py-3 font-medium text-white">Fecha</td>
+                      <td className="py-3 font-medium text-white">Fotos</td>
                     </tr>                                             
                     {
-                      progreso.map((item) => (
-                        <tr className="border-b border-slate-800">
-                          <td className="py-3 font-medium text-white">{item.hips}</td>
-                          <td className="py-3 font-medium text-white">{item.waist}</td>
-                          <td className="py-3 font-medium text-white">{item.arms}</td>
-                          <td className="py-3 font-medium text-white">{item.legs}</td>
-                          <td className="py-3 font-medium text-white">{moment(item.log_date).format('DD-MM-YYYY')}</td>
+                      progreso.map((item,index) => (
+                        <tr className={`border-b border-white ${index === 0 ? 'bg-yellow-400':' '}`} key={item.id}>
+                          <td className={`py-3 font-medium  ${index === 0 ? 'text-black p-2':'text-white p-2'}`}>{item.hips}</td>
+                          <td className={`py-3 font-medium ${index === 0 ? 'text-black p-2':'text-white p-2'}`}>{item.waist}</td>
+                          <td className={`py-3 font-medium ${index === 0 ? 'text-black p-2':'text-white p-2'}`}>{item.arms}</td>
+                          <td className={`py-3 font-medium ${index === 0 ? 'text-black p-2':'text-white p-2'}`}>{item.legs}</td>
+                          <td className={`py-3 font-medium ${index === 0 ? 'text-black p-2':'text-white p-2'}`}>{moment(item.log_date).format('DD-MM-YYYY')}</td>
+                          <td className="py-3 font-medium text-white">
+                            <div className="flex gap-2">
+                              <img src={item.photo_front_url} className='h-8 rounded-md'></img>
+                              <img src={item.photo_back_url} className='h-8 rounded-md'></img>
+                            </div>
+                          </td>
                         </tr>
                       ))
                     }               
@@ -392,116 +404,131 @@ const Dashboard = () => {
                 <p className="text-sm">Salmón al horno con quinoa.</p>
               </div>
             </div>
-          </section>
+</section>
         </div>
       </>
     );
   };
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-white">
-      <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col lg:flex-row">
-        <aside className="w-full border-b border-slate-800 bg-[#141820] lg:w-[320px] lg:min-h-screen lg:border-r lg:border-b-0">
-          <div className="flex h-full flex-col justify-between p-6">
-            <div>
-              <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-[#f1b80c] to-[#d97706] text-xl font-bold text-slate-950 shadow-xl shadow-[#f1b80c]/20">
-                {initials}
-              </div>
-              <div className="mt-5">
-                <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Bienvenido</p>
-                <h1 className="mt-3 text-2xl font-bold text-white">{userName}</h1>
-                <p className="mt-1 text-sm text-slate-400">{roleString}</p>
-              </div>
-
-              <div className="mt-8 space-y-2">
-                {menuLinks.map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => {
-                      if (item.indexOf('Clientes') !== -1 || item.indexOf("Usuarios") !== -1) {
-                        navigate('/clients');
-                        return;
-                      }
-                      if (item.indexOf('Entrenadores') !== -1) {
-                        navigate('/trainers');
-                        return;
-                      }
-                      if (item.indexOf('Ejercicios') !== -1 || item.indexOf('Ejercicios por Entrenador') !== -1) {
-                        navigate('/trainer-exercises');
-                        return;
-                      }
-                      if (item.indexOf('Fotos/Videos') !== -1) {
-                        navigate('/trainer-library');
-                        return;
-                      }
-                      if (item.indexOf('Recetas') !== -1 || item.indexOf('Recetas por Entrenador') !== -1) {
-                        navigate('/trainer-recipes');
-                        return;
-                      }
-                      if (item.indexOf('Ajustes') !== -1) {
-                        navigate('/settings');
-                        return;
-                      }
-                      if (item.indexOf('Noticias') !== -1) {
-                        navigate('/news-manager');
-                        return;
-                      }
-                      setSelectedMenu(item);
-                    }}
-                    className={`w-full rounded-3xl px-4 py-3 text-left text-md font-semibold transition-all ${selectedMenu === item ? 'bg-[#f1b80c] text-[#1e222b]' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-8 space-y-3">
-              <button
-                onClick={handleLogout}
-                className="w-full rounded-3xl bg-[#1f2937] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
-              >
-                Cerrar sesión
-              </button>
-              <button
-                onClick={navigate.bind(null, '/')}
-                className="w-full rounded-3xl bg-[#1f2937] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
-              >
-                <FontAwesomeIcon icon={faHome} className='mr-2'></FontAwesomeIcon><span>Página de Inicio</span>
-              </button>
-            </div>
-          </div>
-        </aside>
-
-        <main className="flex-1 bg-[#0d1117] p-6 lg:p-8">
-          <div className="mb-6 flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
-            <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Panel</p>
-              <h2 className="mt-3 text-3xl font-bold text-white">{selectedMenu}</h2>
-              <p className="mt-2 text-slate-400">Contenido personalizado para tu rol de {roleString}.</p>
-            </div>
-
-            {(roleValue === 2 || roleValue === 3) && (
-              <div className="inline-flex items-center gap-4 rounded-3xl bg-[#141820] border border-slate-800 p-4 shadow-xl">
-                <div className="rounded-2xl bg-slate-900/80 p-3 text-[#f1b80c]">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 fill-current">
-                    <path d="M12 2a7 7 0 0 0-7 7v2.585l-.707.707A1 1 0 0 0 4 14h16a1 1 0 0 0 .707-1.707L19 11.585V9a7 7 0 0 0-7-7zm0 20a4 4 0 0 0 4-4H8a4 4 0 0 0 4 4z" />
-                  </svg>
+    <>
+      <div className="min-h-screen bg-[#0d1117] text-white">
+        <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col lg:flex-row">
+          <aside className="w-full border-b border-slate-800 bg-[#141820] lg:w-[320px] lg:min-h-screen lg:border-r lg:border-b-0">
+            <div className="flex h-full flex-col justify-between p-6">
+              <div>
+                <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-[#f1b80c] to-[#d97706] text-xl font-bold text-slate-950 shadow-xl shadow-[#f1b80c]/20">
+                  {initials}
                 </div>
-                <div>
-                  <p className="text-sm text-slate-400">Notificaciones</p>
-                  <p className="text-2xl font-bold text-white">{notifications}</p>
+                <div className="mt-5">
+                  <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Bienvenido</p>
+                  <h1 className="mt-3 text-2xl font-bold text-white">{userName}</h1>
+                  <p className="mt-1 text-sm text-slate-400">{roleString}</p>
+                </div>
+
+                <div className="mt-8 space-y-2">
+                  {menuLinks.map((item) => (
+                    <button
+                      key={item}
+                      onClick={() => {
+                        if (item.indexOf('Clientes') !== -1 || item.indexOf("Usuarios") !== -1) {
+                          navigate('/clients');
+                          return;
+                        }
+                        if (item.indexOf('Entrenadores') !== -1) {
+                          navigate('/trainers');
+                          return;
+                        }
+                        if (item.indexOf('Ejercicios') !== -1 || item.indexOf('Ejercicios por Entrenador') !== -1) {
+                          navigate('/trainer-exercises');
+                          return;
+                        }
+                        if (item.indexOf('Fotos/Videos') !== -1) {
+                          navigate('/trainer-library');
+                          return;
+                        }
+                        if (item.indexOf('Recetas') !== -1 || item.indexOf('Recetas por Entrenador') !== -1) {
+                          navigate('/trainer-recipes');
+                          return;
+                        }
+                        if (item.indexOf('Ajustes') !== -1) {
+                          navigate('/settings');
+                          return;
+                        }
+                        if (item.indexOf('Noticias') !== -1) {
+                          navigate('/news-manager');
+                          return;
+                        }
+                        setSelectedMenu(item);
+                      }}
+                      className={`w-full rounded-3xl px-4 py-3 text-left text-md font-semibold transition-all ${selectedMenu === item ? 'bg-[#f1b80c] text-[#1e222b]' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                    >
+                      {item}
+                    </button>
+                  ))}
                 </div>
               </div>
-            )}
-          </div>
 
-          <div className="rounded-[40px] border border-slate-800 bg-[#141820] p-6 shadow-2xl">
-            {renderSectionContent()}
-          </div>
-        </main>
+              <div className="mt-8 space-y-3">
+                <button
+                  onClick={handleLogout}
+                  className="w-full rounded-3xl bg-[#1f2937] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
+                >
+                  Cerrar sesión
+                </button>
+                <button
+                  onClick={navigate.bind(null, '/')}
+                  className="w-full rounded-3xl bg-[#1f2937] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
+                >
+                  <FontAwesomeIcon icon={faHome} className='mr-2'></FontAwesomeIcon><span>Página de Inicio</span>
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          <main className="flex-1 bg-[#0d1117] p-6 lg:p-8">
+            <div className="mb-6 flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
+              <div>
+                <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Panel</p>
+                <h2 className="mt-3 text-3xl font-bold text-white">{selectedMenu}</h2>
+                <p className="mt-2 text-slate-400">Contenido personalizado para tu rol de {roleString}.</p>
+              </div>
+
+              {(roleValue === 2 || roleValue === 3) && (
+                <div className="inline-flex items-center gap-4 rounded-3xl bg-[#141820] border border-slate-800 p-4 shadow-xl">
+                  <div className="rounded-2xl bg-slate-900/80 p-3 text-[#f1b80c]">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+                      <path d="M12 2a7 7 0 0 0-7 7v2.585l-.707.707A1 1 0 0 0 4 14h16a1 1 0 0 0 .707-1.707L19 11.585V9a7 7 0 0 0-7-7zm0 20a4 4 0 0 0 4-4H8a4 4 0 0 0 4 4z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-400">Notificaciones</p>
+                    <p className="text-2xl font-bold text-white">{notifications}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-[40px] border border-slate-800 bg-[#141820] p-6 shadow-2xl">
+              {renderSectionContent()}
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+      
+{/* Progress Modal */}
+      <ProgressModal
+        isOpen={showProgressModal}
+        onClose={() => setShowProgressModal(false)}
+        clientId={clientId}
+        age={profile.age}
+        height={profile.height}
+        initialWeight={profile.initial_weight}
+        goal={profile.goal}
+        trainingDays={profile.training_days}
+        trainerId={profile.trainer_id}
+      />
+    </>
   );
 };
 
