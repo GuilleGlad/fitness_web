@@ -58,8 +58,10 @@ const Dashboard = () => {
   const menuLinks = ROLE_MENUS[roleValue] || ROLE_MENUS[3];
   const apiUrl = process.env.REACT_APP_API_URL;
   const token = localStorage.getItem('token');
-  const [progreso, setProgreso] = useState([{cadera: 100, cintura: 100, piernas: 60, brazos: 30}]);
-  const [profile , setProfile] = useState({});
+  const [progreso, setProgreso] = useState([{ cadera: 100, cintura: 100, piernas: 60, brazos: 30 }]);
+  const [profile, setProfile] = useState({});
+  const [previewImage, setPreviewImage] = useState(null);
+
 
   const [counts, setCounts] = useState({
     trainers: 0,
@@ -115,36 +117,36 @@ const Dashboard = () => {
     }
 
     const fetchProfile = async () => {
-      try{
+      try {
         const config = {
           headers: {
             Authorization: `Bearer ${token}`,
           }
         };
         await axios.get(`${apiUrl}/progress/get-profile`, config).then((response) => {
-          if(response.status === 200){
+          if (response.status === 200) {
             setProfile(response.data.profile[0]);
           }
         })
       } catch (error) {
         console.error('Error fetchin data: ', error);
-      }      
+      }
     }
 
     fetchProfile();
 
     const fetchProgress = async () => {
-      try{
+      try {
         const config = {
           headers: {
             Authorization: `Bearer ${token}`,
           }
         };
         await axios.get(`${apiUrl}/progress/get/${clientId}`, config).then((response) => {
-          if(response.status === 200){
+          if (response.status === 200) {
             setProgreso(response.data.filas);
-           console.log(progreso);
-            
+            console.log(progreso);
+
           }
         })
       } catch (error) {
@@ -275,13 +277,13 @@ const Dashboard = () => {
         </div>
 
         <div className="grid gap-4 xl:grid-cols-2 mb-6">
-          <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-5">
+          <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+            <div className="flex items-start justify-between mb-5 lg:flex-row flex-col">
               <div>
                 <h2 className="text-xl font-semibold text-white">Progreso corporal</h2>
                 <p className="text-sm text-slate-400">Última actualización hace 3 días</p>
               </div>
-              <span className="rounded-full bg-[#f1b80c]/15 px-3 py-1 text-sm text-[#f1b80c] font-semibold">En progreso</span>
+              <span className="rounded-full bg-[#f1b80c]/15 px-3 py-1 lg:text-sm text-xs text-nowrap text-[#f1b80c] font-semibold">En progreso</span>
             </div>
             <div className="space-y-4">
               <BodySilhouette genre={genre} cadera={Number(progreso[0].hips)} cintura={Number(progreso[0].waist)} piernas={Number(progreso[0].legs)} brazos={Number(progreso[0].arms)} />
@@ -303,82 +305,100 @@ const Dashboard = () => {
             </div>
           </section>
 
-          <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl">
+          <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
             <h2 className="text-xl font-semibold text-white mb-4">Datos Iniciales</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm text-slate-300">
                 <tbody>
-                    <tr className="border-b border-slate-800">
-                      <td className="py-3 font-medium text-white">Edad</td>
-                      <td className="py-3">{profile.age}</td>
-                    </tr>
-                    <tr className="border-b border-slate-800">
-                      <td className="py-3 font-medium text-white">Altura</td>
-                      <td className="py-3">{profile.height}</td>
-                    </tr>                    
-                    <tr className="border-b border-slate-800">
-                      <td className="py-3 font-medium text-white">Peso</td>
-                      <td className="py-3">{profile.initial_weight}</td>
-                    </tr>                    
-                    <tr className="border-b border-slate-800">
-                      <td className="py-3 font-medium text-white">Objetivo</td>
-                      <td className="py-3">{profile.goal?.replace('_',' ').toUpperCase()}</td>
-                    </tr>                                     
-                    <tr className="border-b border-slate-800">
-                      <td className="py-3 font-medium text-white">Dias a Entrenar</td>
-                      <td className="py-3">{profile.training_days}</td>
-                    </tr>                                                            
+                  <tr className="border-b border-slate-800">
+                    <td className="py-3 font-medium text-white">Edad</td>
+                    <td className="py-3">{profile.age}</td>
+                  </tr>
+                  <tr className="border-b border-slate-800">
+                    <td className="py-3 font-medium text-white">Altura</td>
+                    <td className="py-3">{profile.height}</td>
+                  </tr>
+                  <tr className="border-b border-slate-800">
+                    <td className="py-3 font-medium text-white">Peso</td>
+                    <td className="py-3">{profile.initial_weight}</td>
+                  </tr>
+                  <tr className="border-b border-slate-800">
+                    <td className="py-3 font-medium text-white">Objetivo</td>
+                    <td className="py-3">{profile.goal?.replace('_', ' ').toUpperCase()}</td>
+                  </tr>
+                  <tr className="border-b border-slate-800">
+                    <td className="py-3 font-medium text-white">Dias a Entrenar</td>
+                    <td className="py-3">{profile.training_days}</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
-<hr></hr>
+            <hr></hr>
             <div className="flex justify-evenly">
               <h2 className="text-xl font-semibold text-white mb-4 mt-1">Datos Biometricos</h2>
               <div className="text-center">
-                  <button
-                    onClick={() => setShowProgressModal(true)}
-                    className="text-nowrap flex items-center gap-2 bg-yellow-200 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 my-2 hover:bg-yellow-300 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
-                  >
-                    Agregar <FontAwesomeIcon icon={faAdd} />
-                  </button>
+                <button
+                  onClick={() => setShowProgressModal(true)}
+                  className="text-nowrap flex items-center gap-2 bg-yellow-100 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 my-2 hover:bg-yellow-400 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
+                >
+                  Agregar <FontAwesomeIcon icon={faAdd} />
+                </button>
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm text-slate-300">
-                <tbody>
-                    <tr className="border-b border-slate-800">
-                      <td className="py-3 font-medium text-white">Cintura</td>
-                      <td className="py-3 font-medium text-white">Cadera</td>
-                      <td className="py-3 font-medium text-white">Brazos</td>
-                      <td className="py-3 font-medium text-white">Piernas</td>
-                      <td className="py-3 font-medium text-white">Fecha</td>
-                      <td className="py-3 font-medium text-white">Fotos</td>
-                    </tr>                                             
-                    {
-                      progreso.map((item,index) => (
-                        <tr className={`border-b border-white ${index === 0 ? 'bg-yellow-400':' '}`} key={item.id}>
-                          <td className={`py-3 font-medium  ${index === 0 ? 'text-black p-2':'text-white p-2'}`}>{item.hips}</td>
-                          <td className={`py-3 font-medium ${index === 0 ? 'text-black p-2':'text-white p-2'}`}>{item.waist}</td>
-                          <td className={`py-3 font-medium ${index === 0 ? 'text-black p-2':'text-white p-2'}`}>{item.arms}</td>
-                          <td className={`py-3 font-medium ${index === 0 ? 'text-black p-2':'text-white p-2'}`}>{item.legs}</td>
-                          <td className={`py-3 font-medium ${index === 0 ? 'text-black p-2':'text-white p-2'}`}>{moment(item.log_date).format('DD-MM-YYYY')}</td>
-                          <td className="py-3 font-medium text-white">
-                            <div className="flex gap-2">
-                              <img src={item.photo_front_url} className='h-8 rounded-md'></img>
-                              <img src={item.photo_back_url} className='h-8 rounded-md'></img>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    }               
-                </tbody>
-              </table>
-            </div>            
+<div className="max-h-[250px] overflow-y-auto space-y-3 pr-1">
+  {progreso.map((item, index) => (
+    <div
+      key={item.id}
+      className={`rounded-xl p-3 border ${
+        index === 0
+          ? 'bg-yellow-100 text-black border-yellow-500'
+          : 'bg-yellow-400 border-slate-800 text-black'
+      }`}
+    >
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <p><span className="font-semibold">Cintura:</span> {item.hips}</p>
+        <p><span className="font-semibold">Cadera:</span> {item.waist}</p>
+        <p><span className="font-semibold">Brazos:</span> {item.arms}</p>
+        <p><span className="font-semibold">Piernas:</span> {item.legs}</p>
+        <p className="col-span-2">
+          <span className="font-semibold">Fecha:</span> {moment(item.log_date).format('DD-MM-YYYY')}
+        </p>
+      </div>
+
+      <div className="flex gap-2 mt-2">
+        <img
+          src={item.photo_front_url}
+          className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
+          onClick={() => setPreviewImage(item.photo_front_url)}
+        />
+
+        <img
+          src={item.photo_back_url}
+          className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
+          onClick={() => setPreviewImage(item.photo_back_url)}
+        />
+      </div>
+    </div>
+  ))}
+</div>
+
+            {previewImage && (
+              <div
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+                onClick={() => setPreviewImage(null)}
+              >
+                <img
+                  src={previewImage}
+                  className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl"
+                />
+              </div>
+            )}
+
           </section>
         </div>
 
         <div className="grid gap-4 xl:grid-cols-2">
-          <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl">
+          <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
             <h2 className="text-xl font-semibold text-white mb-4">Rutinas</h2>
             <div className="space-y-3 text-slate-300">
               <div className="rounded-2xl bg-slate-900/70 p-4">
@@ -392,7 +412,7 @@ const Dashboard = () => {
             </div>
           </section>
 
-          <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl">
+          <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
             <h2 className="text-xl font-semibold text-white mb-4">Recetas</h2>
             <div className="space-y-3 text-slate-300">
               <div className="rounded-2xl bg-slate-900/70 p-4">
@@ -404,7 +424,7 @@ const Dashboard = () => {
                 <p className="text-sm">Salmón al horno con quinoa.</p>
               </div>
             </div>
-</section>
+          </section>
         </div>
       </>
     );
@@ -509,14 +529,14 @@ const Dashboard = () => {
               )}
             </div>
 
-            <div className="rounded-[40px] border border-slate-800 bg-[#141820] p-6 shadow-2xl">
+            <div className="rounded-[40px] border border-slate-800 bg-[#141820] shadow-2xl">
               {renderSectionContent()}
             </div>
           </main>
         </div>
       </div>
-      
-{/* Progress Modal */}
+
+      {/* Progress Modal */}
       <ProgressModal
         isOpen={showProgressModal}
         onClose={() => setShowProgressModal(false)}
