@@ -306,37 +306,29 @@ const Dashboard = () => {
           </section>
 
           <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-            <h2 className="text-xl font-semibold text-white mb-4">Datos Iniciales</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm text-slate-300">
-                <tbody>
-                  <tr className="border-b border-slate-800">
-                    <td className="py-3 font-medium text-white">Edad</td>
-                    <td className="py-3">{profile.age}</td>
-                  </tr>
-                  <tr className="border-b border-slate-800">
-                    <td className="py-3 font-medium text-white">Altura</td>
-                    <td className="py-3">{profile.height}</td>
-                  </tr>
-                  <tr className="border-b border-slate-800">
-                    <td className="py-3 font-medium text-white">Peso</td>
-                    <td className="py-3">{profile.initial_weight}</td>
-                  </tr>
-                  <tr className="border-b border-slate-800">
-                    <td className="py-3 font-medium text-white">Objetivo</td>
-                    <td className="py-3">{profile.goal?.replace('_', ' ').toUpperCase()}</td>
-                  </tr>
-                  <tr className="border-b border-slate-800">
-                    <td className="py-3 font-medium text-white">Dias a Entrenar</td>
-                    <td className="py-3">{profile.training_days}</td>
-                  </tr>
-                </tbody>
-              </table>
+            <h2 className="items-center text-xl font-semibold text-white mb-4">Datos Iniciales</h2>
+            <div className="space-y-2">
+              {[
+                { label: "Edad", value: profile.age },
+                { label: "Altura", value: profile.height },
+                { label: "Peso", value: profile.initial_weight },
+                { label: "Objetivo", value: profile.goal?.replace('_', ' ').toUpperCase() },
+                { label: "Días a Entrenar", value: profile.training_days },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-lg p-2 bg-slate-900/60 border border-slate-800 text-white flex justify-between items-center text-xs"
+                >
+                  <span className="text-slate-400">{item.label}</span>
+                  <span className="font-semibold">{item.value}</span>
+                </div>
+              ))}
             </div>
+
             <hr></hr>
-            <div className="flex justify-evenly">
-              <h2 className="text-xl font-semibold text-white mb-4 mt-1">Datos Biometricos</h2>
-              <div className="text-center">
+            <div className="flex">
+              <h2 className="text-left text-xl font-semibold text-white mb-4 mt-1">Datos Biometricos</h2>
+              <div className="justify-end flex-grow flex">
                 <button
                   onClick={() => setShowProgressModal(true)}
                   className="text-nowrap flex items-center gap-2 bg-yellow-100 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 my-2 hover:bg-yellow-400 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
@@ -345,42 +337,41 @@ const Dashboard = () => {
                 </button>
               </div>
             </div>
-<div className="max-h-[250px] overflow-y-auto space-y-3 pr-1">
-  {progreso.map((item, index) => (
-    <div
-      key={item.id}
-      className={`rounded-xl p-3 border ${
-        index === 0
-          ? 'bg-yellow-100 text-black border-yellow-500'
-          : 'bg-yellow-400 border-slate-800 text-black'
-      }`}
-    >
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <p><span className="font-semibold">Cintura:</span> {item.hips}</p>
-        <p><span className="font-semibold">Cadera:</span> {item.waist}</p>
-        <p><span className="font-semibold">Brazos:</span> {item.arms}</p>
-        <p><span className="font-semibold">Piernas:</span> {item.legs}</p>
-        <p className="col-span-2">
-          <span className="font-semibold">Fecha:</span> {moment(item.log_date).format('DD-MM-YYYY')}
-        </p>
-      </div>
+            <div className="max-h-[250px] overflow-y-auto space-y-3 pr-1">
+              {progreso.map((item, index) => (
+                <div
+                  key={item.id}
+                  className={`rounded-xl p-3 border ${index === 0
+                      ? 'bg-yellow-100 text-black border-yellow-500'
+                      : 'bg-yellow-400 border-slate-800 text-black'
+                    }`}
+                >
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <p><span className="font-semibold">Cintura:</span> {item.hips}</p>
+                    <p><span className="font-semibold">Cadera:</span> {item.waist}</p>
+                    <p><span className="font-semibold">Brazos:</span> {item.arms}</p>
+                    <p><span className="font-semibold">Piernas:</span> {item.legs}</p>
+                    <p className="col-span-2">
+                      <span className="font-semibold">Fecha:</span> {moment(item.log_date).format('DD-MM-YYYY')}
+                    </p>
+                  </div>
 
-      <div className="flex gap-2 mt-2">
-        <img
-          src={item.photo_front_url}
-          className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
-          onClick={() => setPreviewImage(item.photo_front_url)}
-        />
+                  <div className="flex gap-2 mt-2">
+                    <img
+                      src={item.photo_front_url}
+                      className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
+                      onClick={() => setPreviewImage(item.photo_front_url)}
+                    />
 
-        <img
-          src={item.photo_back_url}
-          className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
-          onClick={() => setPreviewImage(item.photo_back_url)}
-        />
-      </div>
-    </div>
-  ))}
-</div>
+                    <img
+                      src={item.photo_back_url}
+                      className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
+                      onClick={() => setPreviewImage(item.photo_back_url)}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
 
             {previewImage && (
               <div
