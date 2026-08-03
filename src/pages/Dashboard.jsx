@@ -342,8 +342,8 @@ const Dashboard = () => {
                 <div
                   key={item.id}
                   className={`rounded-xl p-3 border ${index === 0
-                      ? 'bg-yellow-100 text-black border-yellow-500'
-                      : 'bg-yellow-400 border-slate-800 text-black'
+                      ? 'bg-yellow-400 text-black border-yellow-500'
+                      : 'bg-yellow-100 border-slate-800 text-black'
                     }`}
                 >
                   <div className="grid grid-cols-2 gap-2 text-xs">
