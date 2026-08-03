@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import TrainerLibrary from './TrainerLibrary';
-
+import { verifyToken } from '../utils/tokenUtils';
 
 const initialForm = {
   title: '',
@@ -174,6 +174,16 @@ const TrainerExercises = () => {
   const exercisesCount = exercises.length;
 
   useEffect(() => {
+    var redirectPath = null;
+    const checkToken = async () => {
+      redirectPath = await verifyToken();
+      if (redirectPath) {
+        navigate(redirectPath);
+      }
+    };
+
+    checkToken();
+
     const fetchExercises = async () => {
       if (!trainerId) return;
 
@@ -201,7 +211,7 @@ const TrainerExercises = () => {
         );
       } catch (err) {
         console.error(err);
-        toast.error('No se pudieron cargar los ejercicios.');
+        // toast.error('No se pudieron cargar los ejercicios.');
       } finally {
         setLoading(false);
       }
@@ -418,7 +428,7 @@ const TrainerExercises = () => {
           </div>
 
           {/* Desktop Table */}
-          <div className="hidden overflow-x-auto lg:block">
+          <div className="hidden max-h-[400px] overflow-y-auto lg:block">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-700/60">
@@ -470,7 +480,7 @@ const TrainerExercises = () => {
           </div>
 
           {/* Mobile Cards */}
-          <div className="lg:hidden">
+          <div className="max-h-[400px] overflow-y-auto lg:hidden">
             {loading ? (
               <p className="py-12 text-center text-slate-400">Cargando…</p>
             ) : exercises.length === 0 ? (

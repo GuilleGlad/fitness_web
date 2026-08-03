@@ -133,7 +133,9 @@ const Dashboard = () => {
       }
     }
 
-    fetchProfile();
+    if(roleString.toLowerCase() === 'client'){
+      fetchProfile();
+    }
 
     const fetchProgress = async () => {
       try {
@@ -264,7 +266,6 @@ const Dashboard = () => {
       <>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
           {[
-            { label: 'Progreso general', value: '74%' },
             { label: 'Rutinas activas', value: 5 },
             { label: 'Recetas favoritas', value: 12 },
             { label: 'Pagos próximos', value: 1 },

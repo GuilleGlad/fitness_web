@@ -147,6 +147,7 @@ const Clients = () => {
             picture: item.picture || '/images/avatar.png',
             status: item.status,
             deleted: item.deleted || false,
+            role: item.role || '',
           }))
         );
       } catch (err) {
@@ -222,6 +223,10 @@ const Clients = () => {
       toast.success('Cliente restaurado correctamente.');
     } catch { toast.error('No se pudo restaurar el cliente.'); }
   };
+
+  const assignWorkout = (id) => {
+    navigate(`/assign-workout/${id}`);
+  }
 
   const yesNo = (msg, onConfirm) => {
     toast((t) => (
@@ -308,11 +313,28 @@ const Clients = () => {
                     <td className="px-6 py-4">
                       <div className="flex gap-2 opacity-70 group-hover:opacity-100">
                         {client.deleted ? (
-                          <button onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.id))} className="rounded-full bg-slate-600 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-500">Restaurar</button>
+                          <button 
+                            onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.id))} 
+                            disabled={client.role === 'admin'}
+                            className="rounded-full bg-slate-600 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Restaurar
+                          </button>
                         ) : (
                           <>
-                            <button onClick={() => handleEdit(client)} className="rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e]">Editar</button>
-                            <button onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))} className="rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500">Eliminar</button>
+                            <button 
+                              onClick={() => handleEdit(client)}  
+                              className="rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e]"
+                            >
+                              Editar
+                            </button>
+                            <button 
+                              onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))} 
+                              disabled={client.role === 'admin'}
+                              className="rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Eliminar
+                            </button>
                           </>
                         )}
                       </div>
@@ -348,11 +370,29 @@ const Clients = () => {
                     </div>
                     <div className="flex gap-2">
                       {client.deleted ? (
-                        <button onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.id))} className="flex-1 rounded-full bg-slate-600 py-2.5 text-xs font-semibold text-white hover:bg-slate-500">Restaurar</button>
+                        <button 
+                          onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.id))} 
+                          disabled={client.role === 'admin'}
+                          className="flex-1 rounded-full bg-slate-600 py-2.5 text-xs font-semibold text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Restaurar
+                        </button>
                       ) : (
                         <>
-                          <button onClick={() => handleEdit(client)} className="flex-1 rounded-full bg-[#f1b80c] py-2.5 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e]">Editar</button>
-                          <button onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))} className="flex-1 rounded-full bg-red-600 py-2.5 text-xs font-semibold text-white hover:bg-red-500">Eliminar</button>
+                          <button 
+                            onClick={() => handleEdit(client)} 
+                            disabled={client.role === 'admin'}
+                            className="flex-1 rounded-full bg-[#f1b80c] py-2.5 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e] disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Editar
+                          </button>
+                          <button 
+                            onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))} 
+                            disabled={client.role === 'admin'}
+                            className="flex-1 rounded-full bg-red-600 py-2.5 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Eliminar
+                          </button>
                         </>
                       )}
                     </div>
