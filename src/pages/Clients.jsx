@@ -21,7 +21,7 @@ const ModalOverlay = ({ isOpen, onClose, title, children }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
       <div
-        className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-[32px] border border-slate-700 bg-[#141820] shadow-2xl"
+        className="relative w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-[32px] border border-slate-700 bg-[#141820] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-[#141820] px-6 py-4">
@@ -565,110 +565,121 @@ const Clients = () => {
 
       {/* Assign Workout Modal */}
       <ModalOverlay isOpen={showAssignModal} onClose={closeAssignModal} title={selectedClient ? `Asignar rutina a ${selectedClient.name}` : 'Asignar rutina'}>
-        <form onSubmit={handleAssignSubmit} className="space-y-6">
-          <label className="block space-y-2 text-sm text-slate-200">
-            Rutina
-            <select
-              value={selectedWorkoutId}
-              onChange={(e) => setSelectedWorkoutId(e.target.value)}
-              className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-            >
-              <option value="" disabled>Selecciona una rutina</option>
-              {loadingTrainerWorkouts ? (
-                <option value="">Cargando rutinas...</option>
-              ) : trainerWorkouts.length === 0 ? (
-                <option value="">No se encontraron rutinas</option>
-              ) : (
-                trainerWorkouts.map((workout) => (
-                  <option key={workout.id || workout.workout_id || workout.workoutId} value={workout.id || workout.workout_id || workout.workoutId}>
-                    {workout.name || workout.title || `Rutina ${workout.id || workout.workout_id}`}
-                  </option>
-                ))
-              )}
-            </select>
-          </label>
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.95fr]">
+          <div>
+            <form onSubmit={handleAssignSubmit} className="space-y-5">
+              <label className="block space-y-2 text-sm text-slate-200">
+                Rutina
+                <select
+                  value={selectedWorkoutId}
+                  onChange={(e) => setSelectedWorkoutId(e.target.value)}
+                  className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                >
+                  <option value="" disabled>Selecciona una rutina</option>
+                  {loadingTrainerWorkouts ? (
+                    <option value="">Cargando rutinas...</option>
+                  ) : trainerWorkouts.length === 0 ? (
+                    <option value="">No se encontraron rutinas</option>
+                  ) : (
+                    trainerWorkouts.map((workout) => (
+                      <option key={workout.id || workout.workout_id || workout.workoutId} value={workout.id || workout.workout_id || workout.workoutId}>
+                        {workout.name || workout.title || `Rutina ${workout.id || workout.workout_id}`}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </label>
 
-          <div className="space-y-3">
-            <p className="text-sm font-semibold text-slate-200">Días de la semana</p>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {dayOptions.map((day) => (
-                <label key={day.key} className="inline-flex items-center gap-2 rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-sm text-slate-200 transition hover:border-[#f1b80c]">
-                  <input
-                    type="checkbox"
-                    checked={selectedDays[day.key]}
-                    onChange={() => handleToggleDay(day.key)}
-                    className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-[#f1b80c] focus:ring-[#f1b80c]"
-                  />
-                  {day.label}
-                </label>
-              ))}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-slate-200">Días de la semana</p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {dayOptions.map((day) => (
+                    <label key={day.key} className="inline-flex items-center gap-2 rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-sm text-slate-200 transition hover:border-[#f1b80c]">
+                      <input
+                        type="checkbox"
+                        checked={selectedDays[day.key]}
+                        onChange={() => handleToggleDay(day.key)}
+                        className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-[#f1b80c] focus:ring-[#f1b80c]"
+                      />
+                      {day.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <label className="block space-y-2 text-sm text-slate-200">
+                Notas del entrenador
+                <textarea
+                  value={trainerNotes}
+                  onChange={(e) => setTrainerNotes(e.target.value)}
+                  placeholder="Escribe información extra sobre la rutina..."
+                  className="min-h-[120px] w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                />
+              </label>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button type="submit" disabled={loadingAssign} className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-70">
+                  {loadingAssign ? 'Asignando...' : 'Asignar rutina'}
+                </button>
+                <button type="button" onClick={closeAssignModal} className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700">
+                  Cerrar
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div className="rounded-3xl border border-slate-700 bg-[#0f172a] p-4 lg:max-h-[65vh] lg:overflow-hidden">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Rutinas asignadas</h3>
+              {/* <span className="text-sm text-slate-400">Cliente: {selectedClient?.name || '—'}</span> */}
+              <span className="text-sm text-slate-400">Total: {assignedWorkouts.length}</span>
             </div>
-          </div>
-
-          <label className="block space-y-2 text-sm text-slate-200">
-            Notas del entrenador
-            <textarea
-              value={trainerNotes}
-              onChange={(e) => setTrainerNotes(e.target.value)}
-              placeholder="Escribe información extra sobre la rutina..."
-              className="min-h-[120px] w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-            />
-          </label>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <button type="submit" disabled={loadingAssign} className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-70">
-              {loadingAssign ? 'Asignando...' : 'Asignar rutina'}
-            </button>
-            <button type="button" onClick={closeAssignModal} className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700">
-              Cerrar
-            </button>
-          </div>
-        </form>
-
-        <div className="mt-8 rounded-3xl border border-slate-700 bg-[#0f172a] p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Rutinas asignadas</h3>
-            <span className="text-sm text-slate-400">Cliente: {selectedClient?.name || '—'}</span>
-          </div>
-          {loadingAssignedWorkouts ? (
-            <p className="text-slate-400">Cargando rutinas asignadas…</p>
-          ) : assignedWorkouts.length === 0 ? (
-            <p className="text-slate-400">Este cliente no tiene rutinas asignadas aún.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-slate-700/60">
-                    <th className="px-3 py-3 font-medium text-slate-400">Rutina</th>
-                    <th className="px-3 py-3 font-medium text-slate-400">Días</th>
-                    <th className="px-3 py-3 font-medium text-slate-400">Notas</th>
-                    <th className="px-3 py-3 font-medium text-slate-400">Creado</th>
-                    <th className="px-3 py-3 font-medium text-slate-400">Acción</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/50">
-                  {assignedWorkouts.map((item) => (
-                    <tr key={item.id || `${item.client_id}-${item.workout_id}-${item.log_date}`} className="hover:bg-slate-800/40">
-                      <td className="px-3 py-3 text-slate-200">{item.title || `#${item.workout_id}`}</td>
-                      <td className="px-3 py-3 text-slate-200">{item.day_of_week}</td>
-                      <td className="px-3 py-3 text-slate-200">{item.trainer_notes || '—'}</td>
-                      <td className="px-3 py-3 text-slate-400">{item.log_date ? new Date(item.log_date).toLocaleDateString() : '—'}</td>
-                      <td className="px-3 py-3">
+            {loadingAssignedWorkouts ? (
+              <p className="text-slate-400">Cargando rutinas asignadas…</p>
+            ) : assignedWorkouts.length === 0 ? (
+              <p className="text-slate-400">Este cliente no tiene rutinas asignadas aún.</p>
+            ) : (
+              <div className="grid gap-4 overflow-y-auto pr-1 lg:max-h-[56vh]">
+                {assignedWorkouts.map((item) => (
+                  <div key={item.id || `${item.client_id}-${item.workout_id}-${item.log_date}`} className="rounded-3xl border border-slate-800 bg-[#141820] p-4 shadow-xl">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-[#f1b80c]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#f1b80c]">Rutina</span>
+                          <h4 className="text-base font-semibold text-white">{item.title || item.name || item.workout_name || `#${item.workout_id}`}</h4>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 text-sm text-slate-300">
+                            <p className="font-semibold text-white">Días</p>
+                            <p>{item.day_of_week || '—'}</p>
+                          </div>
+                          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 text-sm text-slate-300">
+                            <p className="font-semibold text-white">Creado</p>
+                            <p>{item.log_date ? new Date(item.log_date).toLocaleDateString() : '—'}</p>
+                          </div>
+                        </div>
+                        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 text-sm text-slate-300">
+                          <p className="font-semibold text-white">Notas del entrenador</p>
+                          <p>{item.trainer_notes || '—'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start justify-end">
                         <button
                           type="button"
                           onClick={() => handleDeleteAssignedWorkout(item.id)}
                           className="inline-flex items-center justify-center rounded-full bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-500"
                           aria-label="Eliminar rutina asignada"
+                          title='Eliminar rutina asignada'
                         >
                           🗑️
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </ModalOverlay>
 
