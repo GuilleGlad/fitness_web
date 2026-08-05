@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight, faChevronCircleDown, faChevronCircleUp, faDumbbell, faVideo, faImage } from '@fortawesome/free-solid-svg-icons';
 
-const ExerciseCard = ({ title, description, photo_url, video_url, onNavigate, index, total, onClose }) => {
+const ExerciseCard = ({ title, description, photo_url, video_url, onNavigate, index, total, onClose, Navigation = true }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const videoRef = useRef(null);
   const textLimit = 200;
@@ -65,10 +65,12 @@ const ExerciseCard = ({ title, description, photo_url, video_url, onNavigate, in
             <FontAwesomeIcon icon={faDumbbell} className="h-6 w-6 text-[#f1b80c] flex-shrink-0" />
             <div className="min-w-0">
               <h2 className="text-lg font-semibold text-white truncate">{title}</h2>
-              <p className="text-xs text-slate-400 truncate">Ejercicio {index + 1} de {total}</p>
+              { Navigation && <p className="text-xs text-slate-400 truncate">Ejercicio {index + 1} de {total}</p>}
             </div>
           </div>
           <div className="flex items-center gap-2">
+          { Navigation && 
+             <>
             <button
               onClick={() => handleNavigate(-1)}
               disabled={index === 0}
@@ -85,6 +87,8 @@ const ExerciseCard = ({ title, description, photo_url, video_url, onNavigate, in
             >
               <FontAwesomeIcon icon={faChevronRight} className="h-5 w-5" />
             </button>
+            </>
+          }
             <button
               onClick={onClose}
               className="rounded-full p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white"

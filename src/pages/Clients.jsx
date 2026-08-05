@@ -148,6 +148,14 @@ const Clients = () => {
     { key: 'D', label: 'Domingo' },
   ];
 
+  const translateDay = (key) => {
+    if(key.indexOf(',') != -1) {
+      return key.split(',').map(k => translateDay(k)).join(', ');
+    }
+    const day = dayOptions.find((d) => d.key === key);
+    return day ? day.label : key;
+  };
+
   const resetAssignForm = () => {
     setSelectedWorkoutId('');
     setSelectedDays({ L: false, M: false, X: false, J: false, V: false, S: false, D: false });
@@ -583,7 +591,7 @@ const Clients = () => {
                   ) : (
                     trainerWorkouts.map((workout) => (
                       <option key={workout.id || workout.workout_id || workout.workoutId} value={workout.id || workout.workout_id || workout.workoutId}>
-                        {workout.name || workout.title || `Rutina ${workout.id || workout.workout_id}`}
+                        {workout.title + ' (Sets: ' + workout.sets +' Reps: ' + workout.reps_text + ' ' + workout.client_effort_notes + ')'}
                       </option>
                     ))
                   )}
@@ -641,24 +649,24 @@ const Clients = () => {
             ) : (
               <div className="grid gap-4 overflow-y-auto pr-1 lg:max-h-[56vh]">
                 {assignedWorkouts.map((item) => (
-                  <div key={item.id || `${item.client_id}-${item.workout_id}-${item.log_date}`} className="rounded-3xl border border-slate-800 bg-[#141820] p-4 shadow-xl">
+                  <div key={item.id || `${item.client_id}-${item.workout_id}-${item.log_date}`} className="rounded-3xl border border-slate-800 bg-yellow-400 p-4 shadow-xl">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="space-y-3">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-[#f1b80c]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#f1b80c]">Rutina</span>
-                          <h4 className="text-base font-semibold text-white">{item.title || item.name || item.workout_name || `#${item.workout_id}`}</h4>
+                          <span className="rounded-full bg-yellow-600 px-2.5 py-0.5 text-[11px] font-semibold text-white">Rutina</span>
+                          <h4 className="text-base font-semibold text-black">{item.title || item.name || item.workout_name || `#${item.workout_id}`}</h4>
                         </div>
                         <div className="grid gap-2 sm:grid-cols-2">
-                          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 text-sm text-slate-300">
+                          <div className="rounded-2xl border border-slate-800 bg-slate-600 p-3 text-sm text-slate-300">
                             <p className="font-semibold text-white">Días</p>
-                            <p>{item.day_of_week || '—'}</p>
+                            <p>{translateDay(item.day_of_week) || '—'}</p>
                           </div>
-                          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 text-sm text-slate-300">
+                          <div className="rounded-2xl border border-slate-800 bg-slate-600 p-3 text-sm text-slate-300">
                             <p className="font-semibold text-white">Creado</p>
                             <p>{item.log_date ? new Date(item.log_date).toLocaleDateString() : '—'}</p>
                           </div>
                         </div>
-                        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 text-sm text-slate-300">
+                        <div className="rounded-2xl border border-slate-800 bg-slate-600 p-3 text-sm text-slate-300">
                           <p className="font-semibold text-white">Notas del entrenador</p>
                           <p>{item.trainer_notes || '—'}</p>
                         </div>

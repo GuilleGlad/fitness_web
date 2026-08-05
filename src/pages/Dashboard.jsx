@@ -3,13 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { verifyToken } from '../utils/tokenUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faAdd, faHome } from '@fortawesome/free-solid-svg-icons';
+import { faAdd, faHome, faPencil, faVideo } from '@fortawesome/free-solid-svg-icons';
 import BodySilhouette from '../components/BodySilhouette';
 import moment from 'moment';
+import 'moment/locale/es';
 import FloatingButton from '../components/FloatingButton';
+import ExerciseCard from '../components/ExerciseCard';
 import { Link } from 'react-router-dom';
 import ProgressModal from '../components/ProgressModal';
 import { yellow } from '@mui/material/colors';
+import toast from 'react-hot-toast';
 const ROLE_MAP = {
   'admin': 1,
   'trainer': 2,
@@ -61,7 +64,69 @@ const Dashboard = () => {
   const [progreso, setProgreso] = useState([{ cadera: 100, cintura: 100, piernas: 60, brazos: 30 }]);
   const [profile, setProfile] = useState({});
   const [previewImage, setPreviewImage] = useState(null);
+  const [workouts, setWorkouts] = useState([]);
+  const [previewExercise, setPreviewExercise] = useState(null);
+  const [notesModal, setNotesModal] = useState({ isOpen: false, workoutId: null, title: '', date: '', notes: '' });
+  const [calendarView, setCalendarView] = useState('week');
+  const [selectedDate, setSelectedDate] = useState(moment().startOf('day'));
 
+  const DAY_LETTER_BY_INDEX = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+  const getWorkoutDayLetters = (item) => {
+    const raw = (item.day_of_week || item.days || item.day || item.week_day || item.dayOfWeek || '')
+      .toString()
+      .trim()
+      .toUpperCase();
+
+    if (!raw) return '';
+    return raw.replace(/[^A-Z]/g, '');
+  };
+
+  const getSelectedDayLetter = (date) => {
+    const index = date.isoWeekday() - 1;
+    return DAY_LETTER_BY_INDEX[index] || '';
+  };
+
+  const weekStart = useMemo(() => selectedDate.clone().startOf('isoWeek'), [selectedDate]);
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => weekStart.clone().add(i, 'day')),
+    [weekStart]
+  );
+
+  const monthStart = useMemo(() => selectedDate.clone().startOf('month'), [selectedDate]);
+  const monthEnd = useMemo(() => selectedDate.clone().endOf('month'), [selectedDate]);
+  const monthGrid = useMemo(() => {
+    const start = monthStart.clone().startOf('isoWeek');
+    const end = monthEnd.clone().endOf('isoWeek');
+    const days = [];
+    const current = start.clone();
+    while (current.isSameOrBefore(end, 'day')) {
+      days.push(current.clone());
+      current.add(1, 'day');
+    }
+    return days;
+  }, [monthStart, monthEnd]);
+
+  const filteredWorkouts = useMemo(() => {
+    if (!workouts || workouts.length === 0) return [];
+    const selectedLetter = getSelectedDayLetter(selectedDate);
+    return workouts.filter((item) => {
+      const letters = getWorkoutDayLetters(item);
+      return letters.includes(selectedLetter);
+    });
+  }, [workouts, selectedDate]);
+
+  moment.locale('es');
+  const weekDayLabels = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'];
+
+  const selectWeekDay = (day) => {
+    setSelectedDate(day.clone().startOf('day'));
+    setCalendarView('week');
+  };
+
+  const selectMonthDay = (day) => {
+    setSelectedDate(day.clone().startOf('day'));
+  };
 
   const [counts, setCounts] = useState({
     trainers: 0,
@@ -133,7 +198,7 @@ const Dashboard = () => {
       }
     }
 
-    if(roleString.toLowerCase() === 'client'){
+    if (roleString.toLowerCase() === 'client') {
       fetchProfile();
     }
 
@@ -158,6 +223,28 @@ const Dashboard = () => {
 
     fetchProgress();
 
+    const fetchWorkouts = async () => {
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        };
+        await axios.get(`${apiUrl}/workouts/list/${clientId}`, config).then((response) => {
+          if (response.status === 200) {
+            console.log('Workouts:', response.data.filas);
+            setWorkouts(response.data.filas);
+          }
+        })
+      } catch (error) {
+        console.error('Error fetching workouts:', error);
+      }
+    }
+
+    if (roleString.toLowerCase() === 'client') {
+      fetchWorkouts();
+    }
+
   }, [navigate, apiUrl, roleValue, status]);
 
   const handleLogout = () => {
@@ -166,6 +253,86 @@ const Dashboard = () => {
       localStorage.removeItem(key);
     });
     navigate('/login');
+  };
+
+  const handleExercisePreview = async (id) => {
+    if (!id) return;
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const response = await axios.get(`${apiUrl}/exercises/get/${id}`, config);
+      const exerciseData = response.data?.exercises?.[0];
+      setPreviewExercise(exerciseData || null);
+    } catch (error) {
+      console.error('Error fetching exercise preview:', error);
+      setPreviewExercise(null);
+    }
+  };
+
+  const handleWorkoutNotes = async (workout_id, client_id, log_date, title = '', note) => {
+    if (!workout_id || !client_id || !log_date) return;
+
+    setNotesModal({
+      isOpen: true,
+      workoutId: workout_id,
+      title: title || 'Rutina',
+      date: log_date,
+      notes: note || '',
+    });
+  };
+
+  const closeNotesModal = () => {
+    setNotesModal({ isOpen: false, workoutId: null, title: '', date: '', notes: '' });
+  };
+
+  const formatTimestamp = (dateString) => {
+    const m = moment(dateString);
+    if (!m.isValid()) return dateString;
+    const now = moment();
+    if (m.hour() === 0 && m.minute() === 0 && m.second() === 0) {
+      return m.set({
+        hour: now.hour(),
+        minute: now.minute(),
+        second: now.second(),
+      }).format('YYYY-MM-DD HH:mm:ss');
+    }
+    return m.format('YYYY-MM-DD HH:mm:ss');
+  };
+
+  const saveNotes = async () => {
+    if (!notesModal.workoutId) return;
+    try {
+      const formattedDate = formatTimestamp(notesModal.date);
+      const data = {
+        client_id: clientId,
+        daily_workouts_id: notesModal.workoutId,
+        note: notesModal.notes,
+        log_date: formattedDate,
+      };
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const response = await axios.post(`${apiUrl}/workouts/add-note`, data, config);
+      const savedNote = response.data?.note || notesModal.notes;
+
+      setWorkouts((prevWorkouts) =>
+        prevWorkouts.map((workout) =>
+          workout.id === notesModal.workoutId
+            ? { ...workout, note: savedNote, trainer_notes: savedNote }
+            : workout
+        )
+      );
+      toast.success('Nota guardada correctamente', { autoClose: 2000 });
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      toast.error('Error, no se pudo guardar la nota', { autoClose: 2000 });
+    }
+    closeNotesModal();
   };
 
   const renderSectionContent = () => {
@@ -308,7 +475,7 @@ const Dashboard = () => {
 
           <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
             <h2 className="items-center text-xl font-semibold text-white mb-4">Datos Iniciales</h2>
-            <div className="space-y-2">
+            <div className=" grid grid-cols-3 text-slate-300 mb-4">
               {[
                 { label: "Edad", value: profile.age },
                 { label: "Altura", value: profile.height },
@@ -318,7 +485,7 @@ const Dashboard = () => {
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-lg p-2 bg-slate-900/60 border border-slate-800 text-white flex justify-between items-center text-xs"
+                  className={`rounded-lg p-2 bg-slate-900/60 border border-slate-800 text-white justify-between items-center text-xs flex ${item.label === "Objetivo" ? 'col-span-2' : 'col-span-1'}`}
                 >
                   <span className="text-slate-400">{item.label}</span>
                   <span className="font-semibold">{item.value}</span>
@@ -326,7 +493,7 @@ const Dashboard = () => {
               ))}
             </div>
 
-            <hr></hr>
+
             <div className="flex">
               <h2 className="text-left text-xl font-semibold text-white mb-4 mt-1">Datos Biometricos</h2>
               <div className="justify-end flex-grow flex">
@@ -338,13 +505,13 @@ const Dashboard = () => {
                 </button>
               </div>
             </div>
-            <div className="max-h-[250px] overflow-y-auto space-y-3 pr-1">
+            <div className="max-h-[350px] overflow-y-auto space-y-3 pr-1">
               {progreso.map((item, index) => (
                 <div
                   key={item.id}
                   className={`rounded-xl p-3 border ${index === 0
-                      ? 'bg-yellow-400 text-black border-yellow-500'
-                      : 'bg-yellow-100 border-slate-800 text-black'
+                    ? 'bg-yellow-400 text-black border-black'
+                    : 'bg-slate-800 border-yellow-400 text-white'
                     }`}
                 >
                   <div className="grid grid-cols-2 gap-2 text-xs">
@@ -392,14 +559,125 @@ const Dashboard = () => {
         <div className="grid gap-4 xl:grid-cols-2">
           <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
             <h2 className="text-xl font-semibold text-white mb-4">Rutinas</h2>
-            <div className="space-y-3 text-slate-300">
-              <div className="rounded-2xl bg-slate-900/70 p-4">
-                <p className="font-semibold text-white">Full Body</p>
-                <p className="text-sm">4 días / semana · Fuerza y movilidad</p>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setCalendarView('week')}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${calendarView === 'week' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                  >
+                    Semana
+                  </button>
+                  <button
+                    onClick={() => setCalendarView('month')}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${calendarView === 'month' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                  >
+                    Mes
+                  </button>
+                </div>
+                <p className="text-sm text-slate-400">Selecciona un día para ver las rutinas asignadas.</p>
               </div>
-              <div className="rounded-2xl bg-slate-900/70 p-4">
-                <p className="font-semibold text-white">Cardio ligero</p>
-                <p className="text-sm">3 días / semana · Recuperación</p>
+
+              {calendarView === 'week' ? (
+                <div className="grid grid-cols-7 gap-2 rounded-2xl bg-slate-900/80 p-2">
+                  {weekDays.map((day) => {
+                    const isSelected = day.isSame(selectedDate, 'day');
+                    return (
+                      <button
+                        key={day.format('YYYY-MM-DD')}
+                        type="button"
+                        onClick={() => selectWeekDay(day)}
+                        className={`rounded-2xl border p-2 text-center transition ${isSelected ? 'border-[#f1b80c] bg-[#f1b80c] text-slate-950 shadow-lg' : 'border-slate-800 bg-[#111827] text-slate-300 hover:border-slate-500 hover:bg-slate-800'}`}
+                      >
+                        <div className="text-[10px] uppercase tracking-[0.25em] text-slate-400">{weekDayLabels[day.isoWeekday() - 1]}</div>
+                        <div className="mt-1 text-base font-semibold">{day.format('D')}</div>
+                        <div className="mt-1 text-[10px] text-slate-500">{day.format('ddd')}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-slate-900/80 p-3">
+                  <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-xs text-slate-400">{selectedDate.format('MMMM YYYY')}</p>
+                      <h3 className="text-lg font-semibold text-white">Calendario mensual</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDate((prev) => prev.clone().subtract(1, 'month'))}
+                        className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDate((prev) => prev.clone().add(1, 'month'))}
+                        className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                      >
+                        ›
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1 text-center text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                    {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'].map((label) => (
+                      <div key={label}>{label}</div>
+                    ))}
+                  </div>
+                  <div className="mt-2 grid grid-cols-7 gap-1">
+                    {monthGrid.map((day) => {
+                      const isCurrentMonth = day.month() === monthStart.month();
+                      const isSelected = day.isSame(selectedDate, 'day');
+                      return (
+                        <button
+                          key={day.format('YYYY-MM-DD')}
+                          type="button"
+                          onClick={() => selectMonthDay(day)}
+                          className={`rounded-2xl border p-2 text-left transition ${isSelected ? 'border-[#f1b80c] bg-[#f1b80c] text-slate-950 shadow-lg' : isCurrentMonth ? 'border-slate-800 bg-[#111827] text-slate-200 hover:border-slate-500 hover:bg-slate-800' : 'border-transparent bg-slate-950/40 text-slate-600'}`}
+                        >
+                          <div className="text-sm font-semibold">{day.format('D')}</div>
+                          {day.isSame(moment(), 'day') && <div className="mt-1 text-[10px] uppercase text-slate-400">Hoy</div>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-3xl bg-slate-900/70 p-4 text-slate-300">
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-400">Rutinas para el día</p>
+                    <h3 className="text-lg font-semibold text-white">{selectedDate.format('dddd, D [de] MMMM')}</h3>
+                  </div>
+                  {/* <span className="rounded-full bg-[#f1b80c] px-3 py-1 text-xs font-semibold text-slate-950">{filteredWorkouts.length} encontradas</span> */}
+                </div>
+                {filteredWorkouts.length === 0 ? (
+                  <p className="text-sm text-slate-400">No hay rutinas asignadas para este día.</p>
+                ) : (
+                  <div className="grid gap-3">
+                    {filteredWorkouts.map((item) => (
+                      <div key={item.id || `${item.workout_id}-${item.day_of_week}-${item.title || item.name || item.workout_name}`}
+                        className="rounded-[32px] border border-[#f1b80c] bg-gradient-to-br from-slate-950 via-slate-900 to-[#111827] p-4 shadow-[0_16px_48px_rgba(241,184,12,0.18)] "
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex flex-col gap-1 workout-title">
+                            <h4 className="text-lg font-bold text-white">{item.title || item.name || item.workout_name || `Rutina ${item.workout_id || item.id}`}</h4>
+                            {/* <p className="mt-1 text-sm font-semibold uppercase tracking-[0.12em] text-[#f1b80c]">Día: {item.day_of_week || '—'}</p> */}
+                            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#f1b80c]">Sets: {item.sets || '—'} Reps: {item.reps_text} {item.client_effort_notes}</p>
+                          </div>
+                          <div className="rounded-2xl bg-slate-950/70 px-3 py-2 text-right text-sm font-semibold text-slate-300 flex">
+                            {/* {item.log_date ? moment(item.log_date).format('DD/MM/YYYY') : 'Fecha pendiente'} */}
+                            <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Video' onClick={() => handleExercisePreview(item.exercise_id)}><FontAwesomeIcon icon={faVideo} className="text-black"></FontAwesomeIcon></button>
+                            <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title={item.note || `Notas`} onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), item.title || item.name || item.workout_name, item.note)}><FontAwesomeIcon icon={faPencil} className='text-black'></FontAwesomeIcon></button>
+                          </div>
+                        </div>
+                        {item.description && <p className="mt-4 text-sm leading-6 text-slate-300">{item.description}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </section>
@@ -527,6 +805,81 @@ const Dashboard = () => {
           </main>
         </div>
       </div>
+
+      {/* Exercise preview */}
+      {previewExercise && (
+        <ExerciseCard
+          title={previewExercise.title || previewExercise.name || 'Ejercicio'}
+          description={previewExercise.description || previewExercise.details || ''}
+          photo_url={previewExercise.photo_url || previewExercise.photoUrl || previewExercise.image_url || previewExercise.imageUrl}
+          video_url={previewExercise.video_url || previewExercise.videoUrl}
+          index={0}
+          total={1}
+          onClose={() => setPreviewExercise(null)}
+          Navigation={false}
+        />
+      )}
+
+      {/* Workout notes modal */}
+      {notesModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-[32px] border border-slate-700 bg-[#141820] p-6 shadow-2xl shadow-black/40">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm text-slate-400 uppercase tracking-[0.3em]">Notas de Rutina</p>
+                {/* <h2 className="mt-2 text-2xl font-bold text-white">{notesModal.title}</h2> */}
+              </div>
+              <button
+                onClick={closeNotesModal}
+                className="rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-3xl bg-slate-950/70 p-4">
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Ejercicio</p>
+                  <p className="mt-2 text-2x1 font-semibold text-white">{notesModal.title}</p>
+                </div>
+                <div className="rounded-3xl bg-slate-950/70 p-4">
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Fecha</p>
+                  <p className="mt-2 text-2x1 font-semibold text-white">{moment(notesModal.date).format("DD-MM-YYYY")}</p>
+                </div>
+              </div>
+
+              <div className="rounded-3xl bg-slate-950/70 p-4">
+                <label className="text-2x1 font-semibold text-slate-200" htmlFor="workout-notes">Notas</label>
+                <textarea
+                  id="workout-notes"
+                  value={notesModal.notes}
+                  onChange={(e) => setNotesModal((prev) => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Escribe tus notas aquí..."
+                  className="mt-3 min-h-[180px] w-full resize-y rounded-3xl border border-slate-700 bg-[#111827] p-4 text-sm text-slate-200 placeholder:text-slate-500 focus:border-[#f1b80c] focus:outline-none focus:ring-2 focus:ring-[#f1b80c]/20"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={closeNotesModal}
+                  className="rounded-3xl border border-slate-700 bg-slate-900 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={saveNotes}
+                  className="rounded-3xl bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]"
+                >
+                  Guardar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Progress Modal */}
       <ProgressModal
