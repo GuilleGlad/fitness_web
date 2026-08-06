@@ -27,7 +27,8 @@
     "react-slick": "^0.31.0",
     "react-tooltip": "^6.0.6",
     "slick-carousel": "^1.8.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "chart.js": "^4.4.0"
   },
   "scripts": {
     "start": "react-scripts start",

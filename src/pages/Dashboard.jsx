@@ -1,9 +1,10 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { verifyToken } from '../utils/tokenUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faAdd, faHome, faPencil, faVideo } from '@fortawesome/free-solid-svg-icons';
+import Chart from 'chart.js/auto';
+import { faAdd, faHome, faPencil, faPlus, faVideo } from '@fortawesome/free-solid-svg-icons';
 import BodySilhouette from '../components/BodySilhouette';
 import moment from 'moment';
 import 'moment/locale/es';
@@ -11,8 +12,10 @@ import FloatingButton from '../components/FloatingButton';
 import ExerciseCard from '../components/ExerciseCard';
 import { Link } from 'react-router-dom';
 import ProgressModal from '../components/ProgressModal';
+import PaymentModal from '../components/PaymentModal';
 import { yellow } from '@mui/material/colors';
 import toast from 'react-hot-toast';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 const ROLE_MAP = {
   'admin': 1,
   'trainer': 2,
@@ -51,6 +54,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [selectedMenu, setSelectedMenu] = useState('Perfil de Usuario');
   const [showProgressModal, setShowProgressModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const roleValue = parseInt(localStorage.getItem('role'), 10) || 3;
   const [status, setStatus] = useState(localStorage.getItem('status'));
   const userName = localStorage.getItem('name') || 'Usuario EliteFit';
@@ -64,11 +68,15 @@ const Dashboard = () => {
   const [progreso, setProgreso] = useState([{ cadera: 100, cintura: 100, piernas: 60, brazos: 30 }]);
   const [profile, setProfile] = useState({});
   const [previewImage, setPreviewImage] = useState(null);
+  const [payments, setPayments] = useState([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+  const [receiptPreviewImage, setReceiptPreviewImage] = useState(null);
   const [workouts, setWorkouts] = useState([]);
   const [previewExercise, setPreviewExercise] = useState(null);
   const [notesModal, setNotesModal] = useState({ isOpen: false, workoutId: null, title: '', date: '', notes: '' });
   const [calendarView, setCalendarView] = useState('week');
   const [selectedDate, setSelectedDate] = useState(moment().startOf('day'));
+  const [progressTab, setProgressTab] = useState('silhouette');
 
   const DAY_LETTER_BY_INDEX = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
@@ -135,6 +143,9 @@ const Dashboard = () => {
     ads: 0,
     news: 0,
   });
+  const chartRef = useRef(null);
+  const chartInstanceRef = useRef(null);
+
   const initials = useMemo(() => {
     return userName
       .split(' ')
@@ -143,6 +154,127 @@ const Dashboard = () => {
       .join('')
       .toUpperCase();
   }, [userName]);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    // Build a sorted copy of progreso ordered by log_date ascending (oldest -> newest).
+    const sorted = [...progreso].slice().sort((a, b) => {
+      const ma = moment(a?.log_date);
+      const mb = moment(b?.log_date);
+      const aValid = ma.isValid();
+      const bValid = mb.isValid();
+      if (aValid && bValid) return ma.valueOf() - mb.valueOf();
+      if (aValid) return -1;
+      if (bValid) return 1;
+      return 0;
+    });
+
+    const labels = sorted.map((item, index) => (moment(item?.log_date).isValid() ? moment(item.log_date).format('DD-MM-YY') : `Registro ${index + 1}`));
+
+    const getNumeric = (item, keys) => {
+      const value = keys.reduce((acc, key) => acc ?? item[key] ?? item[key?.toLowerCase()] ?? acc, undefined);
+      return Number(value || 0);
+    };
+
+    const data = {
+      labels,
+      datasets: [
+        {
+          label: 'Cintura',
+          data: sorted.map((item) => getNumeric(item, ['cintura', 'waist'])),
+          borderColor: '#f1b80c',
+          backgroundColor: 'rgba(241, 184, 12, 0.15)',
+          tension: 0.35,
+          pointRadius: 4,
+          borderWidth: 2,
+        },
+        {
+          label: 'Cadera',
+          data: sorted.map((item) => getNumeric(item, ['cadera', 'hips'])),
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34, 197, 94, 0.15)',
+          tension: 0.35,
+          pointRadius: 4,
+          borderWidth: 2,
+        },
+        {
+          label: 'Piernas',
+          data: sorted.map((item) => getNumeric(item, ['piernas', 'legs'])),
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56, 189, 248, 0.15)',
+          tension: 0.35,
+          pointRadius: 4,
+          borderWidth: 2,
+        },
+        {
+          label: 'Brazos',
+          data: sorted.map((item) => getNumeric(item, ['brazos', 'arms'])),
+          borderColor: '#f472b6',
+          backgroundColor: 'rgba(244, 114, 182, 0.15)',
+          tension: 0.35,
+          pointRadius: 4,
+          borderWidth: 2,
+        },
+        {
+          label: 'Peso',
+          data: sorted.map((item) => getNumeric(item, ['peso', 'weight'])),
+          borderColor: '#a855f7',
+          backgroundColor: 'rgba(168, 85, 247, 0.15)',
+          tension: 0.35,
+          pointRadius: 4,
+          borderWidth: 2,
+        },
+      ],
+    };
+
+    const config = {
+      type: 'line',
+      data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: '#e2e8f0',
+              font: { size: 12 },
+            },
+          },
+          tooltip: {
+            enabled: true,
+            backgroundColor: '#0f172a',
+            titleColor: '#f8fafc',
+            bodyColor: '#f8fafc',
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: '#cbd5e1' },
+            grid: { color: 'rgba(148,163,184,0.15)' },
+          },
+          y: {
+            ticks: { color: '#cbd5e1' },
+            grid: { color: 'rgba(148,163,184,0.15)' },
+          },
+        },
+      },
+    };
+
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.data = data;
+      chartInstanceRef.current.update();
+    } else {
+      chartInstanceRef.current = new Chart(chartRef.current, config);
+    }
+
+    return () => {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+        chartInstanceRef.current = null;
+      }
+    };
+  }, [progreso, progressTab]);
 
   useEffect(() => {
     var redirectPath = null;
@@ -191,6 +323,7 @@ const Dashboard = () => {
         await axios.get(`${apiUrl}/progress/get-profile`, config).then((response) => {
           if (response.status === 200) {
             setProfile(response.data.profile[0]);
+            console.log(response.data.profile[0]);
           }
         })
       } catch (error) {
@@ -243,6 +376,41 @@ const Dashboard = () => {
 
     if (roleString.toLowerCase() === 'client') {
       fetchWorkouts();
+    }
+
+    const fetchPayments = async ({ status = '', payment_method = '', start_date = '', end_date = '' } = {}) => {
+      if (!clientId) return;
+      setLoadingPayments(true);
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            client_id: clientId,
+            status,
+            payment_method,
+            start_date,
+            end_date,
+          },
+        };
+        const response = await axios.get(`${apiUrl}/payments/client/${clientId}`, config);
+        if (response.status === 200) {
+          const data = response.data.payments || response.data.filas || response.data.data || response.data || [];
+          const items = Array.isArray(data) ? data : (Array.isArray(response.data) ? response.data : [data]);
+          // If API returns wrapper { message, data: [...] } we already handled data; ensure we don't store the wrapper object
+          setPayments(items);
+        }
+      } catch (error) {
+        console.error('Error fetching payments:', error);
+      } finally {
+        setLoadingPayments(false);
+      }
+    }
+
+    // Cargar pagos si hay clientId
+    if (clientId) {
+      fetchPayments();
     }
 
   }, [navigate, apiUrl, roleValue, status]);
@@ -300,6 +468,15 @@ const Dashboard = () => {
       }).format('YYYY-MM-DD HH:mm:ss');
     }
     return m.format('YYYY-MM-DD HH:mm:ss');
+  };
+
+  const renderStatusBadge = (status) => {
+    const s = (status || '').toString().toLowerCase();
+    if (!s) return <span className="ml-2 inline-block rounded-full bg-slate-700 text-white px-3 py-1 text-xs font-semibold">—</span>;
+    if (s.includes('pend')) return <span className="ml-2 inline-block rounded-full bg-orange-400 text-black px-3 py-1 text-xs font-semibold">{status}</span>;
+    if (s.includes('aprob') || s.includes('aprobed') || s.includes('complete') || s.includes('paid') || s.includes('complet')) return <span className="ml-2 inline-block rounded-full bg-green-600 text-white px-3 py-1 text-xs font-semibold">{status}</span>;
+    if (s.includes('rech') || s.includes('reject')) return <span className="ml-2 inline-block rounded-full bg-red-600 text-white px-3 py-1 text-xs font-semibold">{status}</span>;
+    return <span className="ml-2 inline-block rounded-full bg-slate-700 text-white px-3 py-1 text-xs font-semibold">{status}</span>;
   };
 
   const saveNotes = async () => {
@@ -431,15 +608,14 @@ const Dashboard = () => {
 
     return (
       <>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2 mb-6">
           {[
-            { label: 'Rutinas activas', value: 5 },
-            { label: 'Recetas favoritas', value: 12 },
-            { label: 'Pagos próximos', value: 1 },
+            { label: 'Rutinas activas', value: workouts.length },
+            { label: 'Entrenador', value: profile?.trainer_name || 'No asignado' },
           ].map((card) => (
             <div key={card.label} className="rounded-3xl bg-[#141820] border border-slate-800 p-5 shadow-xl">
               <p className="text-sm text-slate-400 uppercase tracking-[0.25em]">{card.label}</p>
-              <p className="mt-4 text-3xl font-bold text-white">{card.value}</p>
+              <p className="mt-4 text-3xl font-bold text-white">{card.value}&nbsp;{card.label === 'Entrenador' && profile?.trainer_phone ? <Link to={`https://wa.me/${profile?.trainer_phone}`} target='_blank' className="text-sm text-green-400 mt-1"><FontAwesomeIcon icon={faWhatsapp} size='2x'></FontAwesomeIcon></Link> : null}</p>
             </div>
           ))}
         </div>
@@ -451,25 +627,47 @@ const Dashboard = () => {
                 <h2 className="text-xl font-semibold text-white">Progreso corporal</h2>
                 <p className="text-sm text-slate-400">Última actualización hace 3 días</p>
               </div>
-              <span className="rounded-full bg-[#f1b80c]/15 px-3 py-1 lg:text-sm text-xs text-nowrap text-[#f1b80c] font-semibold">En progreso</span>
+              {/* <span className="rounded-full bg-[#f1b80c]/15 px-3 py-1 lg:text-sm text-xs text-nowrap text-[#f1b80c] font-semibold">En progreso</span> */}
             </div>
-            <div className="space-y-4">
-              <BodySilhouette genre={genre} cadera={Number(progreso[0].hips)} cintura={Number(progreso[0].waist)} piernas={Number(progreso[0].legs)} brazos={Number(progreso[0].arms)} />
-              {/* {[
-                { label: 'IMC', value: '23.5', percent: 75 },
-                { label: 'Grasa corporal', value: '18%', percent: 60 },
-                { label: 'Masa muscular', value: '42%', percent: 86 },
-              ].map((item) => (
-                <div key={item.label}>
-                  <div className="flex justify-between text-sm text-slate-300 mb-2">
-                    <span>{item.label}</span>
-                    <span className="font-semibold text-white">{item.value}</span>
+            <div>
+              <div className="mb-4 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setProgressTab('silhouette')}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'silhouette' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                >
+                  Silueta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProgressTab('chart')}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'chart' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                >
+                  Gráfico
+                </button>
+              </div>
+
+              <div>
+                {progressTab === 'silhouette' ? (
+                  <div className="space-y-4">
+                    <BodySilhouette genre={genre} cadera={Number(progreso[0].hips || progreso[0].cadera)} cintura={Number(progreso[0].waist || progreso[0].cintura)} piernas={Number(progreso[0].legs || progreso[0].piernas)} brazos={Number(progreso[0].arms || progreso[0].brazos)} />
                   </div>
-                  <div className="h-2 rounded-full bg-slate-900 overflow-hidden">
-                    <div className="h-full rounded-full bg-[#f1b80c]" style={{ width: `${item.percent}%` }} />
+                ) : (
+                  <div className="w-full chart-div">
+                    <div className="rounded-3xl bg-slate-950/90 border border-slate-800 p-4 h-[320px]">
+                      <div className="mb-4 flex items-center justify-between">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Evolución biométrica</p>
+                          <h3 className="text-lg font-semibold text-white">Peso y medidas</h3>
+                        </div>
+                      </div>
+                      <div className="h-[240px] w-full">
+                        <canvas ref={chartRef} />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))} */}
+                )}
+              </div>
             </div>
           </section>
 
@@ -477,11 +675,11 @@ const Dashboard = () => {
             <h2 className="items-center text-xl font-semibold text-white mb-4">Datos Iniciales</h2>
             <div className=" grid grid-cols-3 text-slate-300 mb-4">
               {[
-                { label: "Edad", value: profile.age },
-                { label: "Altura", value: profile.height },
-                { label: "Peso", value: profile.initial_weight },
-                { label: "Objetivo", value: profile.goal?.replace('_', ' ').toUpperCase() },
-                { label: "Días a Entrenar", value: profile.training_days },
+                { label: "Edad", value: profile?.age },
+                { label: "Altura", value: profile?.height },
+                { label: "Peso", value: profile?.initial_weight },
+                { label: "Objetivo", value: profile?.goal?.replace('_', ' ').toUpperCase() },
+                { label: "Días a Entrenar", value: profile?.training_days },
               ].map((item) => (
                 <div
                   key={item.label}
@@ -499,9 +697,9 @@ const Dashboard = () => {
               <div className="justify-end flex-grow flex">
                 <button
                   onClick={() => setShowProgressModal(true)}
-                  className="text-nowrap flex items-center gap-2 bg-yellow-100 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 my-2 hover:bg-yellow-400 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
+                  className="text-nowrap flex items-center gap-2 bg-yellow-400 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 my-2 hover:bg-yellow-200 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
                 >
-                  Agregar <FontAwesomeIcon icon={faAdd} />
+                  Agregar Datos <FontAwesomeIcon icon={faAdd} />
                 </button>
               </div>
             </div>
@@ -666,11 +864,12 @@ const Dashboard = () => {
                             <h4 className="text-lg font-bold text-white">{item.title || item.name || item.workout_name || `Rutina ${item.workout_id || item.id}`}</h4>
                             {/* <p className="mt-1 text-sm font-semibold uppercase tracking-[0.12em] text-[#f1b80c]">Día: {item.day_of_week || '—'}</p> */}
                             <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#f1b80c]">Sets: {item.sets || '—'} Reps: {item.reps_text} {item.client_effort_notes}</p>
+                            {item.note && <span className='font-bold text-white'>Notas: <span className='font-normal text-slate-200'>{item.note}</span></span>}
                           </div>
                           <div className="rounded-2xl bg-slate-950/70 px-3 py-2 text-right text-sm font-semibold text-slate-300 flex">
                             {/* {item.log_date ? moment(item.log_date).format('DD/MM/YYYY') : 'Fecha pendiente'} */}
                             <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Video' onClick={() => handleExercisePreview(item.exercise_id)}><FontAwesomeIcon icon={faVideo} className="text-black"></FontAwesomeIcon></button>
-                            <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title={item.note || `Notas`} onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), item.title || item.name || item.workout_name, item.note)}><FontAwesomeIcon icon={faPencil} className='text-black'></FontAwesomeIcon></button>
+                            <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Nota' onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), item.title || item.name || item.workout_name, item.note)}><FontAwesomeIcon icon={faPencil} className='text-black'></FontAwesomeIcon></button>
                           </div>
                         </div>
                         {item.description && <p className="mt-4 text-sm leading-6 text-slate-300">{item.description}</p>}
@@ -683,16 +882,85 @@ const Dashboard = () => {
           </section>
 
           <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-            <h2 className="text-xl font-semibold text-white mb-4">Recetas</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Pagos</h2>
             <div className="space-y-3 text-slate-300">
-              <div className="rounded-2xl bg-slate-900/70 p-4">
-                <p className="font-semibold text-white">Smoothie Energético</p>
-                <p className="text-sm">Proteínas, banana y espinaca.</p>
+              <div className="flex items-center gap-3 mb-2">
+                <button
+                  onClick={() => setShowPaymentModal(true)}
+                  className='bg-yellow-400 hover:bg-yellow-200 text-black rounded-2xl p-2 font-semibold'
+                >
+                  Registrar Comprobante <FontAwesomeIcon icon={faPlus}></FontAwesomeIcon>
+                </button>
+                <span className="ml-2 text-sm text-slate-400">Sube tu comprobante de pago para que tu entrenador pueda revisarlo.</span>
               </div>
-              <div className="rounded-2xl bg-slate-900/70 p-4">
-                <p className="font-semibold text-white">Cena ligera</p>
-                <p className="text-sm">Salmón al horno con quinoa.</p>
+              <div>
+                {loadingPayments ? (
+                  <p className="text-sm text-slate-400">Cargando pagos...</p>
+                ) : payments.length === 0 ? (
+                  <p className="text-sm text-slate-400">No se han enviado comprobantes todavía.</p>
+                ) : (
+                  <div className="max-h-[450px] overflow-y-auto space-y-3 pr-1">
+                    {payments.map((p, idx) => {
+                      const isFirst = idx === 0;
+                      const dateText = (p.payment_date || p.paymentDate) ? moment(p.payment_date || p.paymentDate).format('DD/MM/YYYY') : '—';
+                      const amount = Number(p.amount || p.total || 0).toFixed(2);
+                      const method = p.payment_method || p.paymentMethod || '—';
+                      const period = p.period_covered || p.period_cover || p.periodCovered || '—';
+                      const statusText = p.status || '—';
+                      const receiptUrl = p.receipt_image_url || p.receipt_image || p.receiptImageUrl || '';
+                      const clientLabel = (p.client_name || p.name) ? `${p.client_name || p.name}` : (p.client_email || p.email || '—');
+                      return (
+                        <div
+                          key={p.id || `${p.client_id || p.clientId}-${idx}`}
+                          className='rounded-xl p-3 border bg-slate-800 border-yellow-400 text-white'
+                        >
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <p><span className="font-semibold">Fecha:</span> {dateText}</p>
+                            <p className="text-right"><span className="font-semibold">Monto:</span> ${amount}</p>
+                            <p><span className="font-semibold">Método:</span> {method}</p>
+                            <p className="text-right"><span className="font-semibold">Periodo:</span> {period}</p>
+                            {/* <p className="col-span-2"><span className="font-semibold">Estado:</span>{renderStatusBadge(statusText)}</p> */}
+                          </div>
+
+                          <div className="flex gap-2 mt-3 items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {receiptUrl ? (
+                                <img
+                                  src={receiptUrl}
+                                  alt="comprobante"
+                                  className="h-14 w-20 object-cover rounded-md cursor-pointer hover:opacity-80"
+                                  onClick={() => setReceiptPreviewImage(receiptUrl)}
+                                />
+                              ) : (
+                                <div className="h-14 w-20 rounded-md bg-slate-900/50 flex items-center justify-center text-slate-500">—</div>
+                              )}
+
+                              <div className="text-slate-300 text-sm">
+                                <p className="font-semibold text-white">{clientLabel}</p>
+                                {(p.client_email || p.email) && <p className="text-xs text-gray-400">{p.client_email || p.email}</p>}
+                              </div>
+                            </div>
+
+                            <div className="text-right text-xs">
+                              {/* <p className="font-semibold">ID: <span className="font-normal">{p.id || p._id || '—'}</span></p>
+                                <p className="text-slate-800">{p.payment_method ? method : ''}</p> */}
+                              <p className="col-span-2"><span className="font-semibold"></span>{renderStatusBadge(statusText)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
+              {receiptPreviewImage && (
+                <div
+                  className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+                  onClick={() => setReceiptPreviewImage(null)}
+                >
+                  <img src={receiptPreviewImage} className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" />
+                </div>
+              )}
             </div>
           </section>
         </div>
@@ -781,7 +1049,7 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Panel</p>
                 <h2 className="mt-3 text-3xl font-bold text-white">{selectedMenu}</h2>
-                <p className="mt-2 text-slate-400">Contenido personalizado para tu rol de {roleString}.</p>
+                {/* <p className="mt-2 text-slate-400">Contenido personalizado para tu rol de {roleString}.</p> */}
               </div>
 
               {(roleValue === 2 || roleValue === 3) && (
@@ -886,12 +1154,19 @@ const Dashboard = () => {
         isOpen={showProgressModal}
         onClose={() => setShowProgressModal(false)}
         clientId={clientId}
-        age={profile.age}
-        height={profile.height}
-        initialWeight={profile.initial_weight}
-        goal={profile.goal}
-        trainingDays={profile.training_days}
-        trainerId={profile.trainer_id}
+        age={profile?.age}
+        height={profile?.height}
+        initialWeight={profile?.initial_weight}
+        goal={profile?.goal}
+        trainingDays={profile?.training_days}
+        trainerId={profile?.trainer_id}
+      />
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        clientId={clientId}
       />
     </>
   );
