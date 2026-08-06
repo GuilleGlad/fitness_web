@@ -28,7 +28,8 @@
     "react-tooltip": "^6.0.6",
     "slick-carousel": "^1.8.1",
     "web-vitals": "^2.1.4",
-    "chart.js": "^4.4.0"
+    "chart.js": "^4.4.0",
+    "react-chartjs-2": "^5.2.0"
   },
   "scripts": {
     "start": "react-scripts start",

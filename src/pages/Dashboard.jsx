@@ -1,21 +1,24 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { verifyToken } from '../utils/tokenUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import Chart from 'chart.js/auto';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js';
+import { Line } from 'react-chartjs-2';
 import { faAdd, faHome, faPencil, faPlus, faVideo } from '@fortawesome/free-solid-svg-icons';
 import BodySilhouette from '../components/BodySilhouette';
 import moment from 'moment';
 import 'moment/locale/es';
 import FloatingButton from '../components/FloatingButton';
 import ExerciseCard from '../components/ExerciseCard';
-import { Link } from 'react-router-dom';
 import ProgressModal from '../components/ProgressModal';
 import PaymentModal from '../components/PaymentModal';
 import { yellow } from '@mui/material/colors';
 import toast from 'react-hot-toast';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
+
 const ROLE_MAP = {
   'admin': 1,
   'trainer': 2,
@@ -77,6 +80,7 @@ const Dashboard = () => {
   const [calendarView, setCalendarView] = useState('week');
   const [selectedDate, setSelectedDate] = useState(moment().startOf('day'));
   const [progressTab, setProgressTab] = useState('silhouette');
+  const [chartLimit, setChartLimit] = useState(10);
 
   const DAY_LETTER_BY_INDEX = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
@@ -136,30 +140,8 @@ const Dashboard = () => {
     setSelectedDate(day.clone().startOf('day'));
   };
 
-  const [counts, setCounts] = useState({
-    trainers: 0,
-    clients: 0,
-    recipes: 0,
-    ads: 0,
-    news: 0,
-  });
-  const chartRef = useRef(null);
-  const chartInstanceRef = useRef(null);
-
-  const initials = useMemo(() => {
-    return userName
-      .split(' ')
-      .map((word) => word[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
-  }, [userName]);
-
-  useEffect(() => {
-    if (!chartRef.current) return;
-
-    // Build a sorted copy of progreso ordered by log_date ascending (oldest -> newest).
-    const sorted = [...progreso].slice().sort((a, b) => {
+  const chartData = useMemo(() => {
+    const sorted = [...progreso].sort((a, b) => {
       const ma = moment(a?.log_date);
       const mb = moment(b?.log_date);
       const aValid = ma.isValid();
@@ -170,111 +152,126 @@ const Dashboard = () => {
       return 0;
     });
 
-    const labels = sorted.map((item, index) => (moment(item?.log_date).isValid() ? moment(item.log_date).format('DD-MM-YY') : `Registro ${index + 1}`));
+    const limitedData = chartLimit > 0 ? sorted.slice(-chartLimit) : sorted;
+
+    const labels = limitedData.map((item, index) =>
+      moment(item?.log_date).isValid()
+        ? moment(item.log_date).format('DD-MM-YY')
+        : `Registro ${index + 1}`
+    );
 
     const getNumeric = (item, keys) => {
-      const value = keys.reduce((acc, key) => acc ?? item[key] ?? item[key?.toLowerCase()] ?? acc, undefined);
+      const value = keys.reduce(
+        (acc, key) => acc ?? item[key] ?? item[key?.toLowerCase()] ?? acc,
+        undefined
+      );
       return Number(value || 0);
     };
 
-    const data = {
+    return {
       labels,
       datasets: [
         {
-          label: 'Cintura',
-          data: sorted.map((item) => getNumeric(item, ['cintura', 'waist'])),
+          label: 'Cintura (cm)',
+          data: limitedData.map((item) => getNumeric(item, ['cintura', 'waist'])),
           borderColor: '#f1b80c',
           backgroundColor: 'rgba(241, 184, 12, 0.15)',
           tension: 0.35,
-          pointRadius: 4,
-          borderWidth: 2,
+          pointRadius: 2,
+          borderWidth: 1,
+          fill: true,
         },
         {
-          label: 'Cadera',
-          data: sorted.map((item) => getNumeric(item, ['cadera', 'hips'])),
+          label: 'Cadera (cm)',
+          data: limitedData.map((item) => getNumeric(item, ['cadera', 'hips'])),
           borderColor: '#22c55e',
           backgroundColor: 'rgba(34, 197, 94, 0.15)',
           tension: 0.35,
-          pointRadius: 4,
-          borderWidth: 2,
+          pointRadius: 2,
+          borderWidth: 1,
+          fill: true,
         },
         {
-          label: 'Piernas',
-          data: sorted.map((item) => getNumeric(item, ['piernas', 'legs'])),
+          label: 'Piernas (cm)',
+          data: limitedData.map((item) => getNumeric(item, ['piernas', 'legs'])),
           borderColor: '#38bdf8',
           backgroundColor: 'rgba(56, 189, 248, 0.15)',
           tension: 0.35,
-          pointRadius: 4,
-          borderWidth: 2,
+          pointRadius: 2,
+          borderWidth: 1,
+          fill: true,
         },
         {
-          label: 'Brazos',
-          data: sorted.map((item) => getNumeric(item, ['brazos', 'arms'])),
+          label: 'Brazos (cm)',
+          data: limitedData.map((item) => getNumeric(item, ['brazos', 'arms'])),
           borderColor: '#f472b6',
           backgroundColor: 'rgba(244, 114, 182, 0.15)',
           tension: 0.35,
-          pointRadius: 4,
-          borderWidth: 2,
+          pointRadius: 2,
+          borderWidth: 1,
+          fill: true,
         },
         {
-          label: 'Peso',
-          data: sorted.map((item) => getNumeric(item, ['peso', 'weight'])),
+          label: 'Peso (Kg)',
+          data: limitedData.map((item) => getNumeric(item, ['peso', 'weight'])),
           borderColor: '#a855f7',
           backgroundColor: 'rgba(168, 85, 247, 0.15)',
           tension: 0.35,
-          pointRadius: 4,
-          borderWidth: 2,
+          pointRadius: 2,
+          borderWidth: 1,
+          fill: true,
         },
       ],
     };
+  }, [progreso]);
 
-    const config = {
-      type: 'line',
-      data,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            labels: {
-              color: '#e2e8f0',
-              font: { size: 12 },
-            },
-          },
-          tooltip: {
-            enabled: true,
-            backgroundColor: '#0f172a',
-            titleColor: '#f8fafc',
-            bodyColor: '#f8fafc',
-          },
-        },
-        scales: {
-          x: {
-            ticks: { color: '#cbd5e1' },
-            grid: { color: 'rgba(148,163,184,0.15)' },
-          },
-          y: {
-            ticks: { color: '#cbd5e1' },
-            grid: { color: 'rgba(148,163,184,0.15)' },
-          },
+  const chartOptions = useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: {
+          boxWidth: 10,
+          boxHeight: 10,
+          color: '#e2e8f0',
+          font: { size: 12 },
         },
       },
-    };
+      tooltip: {
+        enabled: true,
+        backgroundColor: '#0f172a',
+        titleColor: '#f8fafc',
+        bodyColor: '#f8fafc',
+      },
+    },
+    scales: {
+      x: {
+        ticks: { color: '#cbd5e1' },
+        grid: { color: 'rgba(148,163,184,0.15)' },
+      },
+      y: {
+        ticks: { color: '#cbd5e1' },
+        grid: { color: 'rgba(148,163,184,0.15)' },
+      },
+    },
+  }), []);
 
-    if (chartInstanceRef.current) {
-      chartInstanceRef.current.data = data;
-      chartInstanceRef.current.update();
-    } else {
-      chartInstanceRef.current = new Chart(chartRef.current, config);
-    }
+  const [counts, setCounts] = useState({
+    trainers: 0,
+    clients: 0,
+    recipes: 0,
+    ads: 0,
+    news: 0,
+  });
 
-    return () => {
-      if (chartInstanceRef.current) {
-        chartInstanceRef.current.destroy();
-        chartInstanceRef.current = null;
-      }
-    };
-  }, [progreso, progressTab]);
+  const initials = useMemo(() => {
+    return userName
+      .split(' ')
+      .map((word) => word[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  }, [userName]);
 
   useEffect(() => {
     var redirectPath = null;
@@ -653,16 +650,36 @@ const Dashboard = () => {
                     <BodySilhouette genre={genre} cadera={Number(progreso[0].hips || progreso[0].cadera)} cintura={Number(progreso[0].waist || progreso[0].cintura)} piernas={Number(progreso[0].legs || progreso[0].piernas)} brazos={Number(progreso[0].arms || progreso[0].brazos)} />
                   </div>
                 ) : (
-                  <div className="w-full chart-div">
-                    <div className="rounded-3xl bg-slate-950/90 border border-slate-800 p-4 h-[320px]">
-                      <div className="mb-4 flex items-center justify-between">
+                  <div className="w-full chart-div mt-10">
+                    <div className="rounded-3xl bg-slate-950/90 border border-slate-800 p-4">
+                      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div>
                           <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Evolución biométrica</p>
                           <h3 className="text-lg font-semibold text-white">Peso y medidas</h3>
                         </div>
+                        <div className="flex items-center gap-2">
+                          <label htmlFor="chart-limit" className="text-xs uppercase tracking-[0.25em] text-slate-400">Últimos</label>
+                          <select
+                            id="chart-limit"
+                            value={chartLimit}
+                            onChange={(e) => setChartLimit(Number(e.target.value))}
+                            className="rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-[#f1b80c]"
+                          >
+                            {[5, 10, 15, 20, 30, 0].map((limit) => (
+                              <option key={limit} value={limit}>
+                                {limit === 0 ? 'Todos' : limit}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
-                      <div className="h-[240px] w-full">
-                        <canvas ref={chartRef} />
+                      <div className="h-[320px] w-full">
+                        <Line
+                          data={chartData}
+                          options={chartOptions}
+                          height={320}
+                          style={{ width: '100%', display: 'block' }}
+                        />
                       </div>
                     </div>
                   </div>
