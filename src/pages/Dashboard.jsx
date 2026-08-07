@@ -5,7 +5,7 @@ import { verifyToken } from '../utils/tokenUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { faAdd, faHome, faPencil, faPlus, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faAdd, faHome, faPencil, faPlus, faVideo, faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
 import BodySilhouette from '../components/BodySilhouette';
 import moment from 'moment';
 import 'moment/locale/es';
@@ -52,6 +52,9 @@ const ROLE_MENUS = {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  // ✅ Estado para controlar el menú móvil
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const [selectedMenu, setSelectedMenu] = useState('Perfil de Usuario');
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -78,6 +81,27 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState(moment().startOf('day'));
   const [progressTab, setProgressTab] = useState('silhouette');
   const [chartLimit, setChartLimit] = useState(10);
+
+  // ✅ Cerrar menú al presionar Escape en móvil
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
+
+  // ✅ Prevenir scroll del body cuando el menú está abierto
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [menuOpen]);
+
+  const closeMenu = () => setMenuOpen(false);
+
+  // ========================
+  // Resto del código sin cambios hasta renderSectionContent()
+  // ========================
 
   const DAY_LETTER_BY_INDEX = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
@@ -291,7 +315,6 @@ const Dashboard = () => {
         await axios.get(`${apiUrl}/admin/counts`, config).then((response) => {
           if (response.status === 200) {
             setCounts(response.data.counts);
-            // console.log(response.data);
           }
         })
       } catch (error) {
@@ -311,7 +334,6 @@ const Dashboard = () => {
         await axios.get(`${apiUrl}/admin/counts-by-trainer/${trainer_id}`, config).then((response) => {
           if (response.status === 200) {
             setCounts(response.data.counts);
-            // console.log(response.data);
           }
         })
       } catch (error) {
@@ -416,7 +438,6 @@ const Dashboard = () => {
           if (response.status === 200) {
             const data = response.data.payments || response.data.filas || response.data.data || response.data || [];
             const items = Array.isArray(data) ? data : (Array.isArray(response.data) ? response.data : [data]);
-            // If API returns wrapper { message, data: [...] } we already handled data; ensure we don't store the wrapper object
             setPayments(items);
           }
         }
@@ -439,7 +460,6 @@ const Dashboard = () => {
             console.log(response);
             const data = response.data.payments || response.data.filas || response.data.data || response.data || [];
             const items = Array.isArray(data) ? data : (Array.isArray(response.data) ? response.data : [data]);
-            // If API returns wrapper { message, data: [...] } we already handled data; ensure we don't store the wrapper object
             setPayments(items);
           }
         }        
@@ -667,7 +687,6 @@ const Dashboard = () => {
                 <h2 className="text-xl font-semibold text-white">Progreso corporal</h2>
                 <p className="text-sm text-slate-400">Última actualización hace 3 días</p>
               </div>
-              {/* <span className="rounded-full bg-[#f1b80c]/15 px-3 py-1 lg:text-sm text-xs text-nowrap text-[#f1b80c] font-semibold">En progreso</span> */}
             </div>
             <div>
               <div className="mb-4 flex items-center gap-3">
@@ -757,7 +776,7 @@ const Dashboard = () => {
               <div className="justify-end flex-grow flex">
                 <button
                   onClick={() => setShowProgressModal(true)}
-                  className="text-nowrap flex items-center gap-2 bg-yellow-400 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 my-2 hover:bg-yellow-200 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
+                  className="text-nowrap flex items-center gap-2 bg-yellow-400 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 hover:bg-yellow-200 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
                 >
                   Agregar Datos <FontAwesomeIcon icon={faAdd} />
                 </button>
@@ -909,7 +928,6 @@ const Dashboard = () => {
                     <p className="text-sm text-slate-400">Rutinas para el día</p>
                     <h3 className="text-lg font-semibold text-white">{selectedDate.format('dddd, D [de] MMMM')}</h3>
                   </div>
-                  {/* <span className="rounded-full bg-[#f1b80c] px-3 py-1 text-xs font-semibold text-slate-950">{filteredWorkouts.length} encontradas</span> */}
                 </div>
                 {filteredWorkouts.length === 0 ? (
                   <p className="text-sm text-slate-400">No hay rutinas asignadas para este día.</p>
@@ -922,12 +940,10 @@ const Dashboard = () => {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="flex flex-col gap-1 workout-title">
                             <h4 className="text-lg font-bold text-white">{item.title || item.name || item.workout_name || `Rutina ${item.workout_id || item.id}`}</h4>
-                            {/* <p className="mt-1 text-sm font-semibold uppercase tracking-[0.12em] text-[#f1b80c]">Día: {item.day_of_week || '—'}</p> */}
                             <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#f1b80c]">Sets: {item.sets || '—'} Reps: {item.reps_text} {item.client_effort_notes}</p>
                             {item.note && <span className='font-bold text-white'>Notas: <span className='font-normal text-slate-200'>{item.note}</span></span>}
                           </div>
                           <div className="rounded-2xl bg-slate-950/70 px-3 py-2 text-right text-sm font-semibold text-slate-300 flex">
-                            {/* {item.log_date ? moment(item.log_date).format('DD/MM/YYYY') : 'Fecha pendiente'} */}
                             <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Video' onClick={() => handleExercisePreview(item.exercise_id)}><FontAwesomeIcon icon={faVideo} className="text-black"></FontAwesomeIcon></button>
                             <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Nota' onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), item.title || item.name || item.workout_name, item.note)}><FontAwesomeIcon icon={faPencil} className='text-black'></FontAwesomeIcon></button>
                           </div>
@@ -979,7 +995,6 @@ const Dashboard = () => {
                             <p className="text-right"><span className="font-semibold">Monto:</span> ${amount}</p>
                             <p><span className="font-semibold">Método:</span> {method}</p>
                             <p className="text-right"><span className="font-semibold">Periodo:</span> {period}</p>
-                            {/* <p className="col-span-2"><span className="font-semibold">Estado:</span>{renderStatusBadge(statusText)}</p> */}
                           </div>
 
                           <div className="flex gap-2 mt-3 items-center justify-between">
@@ -1002,8 +1017,6 @@ const Dashboard = () => {
                             </div>
 
                             <div className="text-right text-xs">
-                              {/* <p className="font-semibold">ID: <span className="font-normal">{p.id || p._id || '—'}</span></p>
-                                <p className="text-slate-800">{p.payment_method ? method : ''}</p> */}
                               <p className="col-span-2"><span className="font-semibold"></span>{renderStatusBadge(statusText)}</p>
                             </div>
                           </div>
@@ -1028,92 +1041,115 @@ const Dashboard = () => {
     );
   };
 
+  // ✅ Función para manejar la navegación + cierre del menú móvil
+  const handleMenuNavigation = (item) => {
+    if (item.indexOf('Clientes') !== -1 || item.indexOf("Usuarios") !== -1) {
+      navigate('/clients'); setMenuOpen(false); return;
+    }
+    if (item.indexOf('Entrenadores') !== -1) {
+      navigate('/trainers'); setMenuOpen(false); return;
+    }
+    if (item.indexOf('Ejercicios') !== -1 || item.indexOf('Ejercicios por Entrenador') !== -1) {
+      navigate('/trainer-exercises'); setMenuOpen(false); return;
+    }
+    if (item.indexOf('Fotos/Videos') !== -1) {
+      navigate('/trainer-library'); setMenuOpen(false); return;
+    }
+    if (item.indexOf('Recetas') !== -1 || item.indexOf('Recetas por Entrenador') !== -1) {
+      navigate('/trainer-recipes'); setMenuOpen(false); return;
+    }
+    if (item.indexOf('Pagos') !== -1) {
+      navigate('/trainer-payments'); setMenuOpen(false); return;
+    }                        
+    if (item.indexOf('Ajustes') !== -1) {
+      navigate('/settings'); setMenuOpen(false); return;
+    }
+    if (item.indexOf('Noticias') !== -1) {
+      navigate('/news-manager'); setMenuOpen(false); return;
+    }
+    setSelectedMenu(item);
+    setMenuOpen(false); // cerrar al seleccionar en móvil
+  };
+
+  const handleLogoutWithClose = () => {
+    const keysToClear = ['token', 'role', 'name', 'client_id', 'status', 'genre'];
+    keysToClear.forEach(key => localStorage.removeItem(key));
+    setMenuOpen(false);
+    navigate('/login');
+  };
+
+  // ✅ Componente reutilizable del panel de navegación (se usa tanto en móvil como escritorio)
+  const SidebarPanel = () => (
+    <div className="flex h-full flex-col justify-between p-6">
+      <div>
+        <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-[#f1b80c] to-[#d97706] text-xl font-bold text-slate-950 shadow-xl shadow-[#f1b80c]/20">
+          {initials}
+        </div>
+        <div className="mt-5">
+          <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Bienvenido</p>
+          <h1 className="mt-3 text-2xl font-bold text-white">{userName}</h1>
+          <p className="mt-1 text-sm text-slate-400">{roleString}</p>
+        </div>
+
+        <div className="mt-8 space-y-2">
+          {menuLinks.map((item) => (
+            <button
+              key={item}
+              onClick={() => handleMenuNavigation(item)}
+              className={`w-full rounded-3xl px-4 py-3 text-left text-md font-semibold transition-all ${selectedMenu === item ? 'bg-[#f1b80c] text-[#1e222b]' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-8 space-y-3">
+        <button
+          onClick={handleLogoutWithClose}
+          className="w-full rounded-3xl bg-[#1f2937] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
+        >
+          Cerrar sesión
+        </button>
+        <button
+          onClick={() => { setMenuOpen(false); navigate('/'); }}
+          className="w-full rounded-3xl bg-[#1f2937] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
+        >
+          <FontAwesomeIcon icon={faHome} className='mr-2'></FontAwesomeIcon><span>Página de Inicio</span>
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <div className="min-h-screen bg-[#0d1117] text-white">
         <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col lg:flex-row">
-          <aside className="w-full border-b border-slate-800 bg-[#141820] lg:w-[320px] lg:min-h-screen lg:border-r lg:border-b-0">
-            <div className="flex h-full flex-col justify-between p-6">
-              <div>
-                <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-[#f1b80c] to-[#d97706] text-xl font-bold text-slate-950 shadow-xl shadow-[#f1b80c]/20">
-                  {initials}
-                </div>
-                <div className="mt-5">
-                  <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Bienvenido</p>
-                  <h1 className="mt-3 text-2xl font-bold text-white">{userName}</h1>
-                  <p className="mt-1 text-sm text-slate-400">{roleString}</p>
-                </div>
 
-                <div className="mt-8 space-y-2">
-                  {menuLinks.map((item) => (
-                    <button
-                      key={item}
-                      onClick={() => {
-                        if (item.indexOf('Clientes') !== -1 || item.indexOf("Usuarios") !== -1) {
-                          navigate('/clients');
-                          return;
-                        }
-                        if (item.indexOf('Entrenadores') !== -1) {
-                          navigate('/trainers');
-                          return;
-                        }
-                        if (item.indexOf('Ejercicios') !== -1 || item.indexOf('Ejercicios por Entrenador') !== -1) {
-                          navigate('/trainer-exercises');
-                          return;
-                        }
-                        if (item.indexOf('Fotos/Videos') !== -1) {
-                          navigate('/trainer-library');
-                          return;
-                        }
-                        if (item.indexOf('Recetas') !== -1 || item.indexOf('Recetas por Entrenador') !== -1) {
-                          navigate('/trainer-recipes');
-                          return;
-                        }
-                        if (item.indexOf('Pagos') !== -1) {
-                          navigate('/trainer-payments');
-                          return;
-                        }                        
-                        if (item.indexOf('Ajustes') !== -1) {
-                          navigate('/settings');
-                          return;
-                        }
-                        if (item.indexOf('Noticias') !== -1) {
-                          navigate('/news-manager');
-                          return;
-                        }
-                        setSelectedMenu(item);
-                      }}
-                      className={`w-full rounded-3xl px-4 py-3 text-left text-md font-semibold transition-all ${selectedMenu === item ? 'bg-[#f1b80c] text-[#1e222b]' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-8 space-y-3">
-                <button
-                  onClick={handleLogout}
-                  className="w-full rounded-3xl bg-[#1f2937] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
-                >
-                  Cerrar sesión
-                </button>
-                <button
-                  onClick={navigate.bind(null, '/')}
-                  className="w-full rounded-3xl bg-[#1f2937] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
-                >
-                  <FontAwesomeIcon icon={faHome} className='mr-2'></FontAwesomeIcon><span>Página de Inicio</span>
-                </button>
-              </div>
-            </div>
+          {/* ====== VISTA ESCRITORIO (≥ lg) — sidebar siempre visible ====== */}
+          <aside className="hidden w-full border-b border-slate-800 bg-[#141820] lg:block lg:w-[320px] lg:min-h-screen lg:border-r lg:border-b-0 lg:sticky lg:top-0">
+            {SidebarPanel()}
           </aside>
 
+          {/* ====== CONTENIDO PRINCIPAL ====== */}
           <main className="flex-1 bg-[#0d1117] p-6 lg:p-8">
+
+            {/* ✅ Botón hamburguesa — solo visible en móvil */}
+            <div className="mb-4 lg:hidden  top-4 sticky text-right">
+              <button
+                onClick={() => setMenuOpen(true)}
+                aria-label="Abrir menú"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-[#141820] text-white shadow-lg transition hover:bg-slate-800 active:scale-95"
+              >
+                <FontAwesomeIcon icon={faBars} className="text-lg" />
+              </button>
+            </div>
+
+            {/* Contenido existente del main */}
             <div className="mb-6 flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
               <div>
                 <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Panel</p>
                 <h2 className="mt-3 text-3xl font-bold text-white">{selectedMenu}</h2>
-                {/* <p className="mt-2 text-slate-400">Contenido personalizado para tu rol de {roleString}.</p> */}
               </div>
 
               {(roleValue === 2 || roleValue === 3) && (
@@ -1136,6 +1172,33 @@ const Dashboard = () => {
             </div>
           </main>
         </div>
+
+        {/* ====== VISTA MÓVIL — overlay del menú (solo < lg) ====== */}
+        {menuOpen && (
+          <div
+            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm transition-opacity lg:hidden"
+            onClick={closeMenu}
+          >
+            {/* Panel deslizable desde la izquierda */}
+            <aside
+              className="relative h-full w-[300px] max-w-[85vw] overflow-y-auto bg-[#141820] shadow-2xl transition-transform duration-300 ease-out"
+              onClick={(e) => e.stopPropagation()} // no cerrar al tocar el panel
+            >
+              {/* Botón cerrar (X) */}
+              <div className="absolute right-4 top-4 z-10">
+                <button
+                  onClick={closeMenu}
+                  aria-label="Cerrar menú"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-slate-300 shadow transition hover:bg-slate-700 hover:text-white"
+                >
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
+              </div>
+
+              {SidebarPanel()}
+            </aside>
+          </div>
+        )}
       </div>
 
       {/* Exercise preview */}
@@ -1159,7 +1222,6 @@ const Dashboard = () => {
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm text-slate-400 uppercase tracking-[0.3em]">Notas de Rutina</p>
-                {/* <h2 className="mt-2 text-2xl font-bold text-white">{notesModal.title}</h2> */}
               </div>
               <button
                 onClick={closeNotesModal}
