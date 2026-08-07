@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import TrainerExercises from './pages/TrainerExercises';
 import TrainerLibrary from './pages/TrainerLibrary';
 import TrainerRecipes from './pages/TrainerRecipes';
+import TrainerPayments from './pages/TrainerPayments';
 import NewsManager from './pages/NewsManager';
 import Settings from './pages/Settings';
 import Clients from './pages/Clients';
@@ -48,6 +49,7 @@ function App() {
           <Route path="/trainer-exercises" element={<TrainerExercises />} />
           <Route path="/trainer-library" element={<TrainerLibrary />} />
           <Route path="/trainer-recipes" element={<TrainerRecipes />} />
+          <Route path="/trainer-payments" element={<TrainerPayments />} />
           <Route path="/news-manager" element={<NewsManager />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/clients" element={<Clients />} /> {/* Added Clients Route */}

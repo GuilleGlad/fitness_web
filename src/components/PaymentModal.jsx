@@ -4,12 +4,13 @@ import { faCheckCircle, faXmark } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
-const PaymentModal = ({ isOpen, onClose, clientId }) => {
+const PaymentModal = ({ isOpen, onClose, clientId, trainerId }) => {
   const apiUrl = process.env.REACT_APP_API_URL;
   const token = localStorage.getItem('token');
 
   const [formData, setFormData] = useState({
     client_id: clientId,
+    trainer_id: trainerId,
     amount: '',
     receipt_image_url: null,
     status: 'Pendiente',
@@ -26,6 +27,7 @@ const PaymentModal = ({ isOpen, onClose, clientId }) => {
     if (isOpen) {
       setFormData({
         client_id: clientId,
+        trainer_id: trainerId,
         amount: '',
         receipt_image_url: null,
         status: 'Pendiente',
@@ -35,7 +37,7 @@ const PaymentModal = ({ isOpen, onClose, clientId }) => {
       setErrors({});
       setShowConfirmation(false);
     }
-  }, [isOpen, clientId]);
+  }, [isOpen, clientId, trainerId]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -77,6 +79,7 @@ const PaymentModal = ({ isOpen, onClose, clientId }) => {
       };
       
       appendIfValue('client_id', formData.client_id);
+      appendIfValue('trainer_id', formData.trainer_id);
       appendIfValue('amount', formData.amount);
       appendIfValue('status', formData.status);
       appendIfValue('payment_method', formData.payment_method);
@@ -285,7 +288,8 @@ const PaymentModal = ({ isOpen, onClose, clientId }) => {
               {errors.period_covered && <p className="text-red-400 text-[10px] mt-1">{errors.period_covered}</p>}
             </div>
 
-            {/* Status (Hidden - always Pendiente) */}
+            {/* Hidden fields */}
+            <input type="hidden" name="trainer_id" value={formData.trainer_id || ''} />
             <input type="hidden" name="status" value="Pendiente" />
 
             {/* Botonera de control */}

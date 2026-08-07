@@ -269,7 +269,39 @@ const Settings = () => {
               }
             />
 
-            {/* 2 — Logotipo */}
+            {/* 2 — Mi foto */}
+            <PairRow
+              icon="ℹ️"
+              label="Mi foto"
+              description="Foto Personal."
+              controlsLeft={
+                <>
+                  <input hidden name="aboutUrl" value={settings.aboutUrl} onChange={handleChange} />
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => openLibraryPicker('about')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                      📚 Biblioteca
+                    </button>
+                    <button type="button" onClick={() => handleClear('aboutUrl')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                      Limpiar
+                    </button>
+                  </div>
+                </>
+              }
+              previewRight={
+                previewUrls.about ? (
+                  <div className="flex items-center gap-4 rounded-2xl border border-slate-700/50 bg-slate-900/60 px-4 py-3">
+                    <img src={previewUrls.about} alt="Acerca de nosotros" className="h-14 w-auto rounded-xl object-contain" />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
+                    <span className="text-xl text-slate-600">ℹ️</span>
+                    <p className="text-sm text-slate-500">Sin imagen seleccionada.</p>
+                  </div>
+                )
+              }
+            />
+
+            {/* 3 — Logotipo */}
             <PairRow
               icon="🖼"
               label="Logotipo"
@@ -296,38 +328,6 @@ const Settings = () => {
                   <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
                     <span className="text-xl text-slate-600">🖼</span>
                     <p className="text-sm text-slate-500">Sin logotipo seleccionado.</p>
-                  </div>
-                )
-              }
-            />
-
-            {/* 3 — Acerca de Nosotros */}
-            <PairRow
-              icon="ℹ️"
-              label="Acerca de Nosotros"
-              description="Imagen para la sección 'Acerca de Nosotros'."
-              controlsLeft={
-                <>
-                  <input hidden name="aboutUrl" value={settings.aboutUrl} onChange={handleChange} />
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => openLibraryPicker('about')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
-                      📚 Biblioteca
-                    </button>
-                    <button type="button" onClick={() => handleClear('aboutUrl')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
-                      Limpiar
-                    </button>
-                  </div>
-                </>
-              }
-              previewRight={
-                previewUrls.about ? (
-                  <div className="flex items-center gap-4 rounded-2xl border border-slate-700/50 bg-slate-900/60 px-4 py-3">
-                    <img src={previewUrls.about} alt="Acerca de nosotros" className="h-14 w-auto rounded-xl object-contain" />
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
-                    <span className="text-xl text-slate-600">ℹ️</span>
-                    <p className="text-sm text-slate-500">Sin imagen seleccionada.</p>
                   </div>
                 )
               }

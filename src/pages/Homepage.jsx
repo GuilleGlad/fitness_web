@@ -173,7 +173,7 @@ function Homepage() {
     const videoPath1 = settings.videoUrl || '/videos/videoplayback.mp4';
     const videoPath2 = '/videos/videoplayback2.mp4';
     const logoPath = settings.logoUrl || '/images/Logo-01-1-1.png';
-    const trainerPic = '/images/Image-02.jpg';
+    const trainerPic = settings.aboutUrl || '/images/Image-02.jpg';
     const trainerName = settings.username || 'Sergio Zane';
     const trainerPhone = settings.phone || '';
     const defaultEmail = 'support@musclefit.com';

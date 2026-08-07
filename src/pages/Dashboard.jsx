@@ -47,9 +47,6 @@ const ROLE_MENUS = {
   3: [
     'Perfil de Usuario',
     'Rutinas',
-    'Recetas',
-    'Pagos',
-    'Ajustes',
   ],
 };
 
@@ -302,12 +299,35 @@ const Dashboard = () => {
       }
     }
 
+    const fetchCountsByTrainer = async () => {
+      const trainer_id = clientId;
+
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+        await axios.get(`${apiUrl}/admin/counts-by-trainer/${trainer_id}`, config).then((response) => {
+          if (response.status === 200) {
+            setCounts(response.data.counts);
+            // console.log(response.data);
+          }
+        })
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+      }
+    }
+
     if (roleString.toLowerCase() === 'client' && status === '0') {
       navigate('/wizard');
     }
 
     if (roleValue === 1 && redirectPath === null) {
       fetchCounts();
+    }
+    if (roleValue === 2){
+      fetchCountsByTrainer();
     }
 
     const fetchProfile = async () => {
@@ -347,7 +367,7 @@ const Dashboard = () => {
           }
         })
       } catch (error) {
-        console.error('Error fetchin data: ', error);
+        console.error('Error fetching data: ', error);
       }
     }
 
@@ -375,29 +395,55 @@ const Dashboard = () => {
       fetchWorkouts();
     }
 
-    const fetchPayments = async ({ status = '', payment_method = '', start_date = '', end_date = '' } = {}) => {
-      if (!clientId) return;
+    const fetchPayments = async ({ client_id, status = '', payment_method = '', start_date = '', end_date = '', trainer_id } = {}) => {
       setLoadingPayments(true);
       try {
-        const config = {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          params: {
-            client_id: clientId,
-            status,
-            payment_method,
-            start_date,
-            end_date,
-          },
-        };
-        const response = await axios.get(`${apiUrl}/payments/client/${clientId}`, config);
-        if (response.status === 200) {
-          const data = response.data.payments || response.data.filas || response.data.data || response.data || [];
-          const items = Array.isArray(data) ? data : (Array.isArray(response.data) ? response.data : [data]);
-          // If API returns wrapper { message, data: [...] } we already handled data; ensure we don't store the wrapper object
-          setPayments(items);
+        if(roleValue === 3 && clientId){
+          const config = {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            params: {
+              client_id: clientId,
+              status,
+              payment_method,
+              start_date,
+              end_date,
+              trainer_id
+            },
+          };
+          const response = await axios.get(`${apiUrl}/payments/client/${clientId}`, config);
+          if (response.status === 200) {
+            const data = response.data.payments || response.data.filas || response.data.data || response.data || [];
+            const items = Array.isArray(data) ? data : (Array.isArray(response.data) ? response.data : [data]);
+            // If API returns wrapper { message, data: [...] } we already handled data; ensure we don't store the wrapper object
+            setPayments(items);
+          }
         }
+        if(roleValue === 2){
+          const config = {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            params: {
+              client_id,
+              status,
+              payment_method,
+              start_date,
+              end_date,
+              trainer_id
+            },
+          };
+          const response = await axios.get(`${apiUrl}/payments/?trainer_id=${clientId}`, config);
+          if (response.status === 200) {
+            console.log(response);
+            const data = response.data.payments || response.data.filas || response.data.data || response.data || [];
+            const items = Array.isArray(data) ? data : (Array.isArray(response.data) ? response.data : [data]);
+            // If API returns wrapper { message, data: [...] } we already handled data; ensure we don't store the wrapper object
+            setPayments(items);
+          }
+        }        
+
       } catch (error) {
         console.error('Error fetching payments:', error);
       } finally {
@@ -405,12 +451,9 @@ const Dashboard = () => {
       }
     }
 
-    // Cargar pagos si hay clientId
-    if (clientId) {
       fetchPayments();
-    }
 
-  }, [navigate, apiUrl, roleValue, status]);
+  }, [navigate, apiUrl, roleValue, status, showPaymentModal]);
 
   const handleLogout = () => {
     const keysToClear = ['token', 'role', 'name', 'client_id', 'status', 'genre'];
@@ -555,10 +598,10 @@ const Dashboard = () => {
         <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
             {[
-              { label: 'Clientes activos', value: 18 },
-              { label: 'Rutinas publicadas', value: 42 },
-              { label: 'Recetas disponibles', value: 16 },
-              { label: 'Pagos pendientes', value: 3 },
+              { label: 'Clientes activos', value: counts.clients },
+              { label: 'Ejercicios Publicados', value: counts.exercises },
+              { label: 'Recetas disponibles', value: counts.recipes },
+              { label: 'Pagos pendientes', value: payments.filter(r => r.status === "Pendiente").length },
             ].map((card) => (
               <div key={card.label} className="rounded-3xl bg-[#141820] border border-slate-800 p-5 shadow-xl">
                 <p className="text-sm text-slate-400 uppercase tracking-[0.25em]">{card.label}</p>
@@ -1026,6 +1069,10 @@ const Dashboard = () => {
                           navigate('/trainer-recipes');
                           return;
                         }
+                        if (item.indexOf('Pagos') !== -1) {
+                          navigate('/trainer-payments');
+                          return;
+                        }                        
                         if (item.indexOf('Ajustes') !== -1) {
                           navigate('/settings');
                           return;
@@ -1184,6 +1231,7 @@ const Dashboard = () => {
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
         clientId={clientId}
+        trainerId={profile?.trainer_id}
       />
     </>
   );
