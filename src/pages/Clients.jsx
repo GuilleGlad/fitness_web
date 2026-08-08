@@ -16,6 +16,7 @@ const initialForm = {
   picture: '/images/avatar.png',
   status: 'Activo',
   deleted: 0,
+  status_cuenta: 0
 };
 
 /* ───────── Reusable Modal Wrapper ───────── */
@@ -45,63 +46,88 @@ const ClientForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel,
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
-      {[
-        { label: 'Nombre', name: 'name', type: 'text', placeholder: 'Ej. Juan Pérez' },
-        { label: 'Email', name: 'email', type: 'email', placeholder: 'juan@email.com' },
-        { label: 'Contraseña', name: 'password', type: 'password', placeholder: '••••••••' },
-      ].map(({ label, name, type, placeholder }) => (
-        <label key={name} className="block space-y-2 text-sm text-slate-200">
-          {label}
+    <form onSubmit={onSubmit} >
+
+      {editingId && (
+        <label className="space-y-2 text-sm text-slate-200 flex flex-col items-center">
+          {form.picture && form.picture === '/images/avatar.png' &&<img src={form.picture} className='mt-2 w-full rounded-[50%] lg:w-1/4 object-cover border border-slate-700'/>}
+          <input name="picture" value={form.picture} type="url" readOnly placeholder="https://ejemplo.com/foto.jpg" onChange={handleChange} className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+          {form.picture && form.picture !== '/images/avatar.png' && <img src={form.picture} alt="preview" className="mt-2 w-full rounded-[50%] lg:w-1/4 object-cover border border-slate-700" />}
+          <div className="flex gap-3 mt-2">
+            <button type="button" onClick={onOpenLibrary} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">📚 Biblioteca</button>
+            {form.picture && form.picture !== '/images/avatar.png' && <button type="button" onClick={() => setForm((p) => ({ ...p, picture: initialForm.picture }))} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">🗑️ Limpiar</button>}
+          </div>
+        </label>
+      )}
+
+      <div className="grid gap-5 lg:grid-cols-3">
+        <label className="block space-y-2 text-sm text-slate-200">
+          Nombre
           <input
-            name={name}
-            value={form[name]}
+            name="name"
+            value={form.name}
             onChange={handleChange}
-            type={type}
-            placeholder={placeholder}
+            type="text"
+            placeholder="Ej. Juan Pérez"
             className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
           />
         </label>
-      ))}
 
-      <label className="block space-y-2 text-sm text-slate-200">
-        Género
-        <select name="genre" value={form.genre} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
-          <option value="" disabled className="bg-[#0f172a]">Seleccione un género</option>
-          <option value="m" className="bg-[#0f172a]">Masculino</option>
-          <option value="f" className="bg-[#0f172a]">Femenino</option>
-          <option value="n" className="bg-[#0f172a]">Prefiere no decirlo</option>
-        </select>
-      </label>
+        <label className="block space-y-2 text-sm text-slate-200">
+          Email
+          <input
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            type="email"
+            placeholder="juan@email.com"
+            className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+          />
+        </label>
 
-      <label className="block space-y-2 text-sm text-slate-200">
-        Teléfono
-        <input name="phone" value={form.phone} type="tel" placeholder="+34 600 000 000" onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
-      </label>
+        <label className="block space-y-2 text-sm text-slate-200">
+          Contraseña
+          <input
+            name="password"
+            value={form.password}
+            onChange={handleChange}
+            type="password"
+            placeholder="••••••••"
+            className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+          />
+        </label>
+      </div>
 
-      {editingId && (
-        <>
+      {/* Columna derecha */}
+      <div className="grid gap-5 lg:grid-cols-3">
+        <label className="block space-y-2 text-sm text-slate-200">
+          Género
+          <select name="genre" value={form.genre} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
+            <option value="" disabled className="bg-[#0f172a]">Seleccione un género</option>
+            <option value="m" className="bg-[#0f172a]">Masculino</option>
+            <option value="f" className="bg-[#0f172a]">Femenino</option>
+            <option value="n" className="bg-[#0f172a]">Prefiere no decirlo</option>
+          </select>
+        </label>
+
+        <label className="block space-y-2 text-sm text-slate-200">
+          Teléfono
+          <input name="phone" value={form.phone} type="tel" placeholder="+34 600 000 000" onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+        </label>
+
+        {editingId && (
           <label className="block space-y-2 text-sm text-slate-200">
-            Foto
-            <input name="picture" value={form.picture} type="url" readOnly placeholder="https://ejemplo.com/foto.jpg" onChange={handleChange} className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
-            {form.picture && form.picture !== '/images/avatar.png' && <img src={form.picture} alt="preview" className="mt-2 w-full lg:w-1/4 rounded-lg object-cover border border-slate-700" />}
-            <div className="flex gap-3 mt-2">
-              <button type="button" onClick={onOpenLibrary} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">📚 Biblioteca</button>
-              <button type="button" onClick={() => setForm((p) => ({ ...p, picture: initialForm.picture }))} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">🗑️ Limpiar</button>
-            </div>
-          </label>
-
-          <label className="hidden space-y-2 text-sm text-slate-200">
-            Estado
-            <select name="status" value={form.status} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
-              <option value="Activo" className="bg-[#0f172a]">Activo</option>
-              <option value="Inactivo" className="bg-[#0f172a]">Inactivo</option>
+            Cuenta
+            <select name="status_cuenta" value={form.status_cuenta} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
+              <option value="1" className="bg-[#0f172a]">Activa</option>
+              <option value="0" className="bg-[#0f172a]">Inactiva</option>
             </select>
           </label>
-        </>
-      )}
+        )}
+      </div>
 
-      <div className="grid gap-3 pt-2">
+      {/* Botones - span 2 columnas en desktop */}
+      <div className="lg:col-span-2 grid gap-3 pt-2">
         <button type="submit" className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]">
           {editingId ? 'Guardar cambios' : 'Crear cliente'}
         </button>
@@ -119,7 +145,7 @@ const ClientForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel,
 const Clients = () => {
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL || '';
-
+  const roleValue = localStorage.getItem('role');
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(initialForm);
@@ -415,6 +441,7 @@ const Clients = () => {
             status: item.status,
             deleted: item.deleted || false,
             role: item.role || '',
+            status_cuenta: item.status_cuenta
           }))
         );
       } catch (err) {
@@ -441,7 +468,7 @@ const Clients = () => {
   };
 
   const handleEdit = (client) => {
-    setForm({ name: client.name, email: client.email, password: client.password || '', genre: client.genre || '', phone: client.phone || '', picture: client.picture || '/images/avatar.png', status: client.status });
+    setForm({ name: client.name, email: client.email, password: client.password || '', genre: client.genre || '', phone: client.phone || '', picture: client.picture || '/images/avatar.png', status: client.status, status_cuenta: client.status_cuenta });
     setEditingId(client.id);
     setShowEditModal(true);
   };
@@ -456,7 +483,7 @@ const Clients = () => {
     const token = localStorage.getItem('token');
     if (!token) return toast.error('Token no disponible.');
 
-    const payload = { name: form.name.trim(), email: form.email.trim(), password: form.password.trim(), genre: form.genre.trim(), phone: form.phone.trim(), picture: form.picture.trim(), status: form.status, role: 'client' };
+    const payload = { name: form.name.trim(), email: form.email.trim(), password: form.password.trim(), genre: form.genre.trim(), phone: form.phone.trim(), picture: form.picture.trim(), status: form.status, role: 'client' , status_cuenta: form.status_cuenta};
     const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
 
     if (editingId) {
@@ -559,6 +586,7 @@ const Clients = () => {
                   <th className="px-6 py-4 font-medium text-slate-400">Email</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Teléfono</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Estado</th>
+                  <th className="px-6 py-4 font-medium text-slate-400">Cuenta</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Acciones</th>
                 </tr>
               </thead>
@@ -579,6 +607,7 @@ const Clients = () => {
                         {client.status ?? 'Inicial'}
                       </span>
                     </td>
+                    <td className="px-6 py-4 text-slate-300">{client.status_cuenta ?  'Activa' : 'Inactiva'}</td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2 opacity-70 group-hover:opacity-100">
                         {client.deleted ? (
@@ -597,13 +626,13 @@ const Clients = () => {
                             >
                               Editar
                             </button>
-                            <button
+                            {roleValue === '2' && <button
                               onClick={() => handleRutina(client)}
                               disabled={client.role === 'admin'}
                               className="rounded-full bg-green-400 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-green-300"
                             >
                               Rutinas
-                            </button>
+                            </button>}
                             <button
                               onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))}
                               disabled={client.role === 'admin'}
