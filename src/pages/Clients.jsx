@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import TrainerLibrary from './TrainerLibrary';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheck, faNoteSticky, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { verifyToken } from '../utils/tokenUtils';
 
 const initialForm = {
   name: '',
@@ -81,7 +84,7 @@ const ClientForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel,
           <label className="block space-y-2 text-sm text-slate-200">
             Foto
             <input name="picture" value={form.picture} type="url" readOnly placeholder="https://ejemplo.com/foto.jpg" onChange={handleChange} className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
-            {form.picture && form.picture !== '/images/avatar.png' && <img src={form.picture} alt="preview" className="mt-2 w-full rounded-lg object-cover border border-slate-700" />}
+            {form.picture && form.picture !== '/images/avatar.png' && <img src={form.picture} alt="preview" className="mt-2 w-full lg:w-1/4 rounded-lg object-cover border border-slate-700" />}
             <div className="flex gap-3 mt-2">
               <button type="button" onClick={onOpenLibrary} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">📚 Biblioteca</button>
               <button type="button" onClick={() => setForm((p) => ({ ...p, picture: initialForm.picture }))} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">🗑️ Limpiar</button>
@@ -137,6 +140,11 @@ const Clients = () => {
   const [loadingAssignedWorkouts, setLoadingAssignedWorkouts] = useState(false);
   const [loadingTrainerWorkouts, setLoadingTrainerWorkouts] = useState(false);
   const [trainerId, setTrainerId] = useState(null);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [noteModalData, setNoteModalData] = useState(null);
+  const [noteFeedback, setNoteFeedback] = useState('');
+  const [loadingNoteModal, setLoadingNoteModal] = useState(false);
+  const [savingNoteFeedback, setSavingNoteFeedback] = useState(false);
 
   const dayOptions = [
     { key: 'L', label: 'Lunes' },
@@ -149,7 +157,7 @@ const Clients = () => {
   ];
 
   const translateDay = (key) => {
-    if(key.indexOf(',') != -1) {
+    if (key.indexOf(',') != -1) {
       return key.split(',').map(k => translateDay(k)).join(', ');
     }
     const day = dayOptions.find((d) => d.key === key);
@@ -228,6 +236,102 @@ const Clients = () => {
     resetAssignForm();
   };
 
+  const closeNoteModal = () => {
+    setShowNoteModal(false);
+    setNoteModalData(null);
+    setNoteFeedback('');
+    setLoadingNoteModal(false);
+    setSavingNoteFeedback(false);
+  };
+
+  const handleNoteReview = async (workoutNoteId) => {
+    if (!workoutNoteId) {
+      toast.error('ID de nota inválido.');
+      return;
+    }
+
+    setShowNoteModal(true);
+    setLoadingNoteModal(true);
+    setNoteModalData(null);
+    setNoteFeedback('');
+
+    const existingNote = assignedWorkouts.find(
+      (item) => item.workout_note_id === workoutNoteId || item.id === workoutNoteId
+    );
+
+    if (existingNote) {
+      setNoteModalData(existingNote);
+      setNoteFeedback(existingNote.feedback || '');
+      setLoadingNoteModal(false);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Token no disponible. Inicia sesión.');
+        closeNoteModal();
+        return;
+      }
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const res = await axios.get(`${apiUrl}/workouts/note/${workoutNoteId}`, config);
+      const noteData = res.data?.note || res.data || null;
+      if (!noteData) {
+        toast.error('No se encontró la nota.');
+        closeNoteModal();
+        return;
+      }
+      setNoteModalData(noteData);
+      setNoteFeedback(noteData.feedback || '');
+    } catch (err) {
+      console.error(err);
+      toast.error('No se pudo cargar la nota.');
+      closeNoteModal();
+    } finally {
+      setLoadingNoteModal(false);
+    }
+  };
+
+  const saveNoteFeedback = async () => {
+    if (!noteModalData) return;
+    setSavingNoteFeedback(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return toast.error('Token no disponible. Inicia sesión.');
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      };
+
+      const noteId = noteModalData.workout_note_id || noteModalData.id;
+      const payload = {
+        feedback: noteFeedback.trim(),
+      };
+
+      const response = await axios.put(`${apiUrl}/workouts/update-feedback/${noteId}`, payload, config);
+      const updated = response.data?.note || response.data || { feedback: payload.feedback };
+
+      setAssignedWorkouts((prev) =>
+        prev.map((item) =>
+          item.workout_note_id === noteId || item.id === noteId
+            ? { ...item, feedback: updated.feedback || payload.feedback }
+            : item
+        )
+      );
+      toast.success('Feedback guardado correctamente.');
+      closeNoteModal();
+    } catch (err) {
+      console.error(err);
+      toast.error('No se pudo guardar el feedback.');
+    } finally {
+      setSavingNoteFeedback(false);
+    }
+  };
+
   const handleToggleDay = (key) => {
     setSelectedDays((prev) => ({ ...prev, [key]: !prev[key] }));
   };
@@ -280,6 +384,17 @@ const Clients = () => {
   };
 
   useEffect(() => {
+
+    var redirectPath = null;
+    const checkToken = async () => {
+      redirectPath = await verifyToken();
+      if (redirectPath) {
+        navigate(redirectPath);
+      }
+    };
+
+    checkToken();
+
     const fetchClients = async () => {
       setLoading(true);
       try {
@@ -467,8 +582,8 @@ const Clients = () => {
                     <td className="px-6 py-4">
                       <div className="flex gap-2 opacity-70 group-hover:opacity-100">
                         {client.deleted ? (
-                          <button 
-                            onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.id))} 
+                          <button
+                            onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.id))}
                             disabled={client.role === 'admin'}
                             className="rounded-full bg-slate-600 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
@@ -476,21 +591,21 @@ const Clients = () => {
                           </button>
                         ) : (
                           <>
-                            <button 
-                              onClick={() => handleEdit(client)}  
+                            <button
+                              onClick={() => handleEdit(client)}
                               className="rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e]"
                             >
                               Editar
                             </button>
-                            <button 
-                              onClick={() => handleRutina(client)}  
+                            <button
+                              onClick={() => handleRutina(client)}
                               disabled={client.role === 'admin'}
                               className="rounded-full bg-green-400 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-green-300"
                             >
                               Rutinas
                             </button>
-                            <button 
-                              onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))} 
+                            <button
+                              onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))}
                               disabled={client.role === 'admin'}
                               className="rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
@@ -531,8 +646,8 @@ const Clients = () => {
                     </div>
                     <div className="flex gap-2">
                       {client.deleted ? (
-                        <button 
-                          onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.id))} 
+                        <button
+                          onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.id))}
                           disabled={client.role === 'admin'}
                           className="flex-1 rounded-full bg-slate-600 py-2.5 text-xs font-semibold text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -540,21 +655,21 @@ const Clients = () => {
                         </button>
                       ) : (
                         <>
-                          <button 
-                            onClick={() => handleEdit(client)} 
+                          <button
+                            onClick={() => handleEdit(client)}
                             className="flex-1 rounded-full bg-[#f1b80c] py-2.5 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e] disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Editar
                           </button>
-                          <button 
-                            onClick={() => handleRutina(client)} 
+                          <button
+                            onClick={() => handleRutina(client)}
                             disabled={client.role === 'admin'}
                             className="flex-1 rounded-full bg-green-400 py-2.5 text-xs font-semibold text-slate-950 hover:bg-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Asignar rutina
                           </button>
-                          <button 
-                            onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))} 
+                          <button
+                            onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))}
                             disabled={client.role === 'admin'}
                             className="flex-1 rounded-full bg-red-600 py-2.5 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
@@ -573,7 +688,7 @@ const Clients = () => {
 
       {/* Assign Workout Modal */}
       <ModalOverlay isOpen={showAssignModal} onClose={closeAssignModal} title={selectedClient ? `Asignar rutina a ${selectedClient.name}` : 'Asignar rutina'}>
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.95fr]">
+        <div className="flex flex-col">
           <div>
             <form onSubmit={handleAssignSubmit} className="space-y-5">
               <label className="block space-y-2 text-sm text-slate-200">
@@ -591,7 +706,7 @@ const Clients = () => {
                   ) : (
                     trainerWorkouts.map((workout) => (
                       <option key={workout.id || workout.workout_id || workout.workoutId} value={workout.id || workout.workout_id || workout.workoutId}>
-                        {workout.title + ' (Sets: ' + workout.sets +' Reps: ' + workout.reps_text + ' ' + workout.client_effort_notes + ')'}
+                        {workout.title + ' (Sets: ' + workout.sets + ' Reps: ' + workout.reps_text + ' ' + workout.client_effort_notes + ')'}
                       </option>
                     ))
                   )}
@@ -649,12 +764,12 @@ const Clients = () => {
             ) : (
               <div className="grid gap-4 overflow-y-auto pr-1 lg:max-h-[56vh]">
                 {assignedWorkouts.map((item) => (
-                  <div key={item.id || `${item.client_id}-${item.workout_id}-${item.log_date}`} className="rounded-3xl border border-slate-800 bg-yellow-400 p-4 shadow-xl">
+                  <div key={item.id || `${item.client_id}-${item.workout_id}-${item.log_date}`} className="rounded-3xl border border-yellow-400 bg-slate-800 p-4 shadow-xl">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="space-y-3">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="rounded-full bg-yellow-600 px-2.5 py-0.5 text-[11px] font-semibold text-white">Rutina</span>
-                          <h4 className="text-base font-semibold text-black">{item.title || item.name || item.workout_name || `#${item.workout_id}`}</h4>
+                          <h4 className="text-base font-semibold text-white">{item.title || item.name || item.workout_name || `#${item.workout_id}`}</h4>
                         </div>
                         <div className="grid gap-2 sm:grid-cols-2">
                           <div className="rounded-2xl border border-slate-800 bg-slate-600 p-3 text-sm text-slate-300">
@@ -667,11 +782,34 @@ const Clients = () => {
                           </div>
                         </div>
                         <div className="rounded-2xl border border-slate-800 bg-slate-600 p-3 text-sm text-slate-300">
-                          <p className="font-semibold text-white">Notas del entrenador</p>
+                          <p className="font-semibold text-white">Indicaciones del entrenador</p>
                           <p>{item.trainer_notes || '—'}</p>
                         </div>
+                        {item.note &&
+                          <div className="rounded-2xl border border-yellow-400 bg-slate-600 p-3 text-sm text-slate-300">
+                            <p className="font-semibold text-white">Notas del Cliente</p>
+                            <p>{item.note || '—'}</p>
+                          </div>
+                        }
+                        {item.status === 1 &&
+                          <div className="text-right rounded-2xl border border-yellow-400 bg-slate-800 p-3 text-sm text-white">
+                            <p className="font-semibold text-yellow-400">Notas del Entrenador</p>
+                            <p>{item.feedback || '—'}</p>
+                          </div>
+                        }
                       </div>
-                      <div className="flex items-start justify-end">
+                      <div className="flex items-start justify-end gap-2">
+                        {item.workout_note_id &&
+                          <button
+                            type='button'
+                            className={`inline-flex items-center justify-center rounded-full bg-green-800 px-3 py-2 text-xs font-semibold text-white transition hover:bg-green-400 hover:text-slate-600 ${item.note && !item.status && 'animate-pulseBorder'}`}
+                            aria-label="Notas del Cliente"
+                            title='Notas del Cliente'
+                            onClick={() => handleNoteReview(item.workout_note_id)}
+                          >
+                            <FontAwesomeIcon icon={faNoteSticky} size='2x'></FontAwesomeIcon>
+                          </button>
+                        }
                         <button
                           type="button"
                           onClick={() => handleDeleteAssignedWorkout(item.id)}
@@ -679,7 +817,7 @@ const Clients = () => {
                           aria-label="Eliminar rutina asignada"
                           title='Eliminar rutina asignada'
                         >
-                          🗑️
+                          <FontAwesomeIcon icon={faTrash} size='2x'></FontAwesomeIcon>'
                         </button>
                       </div>
                     </div>
@@ -688,6 +826,86 @@ const Clients = () => {
               </div>
             )}
           </div>
+        </div>
+      </ModalOverlay>
+
+      {/* Note Review Modal */}
+      <ModalOverlay isOpen={showNoteModal} onClose={closeNoteModal} title="Revisar nota">
+        <div className="space-y-5">
+          {loadingNoteModal ? (
+            <p className="text-slate-400">Cargando nota…</p>
+          ) : noteModalData ? (
+            <>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
+                  <p className="font-semibold text-white">ID de nota</p>
+                  <p>{noteModalData.workout_note_id || noteModalData.id || '—'}</p>
+                </div>
+                <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
+                  <p className="font-semibold text-white">ID cliente</p>
+                  <p>{noteModalData.client_id || '—'}</p>
+                </div>
+                <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
+                  <p className="font-semibold text-white">Rutina</p>
+                  <p>{noteModalData.title || noteModalData.name || noteModalData.workout_name || `#${noteModalData.workout_id || '—'}`}</p>
+                </div>
+                <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
+                  <p className="font-semibold text-white">Fecha</p>
+                  <p>{noteModalData.log_date ? new Date(noteModalData.log_date).toLocaleString() : '—'}</p>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
+                <p className="font-semibold text-white">Días</p>
+                <p>{translateDay(noteModalData.day_of_week || noteModalData.days || noteModalData.day || '') || '—'}</p>
+              </div>
+
+              <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
+                <p className="font-semibold text-white">Instrucciones del entrenador</p>
+                <p>{noteModalData.trainer_notes || noteModalData.trainer_notes_text || '—'}</p>
+              </div>
+
+              <label className="block space-y-2 text-sm text-slate-200">
+                Nota
+                <textarea
+                  value={noteModalData.note || noteModalData.notes || ''}
+                  readOnly
+                  placeholder="No hay nota disponible"
+                  className="min-h-[120px] w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-slate-300 outline-none transition focus:border-[#f1b80c]"
+                />
+              </label>
+
+              <label className="block space-y-2 text-sm text-slate-200">
+                Feedback
+                <textarea
+                  value={noteFeedback}
+                  onChange={(e) => setNoteFeedback(e.target.value)}
+                  placeholder="Escribe el feedback del cliente..."
+                  className="min-h-[140px] w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                />
+              </label>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={saveNoteFeedback}
+                  disabled={savingNoteFeedback}
+                  className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {savingNoteFeedback ? 'Guardando...' : 'Guardar feedback'}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeNoteModal}
+                  className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="text-slate-400">No hay datos de la nota disponibles.</p>
+          )}
         </div>
       </ModalOverlay>
 

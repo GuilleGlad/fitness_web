@@ -23,12 +23,16 @@ function App() {
   return (
     <>
       <Toaster
+        containerStyle={{
+          zIndex: 9999 // For the container
+        }}
         position="top-center"
         toastOptions={{
           duration: 4000,
           style: {
             color: 'white',
-            background: 'green'
+            background: 'green',
+            zIndex: 9999 // For toasts
           },
           success: {
             icon: '👍',
@@ -36,6 +40,7 @@ function App() {
           error: {
             icon: '👎',
             background: 'red',
+            zIndex: 9999 // For toasts
           }
         }
         } />
