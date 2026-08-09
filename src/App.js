@@ -15,6 +15,10 @@ import Settings from './pages/Settings';
 import Clients from './pages/Clients';
 import Trainers from './pages/Trainers';
 import Logout from './pages/Logout';
+import Routines from './pages/Routines'; // ajusta la ruta según tu estructura
+import Progress from './pages/Progress';   // ajusta la ruta según tu estructura
+import Payments from './pages/Payments';   // ajusta la ruta según tu estructura
+
 import {Toaster} from 'react-hot-toast';
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -60,6 +64,9 @@ function App() {
           <Route path="/clients" element={<Clients />} /> {/* Added Clients Route */}
           <Route path="/trainers" element={<Trainers />} /> {/* Added Trainers Route */}
           <Route path="/auth/logout" element={<Logout />} />
+          <Route path="/routines" element={<Routines />} />
+          <Route path="/progress" element={<Progress />} />
+          <Route path="/payments" element={<Payments />} />
         </Routes>
       </BrowserRouter>
     </>

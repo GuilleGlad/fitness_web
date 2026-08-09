@@ -467,6 +467,10 @@ const Clients = () => {
     handleOpenAssignModal(client);
   };
 
+  const handleProgress = (client) => {
+    handleOpenAssignModal(client);
+  };
+
   const handleEdit = (client) => {
     setForm({ name: client.name, email: client.email, password: client.password || '', genre: client.genre || '', phone: client.phone || '', picture: client.picture || '/images/avatar.png', status: client.status, status_cuenta: client.status_cuenta });
     setEditingId(client.id);
@@ -632,6 +636,13 @@ const Clients = () => {
                               className="rounded-full bg-green-400 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-green-300"
                             >
                               Rutinas
+                            </button>}
+                            {roleValue === '2' && <button
+                              onClick={() => handleProgress(client)}
+                              disabled={client.role === 'admin'}
+                              className="rounded-full bg-blue-300 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-blue-200"
+                            >
+                              Progreso
                             </button>}
                             <button
                               onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))}

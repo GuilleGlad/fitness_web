@@ -47,6 +47,8 @@ const ROLE_MENUS = {
   3: [
     'Perfil de Usuario',
     'Rutinas',
+    'Progreso',
+    'Pagos'
   ],
 };
 
@@ -348,7 +350,7 @@ const Dashboard = () => {
     if (roleValue === 1 && redirectPath === null) {
       fetchCounts();
     }
-    if (roleValue === 2){
+    if (roleValue === 2) {
       fetchCountsByTrainer();
     }
 
@@ -384,7 +386,7 @@ const Dashboard = () => {
         await axios.get(`${apiUrl}/progress/get/${clientId}`, config).then((response) => {
           if (response.status === 200) {
             setProgreso(response.data.filas);
-            console.log(progreso);
+            // console.log(progreso);
 
           }
         })
@@ -420,7 +422,7 @@ const Dashboard = () => {
     const fetchPayments = async ({ client_id, status = '', payment_method = '', start_date = '', end_date = '', trainer_id } = {}) => {
       setLoadingPayments(true);
       try {
-        if(roleValue === 3 && clientId){
+        if (roleValue === 3 && clientId) {
           const config = {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -441,7 +443,7 @@ const Dashboard = () => {
             setPayments(items);
           }
         }
-        if(roleValue === 2){
+        if (roleValue === 2) {
           const config = {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -457,12 +459,12 @@ const Dashboard = () => {
           };
           const response = await axios.get(`${apiUrl}/payments/?trainer_id=${clientId}`, config);
           if (response.status === 200) {
-            console.log(response);
+            // console.log(response);
             const data = response.data.payments || response.data.filas || response.data.data || response.data || [];
             const items = Array.isArray(data) ? data : (Array.isArray(response.data) ? response.data : [data]);
             setPayments(items);
           }
-        }        
+        }
 
       } catch (error) {
         console.error('Error fetching payments:', error);
@@ -471,7 +473,7 @@ const Dashboard = () => {
       }
     }
 
-      fetchPayments();
+    fetchPayments();
 
   }, [navigate, apiUrl, roleValue, status, showPaymentModal]);
 
@@ -709,7 +711,7 @@ const Dashboard = () => {
               <div>
                 {progressTab === 'silhouette' ? (
                   <div className="space-y-4">
-                    <BodySilhouette genre={genre} cadera={Number(progreso[0].hips || progreso[0].cadera)} cintura={Number(progreso[0].waist || progreso[0].cintura)} piernas={Number(progreso[0].legs || progreso[0].piernas)} brazos={Number(progreso[0].arms || progreso[0].brazos)} />
+                    <BodySilhouette genre={genre} cadera={Number(progreso[0]?.hips || progreso[0]?.cadera)} cintura={Number(progreso[0]?.waist || progreso[0]?.cintura)} piernas={Number(progreso[0]?.legs || progreso[0]?.piernas)} brazos={Number(progreso[0]?.arms || progreso[0]?.brazos)} />
                   </div>
                 ) : (
                   <div className="w-full chart-div mt-10">
@@ -1059,13 +1061,22 @@ const Dashboard = () => {
       navigate('/trainer-recipes'); setMenuOpen(false); return;
     }
     if (item.indexOf('Pagos') !== -1) {
+      if (roleValue === 3) {
+        navigate('/payments'); setMenuOpen(false); return;
+      }
       navigate('/trainer-payments'); setMenuOpen(false); return;
-    }                        
+    }
     if (item.indexOf('Ajustes') !== -1) {
       navigate('/settings'); setMenuOpen(false); return;
     }
     if (item.indexOf('Noticias') !== -1) {
       navigate('/news-manager'); setMenuOpen(false); return;
+    }
+    if (item.indexOf('Rutinas') !== -1) {
+      navigate('/routines'); setMenuOpen(false); return;
+    }
+    if (item.indexOf('Progreso') !== -1) {
+      navigate('/progress'); setMenuOpen(false); return;
     }
     setSelectedMenu(item);
     setMenuOpen(false); // cerrar al seleccionar en móvil
@@ -1104,7 +1115,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="mt-8 space-y-3">
+      <div className="mt-8 space-y-3 sticky bottom-0">
         <button
           onClick={handleLogoutWithClose}
           className="w-full rounded-3xl bg-[#1f2937] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
