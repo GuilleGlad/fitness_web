@@ -5,7 +5,7 @@ import { verifyToken } from '../utils/tokenUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { faAdd, faHome, faPencil, faPlus, faVideo, faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faAdd, faHome, faPencil, faPlus, faVideo, faBars, faTimes, faBell } from '@fortawesome/free-solid-svg-icons';
 import BodySilhouette from '../components/BodySilhouette';
 import moment from 'moment';
 import 'moment/locale/es';
@@ -16,6 +16,7 @@ import PaymentModal from '../components/PaymentModal';
 import { yellow } from '@mui/material/colors';
 import toast from 'react-hot-toast';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
+import { useSocket } from '../hooks/useSocket';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 
@@ -65,7 +66,6 @@ const Dashboard = () => {
   const userName = localStorage.getItem('name') || 'Usuario EliteFit';
   const genre = localStorage.getItem('genre');
   const clientId = localStorage.getItem('client_id');
-  const notifications = 4;
   const roleString = Object.entries(ROLE_MAP).find(([key, value]) => value === roleValue)?.[0]?.toUpperCase() || 'CLIENTE';
   const menuLinks = ROLE_MENUS[roleValue] || ROLE_MENUS[3];
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -83,6 +83,29 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState(moment().startOf('day'));
   const [progressTab, setProgressTab] = useState('silhouette');
   const [chartLimit, setChartLimit] = useState(10);
+  const [notifications, setNotifications] = useState([]);
+  const { socket, isConnected } = useSocket();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewNotification = (data) => {
+      console.log('Notificación recibida en tiempo real:', data);
+
+      setNotifications((prev) => [
+        // Si data ya es un objeto (ej. { id, message, ... }), lo guardamos directamente
+        typeof data === 'object' ? data : { id: Date.now(), message: data },
+        ...prev
+      ]);
+    };
+
+    socket.on('new_notification', handleNewNotification);
+
+    return () => {
+      socket.off('new_notification', handleNewNotification);
+    };
+  }, [socket]);
+
 
   // ✅ Cerrar menú al presionar Escape en móvil
   useEffect(() => {
@@ -323,6 +346,25 @@ const Dashboard = () => {
         console.error('Error fetching counts:', error);
       }
     }
+
+    const fetchNotifications = async () => {
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+        await axios.get(`${apiUrl}/notifications/?status=0&destination_id=${clientId}`, config).then((response) => {
+          if (response.status === 200) {
+            setNotifications(response.data.data);
+          }
+        })
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+      }
+    }
+
+    fetchNotifications();
 
     const fetchCountsByTrainer = async () => {
       const trainer_id = clientId;
@@ -1164,17 +1206,18 @@ const Dashboard = () => {
               </div>
 
               {(roleValue === 2 || roleValue === 3) && (
-                <div className="inline-flex items-center gap-4 rounded-3xl bg-[#141820] border border-slate-800 p-4 shadow-xl">
-                  <div className="rounded-2xl bg-slate-900/80 p-3 text-[#f1b80c]">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 fill-current">
-                      <path d="M12 2a7 7 0 0 0-7 7v2.585l-.707.707A1 1 0 0 0 4 14h16a1 1 0 0 0 .707-1.707L19 11.585V9a7 7 0 0 0-7-7zm0 20a4 4 0 0 0 4-4H8a4 4 0 0 0 4 4z" />
-                    </svg>
+                <Link
+                  to="/notifications"
+                  className={`inline-flex items-baseline gap-4 rounded-3xl bg-[#141820] border border-slate-600 p-4 shadow-lg ${notifications.length > 0 ? "shadow-yellow-400 animate-pulse hover:border-yellow-400" : "animate-none shadow-none"}`}
+                >
+
+                  <div className="rounded-2xl bg-slate-900/80 text-[#f1b80c]">
+                    <FontAwesomeIcon icon={faBell} className='text-lg rounded-[50%]'></FontAwesomeIcon>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-400">Notificaciones</p>
-                    <p className="text-2xl font-bold text-white">{notifications}</p>
+                    <p className="text-2xl font-bold text-white">{notifications.length}</p>
                   </div>
-                </div>
+                </Link>
               )}
             </div>
 
