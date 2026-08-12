@@ -1,13 +1,14 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { verifyToken } from '../utils/tokenUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPencil, faVideo, faBars, faTimes, faHome } from '@fortawesome/free-solid-svg-icons';
+import { faPencil, faVideo, faBars, faTimes, faHome, faBell } from '@fortawesome/free-solid-svg-icons';
 import moment from 'moment';
 import 'moment/locale/es';
 import ExerciseCard from '../components/ExerciseCard';
 import toast from 'react-hot-toast';
+import { useNotifications } from '../context/NotificationsContext';
 
 const ROLE_MENUS = {
   1: [
@@ -45,7 +46,16 @@ const Routines = () => {
   const roleValue = parseInt(localStorage.getItem('role'), 10) || 3;
   const userName = localStorage.getItem('name') || 'Usuario EliteFit';
   const clientId = localStorage.getItem('client_id');
-  const notifications = 4;
+  const {
+    notifications,
+    showNotificationsModal,
+    openNotificationsModal,
+    closeNotificationsModal,
+    markingReadId,
+    markingAllRead,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+  } = useNotifications();
   const roleString = roleValue === 1 ? 'ADMIN' : roleValue === 2 ? 'TRAINER' : 'CLIENT';
   const menuLinks = ROLE_MENUS[roleValue] || ROLE_MENUS[3];
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -199,6 +209,7 @@ const Routines = () => {
   const closeNotesModal = () => {
     setNotesModal({ isOpen: false, workoutId: null, title: '', date: '', notes: '' });
   };
+
 
   const formatTimestamp = (dateString) => {
     const m = moment(dateString);
@@ -369,17 +380,18 @@ const Routines = () => {
                 <h2 className="mt-3 text-3xl font-bold text-white">Rutinas</h2>
               </div>
 
-              <div className="inline-flex items-center gap-4 rounded-3xl bg-[#141820] border border-slate-800 p-4 shadow-xl">
-                <div className="rounded-2xl bg-slate-900/80 p-3 text-[#f1b80c]">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 fill-current">
-                    <path d="M12 2a7 7 0 0 0-7 7v2.585l-.707.707A1 1 0 0 0 4 14h16a1 1 0 0 0 .707-1.707L19 11.585V9a7 7 0 0 0-7-7zm0 20a4 4 0 0 0 4-4H8a4 4 0 0 0 4 4z" />
-                  </svg>
+              <button
+                type="button"
+                onClick={openNotificationsModal}
+                className={`inline-flex items-baseline gap-4 rounded-3xl bg-[#141820] border border-slate-600 p-4 shadow-lg transition hover:bg-slate-800 ${notifications.length > 0 ? "shadow-yellow-400 animate-pulse hover:border-yellow-400" : "animate-none shadow-none"}`}
+              >
+                <div className="rounded-2xl bg-slate-900/80 text-[#f1b80c]">
+                  <FontAwesomeIcon icon={faBell} className='text-lg rounded-[50%]'></FontAwesomeIcon>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Notificaciones</p>
-                  <p className="text-2xl font-bold text-white">{notifications}</p>
+                  <p className="text-2xl font-bold text-white">{notifications.length}</p>
                 </div>
-              </div>
+              </button>
             </div>
 
             <div className="rounded-[40px] border border-slate-800 bg-[#141820] shadow-2xl p-6 lg:p-8">
@@ -606,6 +618,104 @@ const Routines = () => {
                   Guardar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notifications Modal */}
+      {showNotificationsModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          onClick={closeNotificationsModal}
+        >
+          <div
+            className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-[32px] border border-slate-700 bg-[#141820] p-6 shadow-2xl shadow-black/40"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm text-slate-400 uppercase tracking-[0.3em]">Notificaciones</p>
+                <h2 className="mt-2 text-xl font-semibold text-white">{notifications.length} sin leer</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                {notifications.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={markAllNotificationsAsRead}
+                    disabled={markingAllRead}
+                    className="whitespace-nowrap rounded-full border border-[#f1b80c] px-3 py-2 text-xs font-bold uppercase text-[#f1b80c] transition hover:bg-[#f1b80c] hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {markingAllRead ? 'Marcando...' : 'Marcar todas como leídas'}
+                  </button>
+                )}
+                <button
+                  onClick={closeNotificationsModal}
+                  aria-label="Cerrar notificaciones"
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-slate-200 transition hover:bg-slate-800"
+                >
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+              {notifications.length === 0 ? (
+                <p className="rounded-3xl bg-slate-900/70 p-6 text-center text-sm text-slate-400">
+                  No tienes notificaciones pendientes.
+                </p>
+              ) : (
+                notifications.map((n) => {
+                  const isRead = String(n.status) === '1' || String(n.status).toLowerCase() === 'read' || String(n.status).toLowerCase() === 'leído';
+                  const content = (
+                    <>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-white">{n.message}</p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            De: <span className="text-slate-300">{n.source_id}</span>
+                          </p>
+                        </div>
+                        {!isRead && (
+                          <button
+                            type="button"
+                            onClick={() => markNotificationAsRead(n.id)}
+                            disabled={markingReadId === n.id}
+                            className="whitespace-nowrap rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-bold uppercase text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {markingReadId === n.id ? 'Marcando...' : 'Marcar como leída'}
+                          </button>
+                        )}
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.15em] text-slate-500">
+                        <span className={`rounded-full px-3 py-1 font-semibold ${isRead ? 'bg-green-600 text-white' : 'bg-orange-400 text-black'}`}>
+                          {isRead ? 'Leída' : 'Pendiente'}
+                        </span>
+                        <span>Creada: {moment(n.created_at).format('DD-MM-YYYY HH:mm')}</span>
+                        {n.updated_at && <span>Actualizada: {moment(n.updated_at).format('DD-MM-YYYY HH:mm')}</span>}
+                      </div>
+                    </>
+                  );
+
+                  return n.navigate_to ? (
+                    <Link
+                      key={n.id}
+                      to={n.navigate_to}
+                      onClick={closeNotificationsModal}
+                      className="block rounded-2xl border border-slate-800 bg-slate-900/70 p-4 transition hover:border-[#f1b80c]"
+                    >
+                      {content}
+                    </Link>
+                  ) : (
+                    <div
+                      key={n.id}
+                      className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"
+                    >
+                      {content}
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>

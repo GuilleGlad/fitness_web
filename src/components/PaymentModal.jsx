@@ -98,14 +98,6 @@ const PaymentModal = ({ isOpen, onClose, clientId, trainerId }) => {
       
       if (response.status === 200 || response.status === 201) {
         setShowConfirmation(true);
-        const payload = {
-          message: `El usuario ${formData.client_id} acaba de realizar un pago.`, 
-          destination_id: formData.trainer_id,
-          source_id: formData.client_id,
-          status: 0,
-          navigate_to: '/payments'
-        }
-        axios.post(`${apiUrl}/notifications/`,payload, config);
         // Don't close immediately, show confirmation
       }
     } catch (error) {

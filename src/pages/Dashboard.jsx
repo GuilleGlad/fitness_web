@@ -16,7 +16,7 @@ import PaymentModal from '../components/PaymentModal';
 import { yellow } from '@mui/material/colors';
 import toast from 'react-hot-toast';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
-import { useSocket } from '../hooks/useSocket';
+import { useNotifications } from '../context/NotificationsContext';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 
@@ -83,29 +83,16 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState(moment().startOf('day'));
   const [progressTab, setProgressTab] = useState('silhouette');
   const [chartLimit, setChartLimit] = useState(10);
-  const [notifications, setNotifications] = useState([]);
-  const { socket, isConnected } = useSocket();
-
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleNewNotification = (data) => {
-      console.log('Notificación recibida en tiempo real:', data);
-
-      setNotifications((prev) => [
-        // Si data ya es un objeto (ej. { id, message, ... }), lo guardamos directamente
-        typeof data === 'object' ? data : { id: Date.now(), message: data },
-        ...prev
-      ]);
-    };
-
-    socket.on('new_notification', handleNewNotification);
-
-    return () => {
-      socket.off('new_notification', handleNewNotification);
-    };
-  }, [socket]);
-
+  const {
+    notifications,
+    showNotificationsModal,
+    openNotificationsModal,
+    closeNotificationsModal,
+    markingReadId,
+    markingAllRead,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+  } = useNotifications();
 
   // ✅ Cerrar menú al presionar Escape en móvil
   useEffect(() => {
@@ -346,25 +333,6 @@ const Dashboard = () => {
         console.error('Error fetching counts:', error);
       }
     }
-
-    const fetchNotifications = async () => {
-      try {
-        const config = {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        };
-        await axios.get(`${apiUrl}/notifications/?status=0&destination_id=${clientId}`, config).then((response) => {
-          if (response.status === 200) {
-            setNotifications(response.data.data);
-          }
-        })
-      } catch (error) {
-        console.error('Error fetching counts:', error);
-      }
-    }
-
-    fetchNotifications();
 
     const fetchCountsByTrainer = async () => {
       const trainer_id = clientId;
@@ -1206,9 +1174,10 @@ const Dashboard = () => {
               </div>
 
               {(roleValue === 2 || roleValue === 3) && (
-                <Link
-                  to="/notifications"
-                  className={`inline-flex items-baseline gap-4 rounded-3xl bg-[#141820] border border-slate-600 p-4 shadow-lg ${notifications.length > 0 ? "shadow-yellow-400 animate-pulse hover:border-yellow-400" : "animate-none shadow-none"}`}
+                <button
+                  type="button"
+                  onClick={openNotificationsModal}
+                  className={`inline-flex items-baseline gap-4 rounded-3xl bg-[#141820] border border-slate-600 p-4 shadow-lg transition hover:bg-slate-800 ${notifications.length > 0 ? "shadow-yellow-400 animate-pulse hover:border-yellow-400" : "animate-none shadow-none"}`}
                 >
 
                   <div className="rounded-2xl bg-slate-900/80 text-[#f1b80c]">
@@ -1217,7 +1186,7 @@ const Dashboard = () => {
                   <div>
                     <p className="text-2xl font-bold text-white">{notifications.length}</p>
                   </div>
-                </Link>
+                </button>
               )}
             </div>
 
@@ -1324,6 +1293,104 @@ const Dashboard = () => {
                   Guardar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notifications Modal */}
+      {showNotificationsModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          onClick={closeNotificationsModal}
+        >
+          <div
+            className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-[32px] border border-slate-700 bg-[#141820] p-6 shadow-2xl shadow-black/40"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm text-slate-400 uppercase tracking-[0.3em]">Notificaciones</p>
+                <h2 className="mt-2 text-xl font-semibold text-white">{notifications.length} sin leer</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                {notifications.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={markAllNotificationsAsRead}
+                    disabled={markingAllRead}
+                    className="whitespace-nowrap rounded-full border border-[#f1b80c] px-3 py-2 text-xs font-bold uppercase text-[#f1b80c] transition hover:bg-[#f1b80c] hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {markingAllRead ? 'Marcando...' : 'Marcar todas como leídas'}
+                  </button>
+                )}
+                <button
+                  onClick={closeNotificationsModal}
+                  aria-label="Cerrar notificaciones"
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-slate-200 transition hover:bg-slate-800"
+                >
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+              {notifications.length === 0 ? (
+                <p className="rounded-3xl bg-slate-900/70 p-6 text-center text-sm text-slate-400">
+                  No tienes notificaciones pendientes.
+                </p>
+              ) : (
+                notifications.map((n) => {
+                  const isRead = String(n.status) === '1' || String(n.status).toLowerCase() === 'read' || String(n.status).toLowerCase() === 'leído';
+                  const content = (
+                    <>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-white">{n.message}</p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            De: <span className="text-slate-300">{n.source_id}</span>
+                          </p>
+                        </div>
+                        {!isRead && (
+                          <button
+                            type="button"
+                            onClick={() => markNotificationAsRead(n.id)}
+                            disabled={markingReadId === n.id}
+                            className="whitespace-nowrap rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-bold uppercase text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {markingReadId === n.id ? 'Marcando...' : 'Marcar como leída'}
+                          </button>
+                        )}
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.15em] text-slate-500">
+                        <span className={`rounded-full px-3 py-1 font-semibold ${isRead ? 'bg-green-600 text-white' : 'bg-orange-400 text-black'}`}>
+                          {isRead ? 'Leída' : 'Pendiente'}
+                        </span>
+                        <span>Creada: {moment(n.created_at).format('DD-MM-YYYY HH:mm')}</span>
+                        {n.updated_at && <span>Actualizada: {moment(n.updated_at).format('DD-MM-YYYY HH:mm')}</span>}
+                      </div>
+                    </>
+                  );
+
+                  return n.navigate_to ? (
+                    <Link
+                      key={n.id}
+                      to={n.navigate_to}
+                      onClick={closeNotificationsModal}
+                      className="block rounded-2xl border border-slate-800 bg-slate-900/70 p-4 transition hover:border-[#f1b80c]"
+                    >
+                      {content}
+                    </Link>
+                  ) : (
+                    <div
+                      key={n.id}
+                      className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"
+                    >
+                      {content}
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
