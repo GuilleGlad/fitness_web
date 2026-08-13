@@ -644,33 +644,16 @@ const Dashboard = () => {
 
           <div className="grid gap-4 xl:grid-cols-2">
             <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl">
-              <h2 className="text-xl font-semibold text-white mb-4">Resumen semanal</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">Información</h2>
               <ul className="space-y-3 text-slate-300">
-                <li className="rounded-2xl bg-slate-900/70 p-4">
-                  <strong>Clientes con rutina nueva:</strong> 8
-                </li>
-                <li className="rounded-2xl bg-slate-900/70 p-4">
-                  <strong>Sesiones programadas:</strong> 12 esta semana
-                </li>
-                <li className="rounded-2xl bg-slate-900/70 p-4">
-                  <strong>Pagos recibidos:</strong> 5 / 8 completados
-                </li>
+
               </ul>
             </section>
 
             <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl">
-              <h2 className="text-xl font-semibold text-white mb-4">Clientes destacados</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">Clientes Nuevos de el Mes</h2>
               <div className="space-y-3 text-slate-300">
-                {[
-                  { name: 'Camila R.', status: '4 entrenos/sem' },
-                  { name: 'Diego M.', status: 'En crecimiento muscular' },
-                  { name: 'Valeria G.', status: 'Preparación para maratón' },
-                ].map((client) => (
-                  <div key={client.name} className="rounded-2xl bg-slate-900/70 p-4">
-                    <p className="text-white font-semibold">{client.name}</p>
-                    <p className="text-sm">{client.status}</p>
-                  </div>
-                ))}
+            
               </div>
             </section>
           </div>
@@ -794,7 +777,7 @@ const Dashboard = () => {
                 </button>
               </div>
             </div>
-            <div className="max-h-[350px] overflow-y-auto space-y-3 pr-1">
+            <div className="max-h-[395px] overflow-y-auto space-y-3 pr-1">
               {progreso.map((item, index) => (
                 <div
                   key={item.id}
@@ -847,7 +830,7 @@ const Dashboard = () => {
 
         <div className="grid gap-4 xl:grid-cols-2">
           <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-            <h2 className="text-xl font-semibold text-white mb-4">Rutinas</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Workout Diario</h2>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-2">
@@ -864,7 +847,7 @@ const Dashboard = () => {
                     Mes
                   </button>
                 </div>
-                <p className="text-sm text-slate-400">Selecciona un día para ver las rutinas asignadas.</p>
+                <p className="text-sm text-slate-400">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faPencil}></FontAwesomeIcon>.</p>
               </div>
 
               {calendarView === 'week' ? (

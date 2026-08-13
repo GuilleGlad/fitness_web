@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import TrainerLibrary from './TrainerLibrary';
-
+import { verifyToken } from '../utils/tokenUtils';
 
 const initialForm = {
   trainer_id: '',
@@ -156,6 +156,17 @@ const TrainerRecipes = () => {
   const [libraryTarget, setLibraryTarget] = useState('image');
 
   useEffect(() => {
+
+    var redirectPath = null;
+    const checkToken = async () => {
+      redirectPath = await verifyToken();
+      if (redirectPath) {
+        navigate(redirectPath);
+      }
+    };
+
+    checkToken();
+
     const fetchRecipes = async () => {
       if (!trainerId) return;
       const token = localStorage.getItem('token');

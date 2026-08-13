@@ -168,7 +168,7 @@ export default function RegisterForm() {
                         <input
                             type="text"
                             name="name"
-                            placeholder="Nombre completo"
+                            placeholder="Nombre y Apellido"
                             value={formData.name}
                             onChange={handleChange}
                             className="w-full px-4 py-3 bg-[#c4c4c4] text-slate-800 placeholder-slate-500 font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#facc15] transition-all"

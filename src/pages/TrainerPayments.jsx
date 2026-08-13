@@ -5,6 +5,8 @@ import toast from 'react-hot-toast';
 import TrainerLibrary from './TrainerLibrary';
 import moment from 'moment';
 import 'moment/locale/es';
+import { verifyToken } from '../utils/tokenUtils';
+
 
 const initialForm = {
   trainer_id: '',
@@ -59,6 +61,17 @@ const TrainerPayments = () => {
   const [paymentPreviewImage, setPaymentPreviewImage] = useState('');
 
   useEffect(() => {
+
+    var redirectPath = null;
+    const checkToken = async () => {
+      redirectPath = await verifyToken();
+      if (redirectPath) {
+        navigate(redirectPath);
+      }
+    };
+
+    checkToken();
+
     const fetchPayments = async () => {
       if (!trainerId) return;
       const token = localStorage.getItem('token');

@@ -75,7 +75,10 @@ export const NotificationsProvider = ({ children }) => {
         typeof data === 'object' ? data : { id: Date.now(), message: data },
         ...prev,
       ]);
-      toast.success(data.message);
+      const current_id = Number(localStorage.getItem('client_id'));
+      if(current_id === data.destination_id){
+        toast.success(data.message);
+      }
     };
 
     socket.on('new_notification', handleNewNotification);
