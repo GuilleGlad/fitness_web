@@ -202,7 +202,7 @@ return (
                 <tr key={r.id} className="group transition hover:bg-slate-800/40">
                   <td className="px-6 py-4 font-medium text-white">{r.client_id}</td>
                   <td className="px-6 py-4 text-slate-300 max-w-xs truncate">{r.amount}</td>
-                  <td className="px-6 py-4 text-slate-300 max-w-xs truncate">{moment(r.payment_date).format('DD-MM-YYYY')}</td>
+                  <td className="px-6 py-4 text-slate-300 max-w-xs truncate"><span className='font-bold'>{moment(r.payment_date).format('DD-MM-YYYY')}</span> <span className='font-semibold text-customYellow'>{moment(r.payment_date).format('hh:mm a')}</span></td>
                   <td className="px-6 py-4 text-slate-300 max-w-xs truncate">{r.payment_method}</td>
                   <td className="px-6 py-4 text-slate-300 max-w-xs truncate">{r.period_covered}</td>
                   <td className="px-6 py-4">

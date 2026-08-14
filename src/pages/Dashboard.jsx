@@ -43,7 +43,6 @@ const ROLE_MENUS = {
     'Fotos/Videos',
     'Recetas',
     'Pagos',
-    'Ajustes',
   ],
   3: [
     'Perfil de Usuario',
@@ -1330,9 +1329,11 @@ const Dashboard = () => {
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex-1">
                           <p className="text-sm font-semibold text-white">{n.message}</p>
+                          {n.navigate_to && 
                           <p className="mt-1 text-xs text-slate-400">
-                            De: <span className="text-slate-300">{n.source_id}</span>
+                            <Link to={n.navigate_to} className="text-slate-300">{n.navigate_to}</Link>
                           </p>
+                          }
                         </div>
                         {!isRead && (
                           <button
@@ -1345,12 +1346,13 @@ const Dashboard = () => {
                           </button>
                         )}
                       </div>
-                      <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.15em] text-slate-500">
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[10px] uppercase tracking-[0.15em] text-slate-500">
                         <span className={`rounded-full px-3 py-1 font-semibold ${isRead ? 'bg-green-600 text-white' : 'bg-orange-400 text-black'}`}>
                           {isRead ? 'Leída' : 'Pendiente'}
                         </span>
-                        <span>Creada: {moment(n.created_at).format('DD-MM-YYYY HH:mm')}</span>
-                        {n.updated_at && <span>Actualizada: {moment(n.updated_at).format('DD-MM-YYYY HH:mm')}</span>}
+                        {/* <span>Creada: {moment(n.created_at).format('DD-MM-YYYY HH:mm')}</span> */}
+                        {/* {n.updated_at && <span>Actualizada: {moment(n.updated_at).format('DD-MM-YYYY HH:mm')}</span>} */}
+                        <span>{moment(n.created_at).format('DD-MM-YYYY HH:mm')}</span>
                       </div>
                     </>
                   );

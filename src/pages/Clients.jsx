@@ -6,6 +6,7 @@ import TrainerLibrary from './TrainerLibrary';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faNoteSticky, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { verifyToken } from '../utils/tokenUtils';
+import { getClientStatusLabel, getCuentaLabel, normalizeClientRow, normalizeStatusCode } from '../utils/clientUtils';
 
 const initialForm = {
   name: '',
@@ -14,9 +15,9 @@ const initialForm = {
   genre: '',
   phone: '',
   picture: '/images/avatar.png',
-  status: 'Activo',
+  status: 0,
   deleted: 0,
-  status_cuenta: 0
+  status_cuenta: 1
 };
 
 /* ───────── Reusable Modal Wrapper ───────── */
@@ -430,18 +431,16 @@ const Clients = () => {
         const res = await axios.get(`${apiUrl}/admin/clients`, config);
         const list = res.data?.clientes || res.data || [];
         setClients(
-          list.map((item) => ({
-            id: item.user_id,
+          list.map((item) => normalizeClientRow({
+            ...item,
+            id: item.user_id ?? item.id,
             name: item.name,
             email: item.email,
             password: item.password || '',
             genre: item.genre || '',
             phone: item.phone || '',
             picture: item.picture || '/images/avatar.png',
-            status: item.status,
-            deleted: item.deleted || false,
             role: item.role || '',
-            status_cuenta: item.status_cuenta
           }))
         );
       } catch (err) {
@@ -472,7 +471,16 @@ const Clients = () => {
   };
 
   const handleEdit = (client) => {
-    setForm({ name: client.name, email: client.email, password: client.password || '', genre: client.genre || '', phone: client.phone || '', picture: client.picture || '/images/avatar.png', status: client.status, status_cuenta: client.status_cuenta });
+    setForm({
+      name: client.name,
+      email: client.email,
+      password: client.password || '',
+      genre: client.genre || '',
+      phone: client.phone || '',
+      picture: client.picture || '/images/avatar.png',
+      status: normalizeStatusCode(client.status),
+      status_cuenta: Number(client.deleted ?? client.status_cuenta ?? 0) === 0 ? 1 : 0,
+    });
     setEditingId(client.id);
     setShowEditModal(true);
   };
@@ -487,11 +495,21 @@ const Clients = () => {
     const token = localStorage.getItem('token');
     if (!token) return toast.error('Token no disponible.');
 
-    const payload = { name: form.name.trim(), email: form.email.trim(), password: form.password.trim(), genre: form.genre.trim(), phone: form.phone.trim(), picture: form.picture.trim(), status: form.status, role: 'client' , status_cuenta: form.status_cuenta};
+    const payload = {
+      name: form.name.trim(),
+      email: form.email.trim(),
+      password: form.password.trim(),
+      genre: form.genre.trim(),
+      phone: form.phone.trim(),
+      picture: form.picture.trim(),
+      status: Number(form.status) || 0,
+      role: 'client',
+      status_cuenta: Number(form.status_cuenta) === 0 ? 0 : 1,
+    };
     const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
 
     if (editingId) {
-      setClients((p) => p.map((c) => c.id === editingId ? { ...c, ...form } : c));
+      setClients((p) => p.map((c) => c.id === editingId ? normalizeClientRow({ ...c, ...form }) : c));
       cancelEdit();
       try {
         await axios.put(`${apiUrl}/admin/user/${editingId}`, payload, config);
@@ -501,7 +519,16 @@ const Clients = () => {
       try {
         const res = await axios.post(`${apiUrl}/auth/register`, payload, config);
         const saved = res.data?.cliente || res.data || {};
-        setClients((p) => [...p, { id: saved.user.id || Date.now(), ...payload }]);
+        const savedUser = saved.user || saved;
+        const newClient = normalizeClientRow({
+          ...savedUser,
+          ...payload,
+          id: savedUser?.user_id ?? savedUser?.id ?? Date.now(),
+          deleted: savedUser?.deleted ?? payload.deleted ?? 0,
+          status: savedUser?.status ?? payload.status ?? 0,
+          status_cuenta: savedUser?.status_cuenta ?? payload.status_cuenta ?? 1,
+        });
+        setClients((p) => [...p, newClient]);
         toast.success('Cliente guardado correctamente.');
         cancelNew();
       } catch { toast.error('No se pudo guardar el cliente.'); }
@@ -607,16 +634,16 @@ const Clients = () => {
                     <td className="px-6 py-4 text-slate-300">{client.email}</td>
                     <td className="px-6 py-4 text-slate-300">{client.phone || '—'}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${client.status === 'Activo' ? 'bg-[#f1b80c]/15 text-orange-400' : 'bg-red-500/15 text-yellow-400'}`}>
-                        {client.status ?? 'Inicial'}
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getClientStatusLabel(client) === 'Activo' ? 'bg-[#f1b80c]/15 text-orange-400' : 'bg-red-500/15 text-yellow-400'}`}>
+                        {getClientStatusLabel(client)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-slate-300">{client.status_cuenta ?  'Activa' : 'Inactiva'}</td>
+                    <td className="px-6 py-4 text-slate-300">{getCuentaLabel(client)}</td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2 opacity-70 group-hover:opacity-100">
-                        {client.deleted ? (
+                        {client.deleted == 1 ? (
                           <button
-                            onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.id))}
+                            onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.user_id))}
                             disabled={client.role === 'admin'}
                             className="rounded-full bg-slate-600 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
@@ -645,7 +672,7 @@ const Clients = () => {
                               Progreso
                             </button>}
                             <button
-                              onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))}
+                              onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.user_id))}
                               disabled={client.role === 'admin'}
                               className="rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
@@ -670,7 +697,7 @@ const Clients = () => {
             ) : (
               <div className="divide-y divide-slate-800/50">
                 {clients.map((client) => (
-                  <div key={client.id} className={`flex flex-col gap-3 p-5 ${client.deleted ? 'bg-red-950/20' : ''}`}>
+                  <div key={client.user_id} className={`flex flex-col gap-3 p-5 ${client.deleted ? 'bg-red-950/20' : ''}`}>
                     <div className="flex items-center gap-4">
                       <img src={client.picture || '/images/avatar.png'} alt={client.name} className="h-12 w-12 rounded-full object-cover ring-2 ring-slate-700" />
                       <div>
@@ -680,14 +707,14 @@ const Clients = () => {
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
                       {client.phone && <span>Tel: {client.phone}</span>}
-                      <span className={`rounded-full px-3 py-1 ${client.status === 'Activo' ? 'bg-[#f1b80c]/15 text-orange-400' : 'bg-red-500/15 text-yellow-400'}`}>
-                        {client.status ?? 'Inicial'}
+                      <span className={`rounded-full px-3 py-1 ${getClientStatusLabel(client) === 'Activo' ? 'bg-[#f1b80c]/15 text-orange-400' : 'bg-red-500/15 text-yellow-400'}`}>
+                        {getClientStatusLabel(client)}
                       </span>
                     </div>
                     <div className="flex gap-2">
                       {client.deleted ? (
                         <button
-                          onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.id))}
+                          onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.user_id))}
                           disabled={client.role === 'admin'}
                           className="flex-1 rounded-full bg-slate-600 py-2.5 text-xs font-semibold text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -709,7 +736,7 @@ const Clients = () => {
                             Asignar rutina
                           </button>
                           <button
-                            onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))}
+                            onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.user_id))}
                             disabled={client.role === 'admin'}
                             className="flex-1 rounded-full bg-red-600 py-2.5 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
