@@ -428,6 +428,34 @@ const Dashboard = () => {
       fetchWorkouts();
     }
 
+    const checkPayment = async (r) => {
+      const id = r.id;
+      const status = r.status;
+      if (status == "Expirado")
+        return;
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+        await axios.get(`${apiUrl}/payments/${id}/check-expiration`, config).then((response) => {
+          console.log(response);
+          if (response.data?.status_modification == true) {
+            const status_str = "Expirado";
+            setPayments(prevPayments =>
+              prevPayments.map(payment =>
+                payment.id === id ? { ...payment, status: status_str } : payment
+              )
+            );
+          }
+        })
+      } catch (error) {
+        console.log("Error: " + error.message);
+      }
+
+    }
+
     const fetchPayments = async ({ client_id, status = '', payment_method = '', start_date = '', end_date = '', trainer_id } = {}) => {
       setLoadingPayments(true);
       try {
@@ -472,6 +500,11 @@ const Dashboard = () => {
             const data = response.data.payments || response.data.filas || response.data.data || response.data || [];
             const items = Array.isArray(data) ? data : (Array.isArray(response.data) ? response.data : [data]);
             setPayments(items);
+            items.map((p) => {
+              if (p.status == "Pendiente") {
+                checkPayment(p)
+              }
+            })            
           }
         }
 
@@ -627,14 +660,15 @@ const Dashboard = () => {
     if (roleValue === 2) {
       return (
         <>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5 mb-6">
             {[
               { label: 'Clientes activos', value: counts.clients },
               { label: 'Ejercicios Publicados', value: counts.exercises },
               { label: 'Recetas disponibles', value: counts.recipes },
               { label: 'Pagos pendientes', value: payments.filter(r => r.status === "Pendiente").length },
-            ].map((card) => (
-              <div key={card.label} className="rounded-3xl bg-[#141820] border border-slate-800 p-5 shadow-xl">
+              { label: 'Pagos Vencidos', value: payments.filter(r => r.status === "Expirado").length },
+            ].map((card, index) => (
+              <div key={card.label} className={`rounded-3xl ${index % 2 == 0 ? "bg-slate-800" : "bg-slate-600"} border border-slate-800 p-5 shadow-xl`}>
                 <p className="text-sm text-slate-400 uppercase tracking-[0.25em]">{card.label}</p>
                 <p className="mt-4 text-3xl font-bold text-white">{card.value}</p>
               </div>
@@ -652,7 +686,7 @@ const Dashboard = () => {
             <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl">
               <h2 className="text-xl font-semibold text-white mb-4">Clientes Nuevos de el Mes</h2>
               <div className="space-y-3 text-slate-300">
-            
+
               </div>
             </section>
           </div>
@@ -1329,10 +1363,11 @@ const Dashboard = () => {
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex-1">
                           <p className="text-sm font-semibold text-white">{n.message}</p>
-                          {n.navigate_to && 
-                          <p className="mt-1 text-xs text-slate-400">
-                            <Link to={n.navigate_to} className="text-slate-300">{n.navigate_to}</Link>
-                          </p>
+                          {n.navigate_to &&
+                            <p className="mt-1 text-xs text-slate-400">
+                              {/* <Link to={n.navigate_to} className="text-slate-300">{n.navigate_to}</Link> */}
+                              {n.navigate_to}
+                            </p>
                           }
                         </div>
                         {!isRead && (
