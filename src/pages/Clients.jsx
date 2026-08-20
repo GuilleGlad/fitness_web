@@ -627,9 +627,10 @@ const Clients = () => {
                 ) : clients.length === 0 ? (
                   <tr><td colSpan="6" className="py-12 text-center text-slate-400">No hay usuarios aún.</td></tr>
                 ) : clients.map((client) => (
-                  <tr key={client.id} className={`group transition ${client.deleted ? 'bg-red-950/30' : 'hover:bg-slate-800/40'}`}>
+                  
+                    <tr key={client.id} className={`group transition ${client.deleted ? 'bg-red-950/30' : 'hover:bg-slate-800/40'}`}>
                     {/* <td className="px-6 py-4 text-slate-300">{client.id}</td> */}
-                    <td className="px-6 py-4"><img src={client.picture || '/images/avatar.png'} alt={client.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-700" /></td>
+                    <td className="px-6 py-4"><img src={client.role != 'admin' ? client.picture || '/images/avatar.png' : '/images/avatar.png'} alt={client.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-700" /></td>
                     <td className="px-6 py-4 font-medium text-white">{client.name}</td>
                     <td className="px-6 py-4 text-slate-300">{client.email}</td>
                     <td className="px-6 py-4 text-slate-300">{client.phone || '—'}</td>
@@ -653,7 +654,9 @@ const Clients = () => {
                           <>
                             <button
                               onClick={() => handleEdit(client)}
-                              className="rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e]"
+                              disabled={client.role === 'admin'}
+                              hidden={client.role === 'admin'}
+                              className="rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e] disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Editar
                             </button>
@@ -674,6 +677,7 @@ const Clients = () => {
                             <button
                               onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.user_id))}
                               disabled={client.role === 'admin'}
+                              hidden={client.role === 'admin'}
                               className="rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Eliminar
