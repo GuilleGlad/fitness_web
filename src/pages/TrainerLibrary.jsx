@@ -25,10 +25,9 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
             try {
                 await axios.get(`${apiUrl}/library/list/${trainerId}`, config)
                     .then((data) => {
-                        const lib = data.data.library;
-                        lib.map((f) => f.new = false)
+                        const lib = data.data.library.map((f) => ({ ...f, new: false }));
                         // console.log(lib);
-                        setMedia((m) => [...lib, ...m])
+                        setMedia(lib)
                     })
 
             } catch (err) {
