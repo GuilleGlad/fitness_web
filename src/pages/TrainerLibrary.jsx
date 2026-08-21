@@ -8,6 +8,7 @@ import LibraryItem from '../components/LibraryItem';
 const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode = 'single' }) => {
     const [media, setMedia] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
+    const [isUploading, setIsUploading] = useState(false);
     const apiUrl = process.env.REACT_APP_API_URL;
     const navigate = useNavigate();
     const isMultipleSelection = selectionMode === 'multiple';
@@ -39,7 +40,15 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
 
     const fileInputRef = useRef(null);
 
+    const onPreClose = () => {
+        if(isUploading)
+            toast.success("En cualquier momento el archivo aparecera en la libreria y podra ser utilizado.",{
+        duration: 30000})
+        onClose();
+    }
+
     const handleFiles = async (e) => {
+        setIsUploading(true);
         const token = localStorage.getItem('token');
         if (!token) {
             toast.error('Token no disponible. Inicia sesión nuevamente.');
@@ -80,6 +89,7 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
         setMedia((items) =>
             items.map((item) => (item.id === tempId ? { ...item, id: serverId, new: false, file_path: serverUrl } : item))
         );
+        setIsUploading(false);
         setSelectedItems((items) =>
             items.map((item) => (item.id === tempId ? { ...item, id: serverId, new: false } : item))
         );
@@ -211,7 +221,7 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
                     {isModal ? (
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={onPreClose}
                             className="inline-flex items-center justify-center rounded-3xl bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
                         >
                             Cerrar
@@ -247,13 +257,13 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
                             </button>
                         </label>
 
-                        {isModal && isMultipleSelection && (
+                        {isModal && isMultipleSelection && !isUploading && (
                             <>
                                 <button
                                     type="button"
                                     onClick={handleUseSelection}
                                     disabled={selectedItems.length === 0}
-                                    className="rounded-2xl bg-[#f1b80c] px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-50"
+                                    className={`rounded-2xl bg-[#f1b80c] px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-50 `}
                                 >
                                     Usar seleccionados ({selectedItems.length})
                                 </button>
@@ -267,6 +277,11 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
                                 </button>
                             </>
                         )}
+                        {isUploading && (
+                         <>
+                         <span>Se estan cargando los archivos...</span>
+                         </>   
+                        )}
                     </div>
 
                     <div className="flex-1 overflow-y-auto pr-1">
@@ -276,6 +291,7 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
                         )}
                         {media.map((item) => {
                             const isSelected = selectedItems.some((selected) => selected.id === item.id);
+                            const itemStatus = item.new ? 'pending' : 'uploaded';
                             return (
                                 <div key={item.uploadId || item.id} className="flex flex-col gap-2">
                                     <LibraryItem
@@ -285,6 +301,7 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
                                         token={localStorage.getItem('token')}
                                         onDeleteSuccess={removeItem}
                                         onUploadSuccess={handleUploadSuccess}
+                                        status={itemStatus}
                                     />
                                     {onSelectMedia && (
                                         <div className="flex items-center justify-between gap-2">
@@ -305,7 +322,8 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
                                                 <button
                                                     type="button"
                                                     onClick={() => onSelectMedia({ url: item.file_path, mediaType: item.file_type })}
-                                                    className="rounded-2xl bg-[#f1b80c] px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]"
+                                                    className={`rounded-2xl bg-[#f1b80c] px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] ${itemStatus !== 'uploaded' && itemStatus !== 'error' ? "hidden" : ""}`}
+                                                    disabled={itemStatus !== 'uploaded' && itemStatus !== 'error'}
                                                 >
                                                     Usar {item.file_type === 'video' ? 'video' : 'foto'}
                                                 </button>

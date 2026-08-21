@@ -4,8 +4,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRemove } from '@fortawesome/free-solid-svg-icons';
 
-const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUploadSuccess }) => {
-    const [status, setStatus] = useState(item?.new ? 'pending' : 'uploaded');
+const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUploadSuccess, status: passedStatus }) => {
+    const [status, setStatus] = useState(passedStatus !== undefined ? passedStatus : (item?.new ? 'pending' : 'uploaded'));
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState(null);
     const uploadStartedRef = useRef(false);
