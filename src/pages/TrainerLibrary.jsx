@@ -8,10 +8,15 @@ import LibraryItem from '../components/LibraryItem';
 const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode = 'single' }) => {
     const [media, setMedia] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
-    const [isUploading, setIsUploading] = useState(false);
     const apiUrl = process.env.REACT_APP_API_URL;
     const navigate = useNavigate();
     const isMultipleSelection = selectionMode === 'multiple';
+
+    // Derivado directamente de `media`, en vez de un contador manual.
+    // Un contador incrementado/decrementado a mano se desincroniza fácil
+    // cuando hay varias subidas en paralelo o alguna falla.
+    const isUploading = media.some((item) => item.new && !item.uploadFailed);
+    const uploadingCount = media.filter((item) => item.new && !item.uploadFailed).length;
 
     useEffect(() => {
         const trainerId = localStorage.getItem('client_id');
@@ -48,7 +53,6 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
     }
 
     const handleFiles = async (e) => {
-        setIsUploading(true);
         const token = localStorage.getItem('token');
         if (!token) {
             toast.error('Token no disponible. Inicia sesión nuevamente.');
@@ -89,9 +93,17 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
         setMedia((items) =>
             items.map((item) => (item.id === tempId ? { ...item, id: serverId, new: false, file_path: serverUrl } : item))
         );
-        setIsUploading(false);
         setSelectedItems((items) =>
             items.map((item) => (item.id === tempId ? { ...item, id: serverId, new: false } : item))
+        );
+    };
+
+    const handleUploadError = (tempId) => {
+        // Marca el item como fallido en vez de dejarlo "new" para siempre:
+        // así un solo archivo con error no bloquea para siempre los botones
+        // de "Usar seleccionados" / "Eliminar seleccionados" del resto.
+        setMedia((items) =>
+            items.map((item) => (item.id === tempId ? { ...item, uploadFailed: true } : item))
         );
     };
 
@@ -279,7 +291,7 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
                         )}
                         {isUploading && (
                          <>
-                         <span>Se estan cargando los archivos...</span>
+                         <span>Se estan cargando {uploadingCount} archivo{uploadingCount !== 1 ? 's' : ''}...</span>
                          </>   
                         )}
                     </div>
@@ -291,7 +303,7 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
                         )}
                         {media.map((item) => {
                             const isSelected = selectedItems.some((selected) => selected.id === item.id);
-                            const itemStatus = item.new ? 'pending' : 'uploaded';
+                            const itemStatus = item.uploadFailed ? 'error' : (item.new ? 'pending' : 'uploaded');
                             return (
                                 <div key={item.uploadId || item.id} className="flex flex-col gap-2">
                                     <LibraryItem
@@ -301,6 +313,7 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
                                         token={localStorage.getItem('token')}
                                         onDeleteSuccess={removeItem}
                                         onUploadSuccess={handleUploadSuccess}
+                                        onUploadError={handleUploadError}
                                         status={itemStatus}
                                     />
                                     {onSelectMedia && (

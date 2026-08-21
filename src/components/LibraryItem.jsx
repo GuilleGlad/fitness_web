@@ -4,7 +4,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRemove } from '@fortawesome/free-solid-svg-icons';
 
-const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUploadSuccess, status: passedStatus }) => {
+const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUploadSuccess, onUploadError, status: passedStatus }) => {
     const [status, setStatus] = useState(passedStatus !== undefined ? passedStatus : (item?.new ? 'pending' : 'uploaded'));
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState(null);
@@ -63,11 +63,14 @@ const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUpload
                     setError(message);
                     setStatus('error');
                     toast.error(`Error subiendo ${item.filename || item.name}: ${message}`);
+                    if (typeof onUploadError === 'function') {
+                        onUploadError(item.id, message);
+                    }
                 });
         }
         uploadItem();
 
-    }, [apiUrl, item?.file, item?.id, item?.new, item?.size, item?.filename, onUploadSuccess, token, trainerId]);
+    }, [apiUrl, item?.file, item?.id, item?.new, item?.size, item?.filename, onUploadSuccess, onUploadError, token, trainerId]);
 
     const triggerYesNoToast = (handle, ...params) => {
         toast((t) => (
