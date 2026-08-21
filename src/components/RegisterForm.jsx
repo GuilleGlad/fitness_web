@@ -35,6 +35,63 @@ export default function RegisterForm() {
     const [success, setSuccess] = useState(false);
     const [online, setOnline] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Errores de validación por campo, mostrados debajo de cada input.
+    const [fieldErrors, setFieldErrors] = useState({});
+    // Solo mostramos el error de un campo una vez que el usuario ya
+    // interactuó con él (blur) o intentó enviar el formulario, para no
+    // pintar todo de rojo apenas se abre la pantalla.
+    const [touched, setTouched] = useState({});
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Teléfono opcional: si se completa, validamos un formato básico
+    // (dígitos, espacios, +, guiones y paréntesis).
+    const phoneRegex = /^[0-9+()\-\s]{6,20}$/;
+
+    // Devuelve el mensaje de error para un campo dado, en base al
+    // formData actual. `data` permite validar con un valor "adelantado"
+    // (por ejemplo, la contraseña recién tipeada) antes de que el estado
+    // termine de actualizarse.
+    const validateField = (name, data = formData) => {
+        switch (name) {
+            case 'name':
+                return data.name.trim() ? '' : 'El nombre es obligatorio.';
+            case 'email':
+                if (!data.email.trim()) return 'El email es obligatorio.';
+                if (!emailRegex.test(data.email)) return 'Ingresa un correo electrónico válido.';
+                return '';
+            case 'password':
+                if (!data.password) return 'La contraseña es obligatoria.';
+                if (data.password.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
+                return '';
+            case 'confirmPassword':
+                if (!data.confirmPassword) return 'Confirma tu contraseña.';
+                if (data.password !== data.confirmPassword) return 'Las contraseñas no coinciden.';
+                return '';
+            case 'phone':
+                if (!data.phone) return ''; // opcional
+                return phoneRegex.test(data.phone) ? '' : 'Ingresa un teléfono válido.';
+            case 'genre':
+                return data.genre ? '' : 'Selecciona un género.';
+            case 'role':
+                return data.role !== 0 ? '' : 'Selecciona un rol.';
+            default:
+                return '';
+        }
+    };
+
+    // Valida todos los campos y devuelve el objeto de errores completo.
+    const validateAll = (data = formData) => {
+        const fields = ['name', 'email', 'password', 'confirmPassword', 'phone', 'genre', 'role'];
+        const errors = {};
+        fields.forEach((field) => {
+            const message = validateField(field, data);
+            if (message) errors[field] = message;
+        });
+        return errors;
+    };
+
     const registroSuccessNotif = (text) => {
         toast(text,
             {
@@ -59,60 +116,73 @@ export default function RegisterForm() {
     }
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({
-            ...prev,
+        const nextData = {
+            ...formData,
             [name]: name === 'role' ? parseInt(value, 10) : value,
-        }));
-        setIsOpen(false)
+        };
+        setFormData(nextData);
+        setIsOpen(false);
+
+        // Revalida el campo tocado y, si es la contraseña, revalida
+        // también "confirmar contraseña" ya que depende de ella.
+        setFieldErrors((prev) => {
+            const next = { ...prev, [name]: validateField(name, nextData) };
+            if (name === 'password') {
+                next.confirmPassword = validateField('confirmPassword', nextData);
+            }
+            return next;
+        });
+    };
+
+    const handleBlur = (e) => {
+        const { name } = e.target;
+        setTouched((prev) => ({ ...prev, [name]: true }));
+        setFieldErrors((prev) => ({ ...prev, [name]: validateField(name) }));
+        setIsOpen(false);
     };
 
     const isServerOnline = useServerStatus(apiUrl + "/testApi", 5000, setServerStatusStr);
 
+    // Clase base de los inputs, agregando un borde rojo cuando el campo
+    // fue tocado y tiene un error de validación.
+    const getInputClass = (name) => {
+        const base = "w-full px-4 py-3 bg-[#c4c4c4] text-slate-800 placeholder-slate-500 font-medium rounded-xl focus:outline-none focus:ring-2 transition-all";
+        const hasError = touched[name] && fieldErrors[name];
+        return `${base} ${hasError ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-[#facc15]'}`;
+    };
+
+    // Mensaje de error debajo de un campo, si corresponde.
+    const FieldError = ({ name }) => (
+        touched[name] && fieldErrors[name] ? (
+            <p className="mt-1 text-xs text-red-400">{fieldErrors[name]}</p>
+        ) : null
+    );
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Evita doble submit (doble click, o Enter + click) mientras
+        // ya hay un registro en curso.
+        if (isSubmitting) {
+            return;
+        }
+
         setError('');
         setSuccess(false);
 
-        // 1. Validaciones básicas
-        if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword || !formData.genre || formData.role === 0) {
-            // setError('Todos los campos son obligatorios.');
-            registroErrorNotif('Todos los campos son obligatorios.');
+        // Valida todos los campos y marca todos como "touched" para que
+        // se muestren los mensajes de error debajo de cada input.
+        const errors = validateAll();
+        setFieldErrors(errors);
+        setTouched({ name: true, email: true, password: true, confirmPassword: true, phone: true, genre: true, role: true });
+
+        if (Object.keys(errors).length > 0) {
+            registroErrorNotif('Revisa los campos marcados en rojo.');
             return;
         }
 
-        // 2. Validación de Email (Regex estándar)
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email)) {
-            // setError('Por favor, ingresa un correo electrónico válido.');
-            registroErrorNotif('Por favor, ingresa un correo electrónico válido.');
-            return;
-        }
-
-        // 3. Validación de contraseñas coincidentes
-        if (formData.password !== formData.confirmPassword) {
-            // setError('Las contraseñas no coinciden.');
-            registroErrorNotif('Las contraseñas no coinciden.');
-            return;
-        }
-
-        // 4. Validación de longitud mínima de contraseña (opcional pero recomendada)
-        if (formData.password.length < 6) {
-            setError('La contraseña debe tener al menos 6 caracteres.');
-            registroErrorNotif('La contraseña debe tener al menos 6 caracteres.');
-            return;
-        }
-        // 5. Validación de selección de género
-        if (!formData.genre) {
-            // setError('Debe seleccionar un género');
-            registroErrorNotif('Debe seleccionar un género');
-            return;
-        }
-        if(formData.role == 0){
-            // setError('Debe seleccionar un rol');
-            registroErrorNotif('Debe seleccionar un rol');
-            return;
-        }
         // Si todo está correcto
+            setIsSubmitting(true);
             try{
                 const response = await axios.post(apiUrl + "/auth/register",formData);
                 console.log('Datos enviados con éxito:', formData);
@@ -138,8 +208,11 @@ export default function RegisterForm() {
             }catch(e){
             // console.error("error: " + e.status);
             setSuccess(false);
-            if(e.status == 409)
+            setIsSubmitting(false);
+            if(e.status == 409){
+                setFieldErrors((prev) => ({ ...prev, email: 'Este email ya está registrado.' }));
                 registroErrorNotif("El email ya existe, por favor revise los campos del formulario.");
+            }
             else
                 registroErrorNotif("Error de registro.");
         }
@@ -171,8 +244,10 @@ export default function RegisterForm() {
                             placeholder="Nombre y Apellido"
                             value={formData.name}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-[#c4c4c4] text-slate-800 placeholder-slate-500 font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#facc15] transition-all"
+                            onBlur={handleBlur}
+                            className={getInputClass('name')}
                         />
+                        <FieldError name="name" />
                     </div>
 
                     {/* Campo: Email */}
@@ -183,8 +258,10 @@ export default function RegisterForm() {
                             placeholder="Email"
                             value={formData.email}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-[#c4c4c4] text-slate-800 placeholder-slate-500 font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#facc15] transition-all"
+                            onBlur={handleBlur}
+                            className={getInputClass('email')}
                         />
+                        <FieldError name="email" />
                     </div>
 
                     {/* Campo: Contraseña */}
@@ -195,8 +272,10 @@ export default function RegisterForm() {
                             placeholder="Password"
                             value={formData.password}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-[#c4c4c4] text-slate-800 placeholder-slate-500 font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#facc15] transition-all"
+                            onBlur={handleBlur}
+                            className={getInputClass('password')}
                         />
+                        <FieldError name="password" />
                     </div>
 
                     {/* Campo: Confirmar Contraseña */}
@@ -207,8 +286,10 @@ export default function RegisterForm() {
                             placeholder="Confirmar Password"
                             value={formData.confirmPassword}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-[#c4c4c4] text-slate-800 placeholder-slate-500 font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#facc15] transition-all"
+                            onBlur={handleBlur}
+                            className={getInputClass('confirmPassword')}
                         />
+                        <FieldError name="confirmPassword" />
                     </div>
 
                     {/* Campo: Telefono */}
@@ -219,8 +300,10 @@ export default function RegisterForm() {
                             placeholder="Teléfono (opcional)"
                             value={formData.phone}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-[#c4c4c4] text-slate-800 placeholder-slate-500 font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#facc15] transition-all"
+                            onBlur={handleBlur}
+                            className={getInputClass('phone')}
                         />
+                        <FieldError name="phone" />
                     </div>
 
                     {/* Campo: Género (Dropdown) */}
@@ -229,13 +312,15 @@ export default function RegisterForm() {
                             name="genre"
                             value={formData.genre}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-[#c4c4c4] text-slate-800 font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#facc15] transition-all cursor-pointer"
+                            onBlur={handleBlur}
+                            className={`${getInputClass('genre')} cursor-pointer`}
                         >
                             <option value="">Seleccionar Género...</option>
                             <option value="f">Femenino</option>
                             <option value="m">Masculino</option>
                             <option value="n">Prefiere no decirlo</option>
                         </select>
+                        <FieldError name="genre" />
                     </div>
 
                     {/* Campo: Rol (Dropdown) */}
@@ -246,8 +331,8 @@ export default function RegisterForm() {
                                 value={formData.role}
                                 onChange={handleChange}
                                 onMouseDown={() => setIsOpen(true)}
-                                onBlur={() => setIsOpen(false)}
-                                className="w-full px-4 py-3 bg-[#c4c4c4] text-slate-800 font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#facc15] transition-all cursor-pointer appearance-none pr-10"
+                                onBlur={handleBlur}
+                                className={`${getInputClass('role')} cursor-pointer appearance-none pr-10`}
                             >
                                 <option value={0}>Seleccionar Rol...</option>
                                 <option value={ROLES.CLIENT}>Cliente</option>
@@ -270,14 +355,16 @@ export default function RegisterForm() {
                                 )}
                             </div>
                         </div>
+                        <FieldError name="role" />
                     </div>
 
                     {/* Botón de Enviar */}
                     <button
                         type="submit"
-                        className="w-full py-3 mt-2 bg-[#eab308] hover:bg-[#ca8a04] text-slate-900 font-bold text-lg rounded-xl shadow-md transition-colors duration-200"
+                        disabled={isSubmitting}
+                        className="w-full py-3 mt-2 bg-[#eab308] hover:bg-[#ca8a04] text-slate-900 font-bold text-lg rounded-xl shadow-md transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#eab308]"
                     >
-                        Registrarse
+                        {isSubmitting ? 'Registrando...' : 'Registrarse'}
                     </button>
                 </form>
 

@@ -58,7 +58,18 @@ const OnboardingWizard = () => {
     console.log(formData);
   };
 
+  const isSubmittingRef = React.useRef(false);
+
   const handleSubmit = () => {
+    // Guarda adicional (defensa en profundidad) para no disparar dos
+    // POST /progress/add si esta función se llegara a invocar dos veces
+    // seguidas, además del guard que ya tiene el botón en
+    // StepTrainerAssignment.
+    if (isSubmittingRef.current) {
+      return Promise.resolve();
+    }
+    isSubmittingRef.current = true;
+
     console.log("Datos listos para enviar a EliteFit:", formData);
     const config = {
       headers: {
@@ -66,7 +77,10 @@ const OnboardingWizard = () => {
         "Authorization": "Bearer " + localStorage.getItem('token')
       }
     }
-    const response_progress = axios.post(apiUrl + "/progress/add", formData, config)
+    // Se retorna la promesa para que el botón "Registrarse" (en
+    // StepTrainerAssignment) pueda hacer `await submit()` y quedarse
+    // deshabilitado hasta que la petición realmente termine.
+    return axios.post(apiUrl + "/progress/add", formData, config)
       .then((res) => {
         console.log("Respuesta del servidor:", res.data);
         localStorage.setItem('status',1);
@@ -79,6 +93,9 @@ const OnboardingWizard = () => {
       .catch((err) => {
         console.error("Error al enviar datos:", err);
         registroErrorNotif("Hubo un error al registrar los datos. Por favor, inténtalo de nuevo.");
+      })
+      .finally(() => {
+        isSubmittingRef.current = false;
       });
 
   };

@@ -355,9 +355,8 @@ function Homepage() {
                 </div>
                 <div className='separator lg:pt-32 pt-12 bg-black'></div> */}
                     {/* RRSS */}
-                    <div className="bg-black w-full flex flex-col items-center px-6 lg:px-0">
+                    {/* <div className="bg-black w-full flex flex-col items-center px-6 lg:px-0">
 
-                        {/* TÍTULO */}
                         <div className="w-full flex justify-center mb-10">
                             <BigTitle
                                 title="GUIADOS POR EL MEJOR"
@@ -366,10 +365,8 @@ function Homepage() {
                             />
                         </div>
 
-                        {/* BLOQUE IMAGEN + CONTADORES (solo horizontal en desktop) */}
                         <div className="w-full flex flex-col lg:flex-row lg:items-center lg:justify-center gap-10">
 
-                            {/* Imagen */}
                             <div className="w-full lg:w-1/2 flex justify-center">
                                 <img
                                     src="/images/Shape-01.png"
@@ -378,7 +375,6 @@ function Homepage() {
                                 />
                             </div>
 
-                            {/* Contadores */}
                             <div className="w-full lg:w-1/2 flex justify-center">
                                 <div className="grid grid-cols-2 gap-4 w-full max-w-md">
                                     <ContadorRRSS logo="youtube" title="youtube" account="sergiozane" count="2,1M" />
@@ -390,23 +386,21 @@ function Homepage() {
 
                         </div>
 
-                    </div>
+                    </div> */}
 
 
 
-                    <div className='separator lg:pt-32 pt-12 bg-black'></div>
+                    {/* <div className='separator lg:pt-32 pt-12 bg-black'></div> */}
                     {/* RESULTS */}
                     <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
-
-                        {/* Encabezado */}
-                        <div className="flex flex-col lg:flex-row bg-black lg:mr-32">
+                        {/* <div className="flex flex-col lg:flex-row bg-black lg:mr-32">
 
                             <div className="lg:w-1/4 w-full mb-4 lg:mb-0">
-                                {/* <FloatingText
+                                <FloatingText
                                     text="RESULTADOS"
                                     color="text-white lg:ml-32"
                                     iconColor="#b8fb00"
-                                /> */}
+                                /> 
                             </div>
 
                             <div className="lg:w-3/4 w-full">
@@ -417,7 +411,7 @@ function Homepage() {
                                 />
                             </div>
 
-                        </div>
+                        </div> */}
 
                         {/* Carrusel */}
                         <div className="flex-1 bg-black">

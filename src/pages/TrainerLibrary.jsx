@@ -3,11 +3,68 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Toaster } from 'react-hot-toast';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleQuestion, faXmark } from '@fortawesome/free-solid-svg-icons';
 import LibraryItem from '../components/LibraryItem';
+
+// Tutorial rápido de cómo subir y etiquetar archivos en la biblioteca.
+// Se muestra como un popover al presionar el ícono "?" junto al botón
+// de subida; no se guarda en ningún lado, es solo texto de ayuda.
+const UploadHelpTooltip = ({ onClose }) => {
+    const steps = [
+        {
+            title: '1. Sube tus fotos o videos',
+            description: 'Toca el botón "Subir Fotos/Videos" y elige uno o varios archivos. La subida arranca automáticamente, no hace falta nada más.',
+        },
+        {
+            title: '2. Espera a que digan "Listo"',
+            description: 'Vas a ver una barra de progreso mientras se suben. Cuando el archivo pase a estado "Listo", ya está guardado en la biblioteca.',
+        },
+        {
+            title: '3. Asígnale un título o etiquetas',
+            description: 'Una vez subido, aparece el texto "Sin título / etiquetas" con un lápiz al lado. Toca el lápiz, escribe el título o etiquetas (ej: "piernas, cardio") y confirma con la marca ✓.',
+        },
+        {
+            title: '4. Busca usando el título',
+            description: 'Usa la barra "Buscar por título o etiqueta..." para encontrar rápido las fotos o videos que etiquetaste.',
+        },
+    ];
+
+    return (
+        <div
+            role="dialog"
+            aria-label="Ayuda para subir y etiquetar archivos"
+            className="absolute left-0 top-full z-20 mt-2 w-[300px] rounded-2xl border border-slate-700 bg-[#1c212b] p-4 text-sm text-slate-200 shadow-2xl sm:w-[360px]"
+        >
+            <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-base font-semibold text-white">Cómo cargar y etiquetar</h2>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="Cerrar ayuda"
+                    className="text-slate-400 hover:text-white"
+                >
+                    <FontAwesomeIcon icon={faXmark} />
+                </button>
+            </div>
+            <ol className="flex flex-col gap-3">
+                {steps.map((step) => (
+                    <li key={step.title}>
+                        <p className="font-semibold text-customYellow">{step.title}</p>
+                        <p className="text-slate-300">{step.description}</p>
+                    </li>
+                ))}
+            </ol>
+        </div>
+    );
+};
 
 const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode = 'single' }) => {
     const [media, setMedia] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showUploadHelp, setShowUploadHelp] = useState(false);
+    const uploadHelpRef = useRef(null);
     const apiUrl = process.env.REACT_APP_API_URL;
     const navigate = useNavigate();
     const isMultipleSelection = selectionMode === 'multiple';
@@ -17,6 +74,26 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
     // cuando hay varias subidas en paralelo o alguna falla.
     const isUploading = media.some((item) => item.new && !item.uploadFailed);
     const uploadingCount = media.filter((item) => item.new && !item.uploadFailed).length;
+
+    // Filtra por título/etiquetas para la búsqueda dentro de la biblioteca.
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const visibleMedia = normalizedQuery
+        ? media.filter((item) => (item.title || '').toLowerCase().includes(normalizedQuery))
+        : media;
+
+    // Cierra el tutorial de ayuda si se hace click afuera de él.
+    useEffect(() => {
+        if (!showUploadHelp) return;
+
+        const handleClickOutside = (event) => {
+            if (uploadHelpRef.current && !uploadHelpRef.current.contains(event.target)) {
+                setShowUploadHelp(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showUploadHelp]);
 
     useEffect(() => {
         const trainerId = localStorage.getItem('client_id');
@@ -74,6 +151,7 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
             file_type: file.type.startsWith('video') ? 'video' : 'image',
             file_size: file.size,
             filename: file.name,
+            title: '', // se completa antes de confirmar la subida (ver LibraryItem)
             new: true
         }));
         console.log(newItems);
@@ -89,9 +167,9 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
         setSelectedItems((items) => items.filter((it) => it.id !== id && (it.uploadId || it.id) !== id));
     };
 
-    const handleUploadSuccess = (tempId, serverId, serverUrl) => {
+    const handleUploadSuccess = (tempId, serverId, serverUrl, serverTitle) => {
         setMedia((items) =>
-            items.map((item) => (item.id === tempId ? { ...item, id: serverId, new: false, file_path: serverUrl } : item))
+            items.map((item) => (item.id === tempId ? { ...item, id: serverId, new: false, file_path: serverUrl, title: serverTitle ?? item.title } : item))
         );
         setSelectedItems((items) =>
             items.map((item) => (item.id === tempId ? { ...item, id: serverId, new: false } : item))
@@ -104,6 +182,14 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
         // de "Usar seleccionados" / "Eliminar seleccionados" del resto.
         setMedia((items) =>
             items.map((item) => (item.id === tempId ? { ...item, uploadFailed: true } : item))
+        );
+    };
+
+    // Actualiza el título/etiquetas de un item que ya está subido
+    // (se llama luego de guardar el cambio en el backend).
+    const handleTitleUpdate = (id, newTitle) => {
+        setMedia((items) =>
+            items.map((item) => (item.id === id ? { ...item, title: newTitle } : item))
         );
     };
 
@@ -269,6 +355,31 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
                             </button>
                         </label>
 
+                        {/* Ícono de ayuda: abre un tutorial con los pasos para subir y etiquetar */}
+                        <div className="relative" ref={uploadHelpRef}>
+                            <button
+                                type="button"
+                                onClick={() => setShowUploadHelp((v) => !v)}
+                                aria-label="Ayuda sobre cómo subir y etiquetar archivos"
+                                aria-expanded={showUploadHelp}
+                                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition hover:bg-slate-800 hover:text-white"
+                            >
+                                <FontAwesomeIcon icon={faCircleQuestion} size="lg" />
+                            </button>
+                            {showUploadHelp && (
+                                <UploadHelpTooltip onClose={() => setShowUploadHelp(false)} />
+                            )}
+                        </div>
+
+                        {/* Búsqueda por título / etiquetas */}
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Buscar por título o etiqueta..."
+                            className="min-w-[220px] flex-1 rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-customYellow"
+                        />
+
                         {isModal && isMultipleSelection && !isUploading && (
                             <>
                                 <button
@@ -298,10 +409,12 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
 
                     <div className="flex-1 overflow-y-auto pr-1">
                         <div className="min-h-full grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-                        {media.length === 0 && (
-                            <div className="text-gray-400">No hay archivos subidos aún.</div>
+                        {visibleMedia.length === 0 && (
+                            <div className="text-gray-400">
+                                {normalizedQuery ? 'No hay resultados para esa búsqueda.' : 'No hay archivos subidos aún.'}
+                            </div>
                         )}
-                        {media.map((item) => {
+                        {visibleMedia.map((item) => {
                             const isSelected = selectedItems.some((selected) => selected.id === item.id);
                             const itemStatus = item.uploadFailed ? 'error' : (item.new ? 'pending' : 'uploaded');
                             return (
@@ -314,6 +427,7 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
                                         onDeleteSuccess={removeItem}
                                         onUploadSuccess={handleUploadSuccess}
                                         onUploadError={handleUploadError}
+                                        onTitleUpdate={handleTitleUpdate}
                                         status={itemStatus}
                                     />
                                     {onSelectMedia && (

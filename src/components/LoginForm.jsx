@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import BigTitle from '../components/BigTitle'; // Reusing the core component
 import { TextField, Input, InputLabel, FormControl, FormHelperText, Button } from "@mui/material";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDotCircle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowsRotate, faDotCircle } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { Tooltip } from 'react-tooltip';
@@ -21,6 +21,17 @@ const LoginForm = () => {
     const [error, setError] = useState('');
     const apiUrl = process.env.REACT_APP_API_URL;
     const [serverStatusStr, setServerStatusStr] = useState('El servidor esta offline');
+    const [fieldsEmpty, setFieldsEmpty] = useState(true);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if(email != '' && password != ''){
+            setFieldsEmpty(false);
+        }else{
+            setFieldsEmpty(true);
+        }
+    })
+
     const loginSuccessNotif = () => {
         toast("Login Exitoso, redirigiendo...",
             {
@@ -73,6 +84,7 @@ const LoginForm = () => {
             localStorage.setItem('status',user.status);
             localStorage.setItem('genre',user.genre);
             loginSuccessNotif();
+            setLoading(true);
             setTimeout(() => {
                 if (role === 3 && user.status === 0) {
                     navigate('/wizard');
@@ -150,9 +162,11 @@ const LoginForm = () => {
                 {/* Placeholder for the actual form, using the handler to simulate submission */}
                 <button
                     onClick={handleLogin}
-                    className="w-full bg-yellow-500 text-gray-900 font-bold py-3 rounded-lg hover:bg-yellow-400 transition duration-200 text-lg shadow-lg"
+                    disabled={fieldsEmpty}
+                    className="w-full py-3 mt-2 bg-[#eab308] hover:bg-[#ca8a04] text-slate-900 font-bold text-lg rounded-xl shadow-md transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#eab308]"
                 >
-                    Continuar
+                    {!loading && <span>Continuar</span>}
+                    {loading && <FontAwesomeIcon icon={faArrowsRotate} spin="1"></FontAwesomeIcon>}
                 </button>
 
                 <p className="text-center text-sm mt-6 text-gray-400">

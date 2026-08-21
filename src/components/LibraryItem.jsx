@@ -1,14 +1,24 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRemove } from '@fortawesome/free-solid-svg-icons';
+import { faRemove, faPen, faCheck } from '@fortawesome/free-solid-svg-icons';
 
-const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUploadSuccess, onUploadError, status: passedStatus }) => {
+const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUploadSuccess, onUploadError, onTitleUpdate, status: passedStatus }) => {
     const [status, setStatus] = useState(passedStatus !== undefined ? passedStatus : (item?.new ? 'pending' : 'uploaded'));
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState(null);
     const uploadStartedRef = useRef(false);
+
+    // Título / etiquetas del elemento. La subida arranca sola apenas se
+    // selecciona el archivo (sin esperar título) para no perderla si el
+    // usuario no completa nada; el título/etiquetas se asigna o edita
+    // después, una vez que el archivo ya está subido.
+    const [title, setTitle] = useState(item?.title || '');
+
+    // Edición del título para items que ya fueron subidos.
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [savingTitle, setSavingTitle] = useState(false);
 
     useEffect(() => {
 
@@ -35,6 +45,7 @@ const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUpload
             const formData = new FormData();
             formData.append('trainerId', trainerId);
             formData.append('file', item.file);
+            formData.append('title', title.trim());
 
             await axios
                 .post(`${apiUrl}/library/add`,
@@ -53,8 +64,9 @@ const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUpload
                 .then((res) => {
                     const serverItemId = res?.data?.itemId;
                     const serverUrl = res?.data?.url;
+                    const serverTitle = res?.data?.title !== undefined ? res.data.title : title.trim();
                     if (serverItemId !== undefined && serverItemId !== null && typeof onUploadSuccess === 'function') {
-                        onUploadSuccess(item.id, serverItemId,serverUrl);
+                        onUploadSuccess(item.id, serverItemId, serverUrl, serverTitle);
                     }
                     setStatus('uploaded');
                 })
@@ -125,6 +137,30 @@ const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUpload
         triggerYesNoToast(handleDelete, item.id)
     }
 
+    // Guarda / actualiza el título de un elemento que YA fue subido,
+    // llamando a un endpoint de actualización en el backend.
+    const handleSaveTitle = async () => {
+        if (!item?.id || !apiUrl || !token) return;
+        setSavingTitle(true);
+        try {
+            await axios.patch(
+                `${apiUrl}/library/update/${item.id}`,
+                { title: title.trim() },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success('Título actualizado.');
+            setIsEditingTitle(false);
+            if (typeof onTitleUpdate === 'function') {
+                onTitleUpdate(item.id, title.trim());
+            }
+        } catch (updateError) {
+            console.error('Error actualizando el título:', updateError);
+            toast.error('No se pudo actualizar el título. Intenta de nuevo.');
+        } finally {
+            setSavingTitle(false);
+        }
+    };
+
     return (
         <div className="relative overflow-hidden rounded bg-gray-800 p-2">
             <div className="mb-2">
@@ -135,6 +171,48 @@ const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUpload
                     <video src={item.file_path} controls className="w-full h-48 object-cover rounded" />
                 )}
             </div>
+
+            {/* Título / etiquetas: solo se puede asignar/editar una vez subido */}
+            <div className="mb-2 flex items-center gap-2">
+                {isEditingTitle ? (
+                    <>
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="Título / etiquetas (ej: piernas, cardio)"
+                            autoFocus
+                            className="w-full rounded bg-gray-700 px-2 py-1 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-customYellow"
+                        />
+                        <button
+                            type="button"
+                            title="Guardar título"
+                            onClick={handleSaveTitle}
+                            disabled={savingTitle}
+                            className="shrink-0 text-emerald-400 disabled:opacity-50"
+                        >
+                            <FontAwesomeIcon icon={faCheck} />
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <span className="truncate text-xs text-slate-300">
+                            {title || (status === 'uploaded' ? 'Sin título / etiquetas' : '')}
+                        </span>
+                        {status === 'uploaded' && (
+                            <button
+                                type="button"
+                                title="Editar título"
+                                onClick={() => setIsEditingTitle(true)}
+                                className="shrink-0 text-slate-400 hover:text-white"
+                            >
+                                <FontAwesomeIcon icon={faPen} />
+                            </button>
+                        )}
+                    </>
+                )}
+            </div>
+
             <div className="flex items-center justify-between">
                 {/* <div className="text-sm truncate mr-2">{item.filename}</div> */}
                 <div className="text-xs font-semibold uppercase text-slate-400">

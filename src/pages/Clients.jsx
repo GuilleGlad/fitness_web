@@ -40,7 +40,7 @@ const ModalOverlay = ({ isOpen, onClose, title, children }) => {
 };
 
 /* ───────── Form Component (receives setForm via props) ───────── */
-const ClientForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel, onOpenLibrary }) => {
+const ClientForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel, onOpenLibrary, isSubmitting }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -129,11 +129,11 @@ const ClientForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel,
 
       {/* Botones - span 2 columnas en desktop */}
       <div className="lg:col-span-2 grid gap-3 pt-2">
-        <button type="submit" className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]">
-          {editingId ? 'Guardar cambios' : 'Crear cliente'}
+        <button type="submit" disabled={isSubmitting} className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-60">
+          {isSubmitting ? (editingId ? 'Guardando...' : 'Creando...') : (editingId ? 'Guardar cambios' : 'Crear cliente')}
         </button>
         {editingId && (
-          <button type="button" onClick={onCancel} className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700">
+          <button type="button" onClick={onCancel} disabled={isSubmitting} className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60">
             Cancelar edición
           </button>
         )}
@@ -172,6 +172,7 @@ const Clients = () => {
   const [noteFeedback, setNoteFeedback] = useState('');
   const [loadingNoteModal, setLoadingNoteModal] = useState(false);
   const [savingNoteFeedback, setSavingNoteFeedback] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const dayOptions = [
     { key: 'L', label: 'Lunes' },
@@ -491,6 +492,11 @@ const Clients = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Evita doble registro/actualización si se hace doble click
+    // en "Crear cliente" / "Guardar cambios".
+    if (isSubmitting) return;
+
     if (!form.name.trim() || !form.email.trim()) return toast.error('Nombre y email son obligatorios.');
     const token = localStorage.getItem('token');
     if (!token) return toast.error('Token no disponible.');
@@ -508,6 +514,8 @@ const Clients = () => {
     };
     const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
 
+    setIsSubmitting(true);
+
     if (editingId) {
       setClients((p) => p.map((c) => c.id === editingId ? normalizeClientRow({ ...c, ...form }) : c));
       cancelEdit();
@@ -515,6 +523,7 @@ const Clients = () => {
         await axios.put(`${apiUrl}/admin/user/${editingId}`, payload, config);
         toast.success('Cliente actualizado correctamente.');
       } catch { toast.error('No se pudo actualizar el cliente.'); }
+      finally { setIsSubmitting(false); }
     } else {
       try {
         const res = await axios.post(`${apiUrl}/auth/register`, payload, config);
@@ -532,6 +541,7 @@ const Clients = () => {
         toast.success('Cliente guardado correctamente.');
         cancelNew();
       } catch { toast.error('No se pudo guardar el cliente.'); }
+      finally { setIsSubmitting(false); }
     }
   };
 
@@ -601,7 +611,7 @@ const Clients = () => {
         <section className="overflow-hidden rounded-[40px] border border-slate-800 bg-[#141820]">
           <div className="flex items-center justify-between px-6 py-5">
             <h2 className="text-xl font-semibold text-white">Lista de usuarios</h2>
-            <button onClick={handleNewClient} className="rounded-full bg-[#f1b80c] px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]">
+            <button onClick={handleNewClient} disabled={isSubmitting} className="rounded-full bg-[#f1b80c] px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-60">
               + Nuevo cliente
             </button>
           </div>
@@ -982,12 +992,12 @@ const Clients = () => {
 
       {/* Edit Modal */}
       <ModalOverlay isOpen={showEditModal} onClose={cancelEdit} title="Editar cliente">
-        <ClientForm form={form} setForm={setForm} editingId={editingId} initialForm={initialForm} onSubmit={handleSubmit} onCancel={cancelEdit} onOpenLibrary={openLibraryPicker} />
+        <ClientForm form={form} setForm={setForm} editingId={editingId} initialForm={initialForm} onSubmit={handleSubmit} onCancel={cancelEdit} onOpenLibrary={openLibraryPicker} isSubmitting={isSubmitting} />
       </ModalOverlay>
 
       {/* New Client Modal */}
       <ModalOverlay isOpen={showNewModal} onClose={cancelNew} title="Nuevo cliente">
-        <ClientForm form={form} setForm={setForm} editingId={null} initialForm={initialForm} onSubmit={handleSubmit} onCancel={cancelNew} onOpenLibrary={openLibraryPicker} />
+        <ClientForm form={form} setForm={setForm} editingId={null} initialForm={initialForm} onSubmit={handleSubmit} onCancel={cancelNew} onOpenLibrary={openLibraryPicker} isSubmitting={isSubmitting} />
       </ModalOverlay>
 
       {/* Library Modal */}

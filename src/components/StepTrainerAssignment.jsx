@@ -8,6 +8,7 @@ import axios from 'axios';
 const StepTrainerAssignment = ({ formData, updateData, submit, prev }) => {
   const apiUrl = process.env.REACT_APP_API_URL;
   const [trainers, setTrainers] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
@@ -27,6 +28,19 @@ const StepTrainerAssignment = ({ formData, updateData, submit, prev }) => {
     };
     fetchTrainers();
   }, [])
+
+  // Evita doble registro si se hace doble click en "Registrarse".
+  // `submit` puede ser sync o async (async si hace la llamada de
+  // registro), por eso se usa `await` sobre su resultado en ambos casos.
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await submit();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -59,14 +73,14 @@ const StepTrainerAssignment = ({ formData, updateData, submit, prev }) => {
       </div>
 
       <div className="flex gap-3 mt-6">
-        <button onClick={prev} className="w-1/3 py-3.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-all text-sm">
+        <button onClick={prev} disabled={isSubmitting} className="w-1/3 py-3.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-all text-sm disabled:cursor-not-allowed disabled:opacity-40">
           Atrás
         </button>
         <button
-          onClick={submit} disabled={!formData.trainerId}
+          onClick={handleSubmit} disabled={!formData.trainerId || isSubmitting}
           className="w-2/3 py-3.5 bg-[#f1b80c] text-[#1e222b] font-extrabold rounded-xl hover:bg-[#d9a406] disabled:opacity-40 disabled:pointer-events-none transition-all text-sm uppercase tracking-wider"
         >
-          Registrarse
+          {isSubmitting ? 'Registrando...' : 'Registrarse'}
         </button>
       </div>
       <p className="text-center text-sm mt-6 text-gray-400">

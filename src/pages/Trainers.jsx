@@ -36,7 +36,7 @@ const ModalOverlay = ({ isOpen, onClose, title, children }) => {
 };
 
 /* ───────── Trainer Form Component (Adaptado a la especificación) ───────── */
-const TrainerForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel, onOpenLibrary }) => {
+const TrainerForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel, onOpenLibrary, isSubmitting }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
@@ -108,11 +108,11 @@ const TrainerForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel
 
 
             <div className="grid gap-3 pt-2">
-                <button type="submit" className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]">
-                    {editingId ? 'Guardar cambios' : 'Crear entrenador'}
+                <button type="submit" disabled={isSubmitting} className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-60">
+                    {isSubmitting ? (editingId ? 'Guardando...' : 'Creando...') : (editingId ? 'Guardar cambios' : 'Crear entrenador')}
                 </button>
                 {editingId && (
-                    <button type="button" onClick={onCancel} className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700">
+                    <button type="button" onClick={onCancel} disabled={isSubmitting} className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60">
                         Cancelar edición
                     </button>
                 )}
@@ -134,6 +134,7 @@ const Trainers = () => {
     const [showNewModal, setShowNewModal] = useState(false);
     const [showLibraryModal, setShowLibraryModal] = useState(false);
     const [libraryCallback, setLibraryCallback] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const fetchTrainers = async () => {
@@ -222,6 +223,11 @@ const Trainers = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Evita doble registro/actualización si se hace doble click
+        // en "Crear entrenador" / "Guardar cambios".
+        if (isSubmitting) return;
+
         if (!form.name.trim() || !form.email.trim()) return toast.error('Nombre y email son obligatorios.');
 
         const token = localStorage.getItem('token');
@@ -241,6 +247,8 @@ const Trainers = () => {
 
         const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
 
+        setIsSubmitting(true);
+
         if (editingId) {
             setTrainers((p) => p.map((t) => t.id === editingId ? { ...t, ...form } : t));
             cancelEdit();
@@ -248,8 +256,12 @@ const Trainers = () => {
                 await axios.put(`${apiUrl}/admin/user/${editingId}`, payload, config);
                 toast.success('Entrenador actualizado correctamente.');
             } catch { toast.error('No se pudo actualizar el entrenador.'); }
+            finally { setIsSubmitting(false); }
         } else {
-            if (!payload.password) return toast.error('La contraseña es obligatoria para crear un entrenador.');
+            if (!payload.password) {
+                setIsSubmitting(false);
+                return toast.error('La contraseña es obligatoria para crear un entrenador.');
+            }
             try {
                 const res = await axios.post(`${apiUrl}/auth/register`, payload, config);
                 const saved = res.data?.trainer || res.data || {};
@@ -259,6 +271,8 @@ const Trainers = () => {
             } catch (err) {
                 console.error(err);
                 toast.error('No se pudo guardar el entrenador. Verifique los datos.');
+            } finally {
+                setIsSubmitting(false);
             }
         }
     };
@@ -327,7 +341,7 @@ const Trainers = () => {
                 <section className="overflow-hidden rounded-[40px] border border-slate-800 bg-[#141820]">
                     <div className="flex items-center justify-between px-6 py-5">
                         <h2 className="text-xl font-semibold text-white">Lista de entrenadores</h2>
-                        <button onClick={handleNewTrainer} className="rounded-full bg-[#f1b80c] px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]">
+                        <button onClick={handleNewTrainer} disabled={isSubmitting} className="rounded-full bg-[#f1b80c] px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-60">
                             + Nuevo entrenador
                         </button>
                     </div>
@@ -418,12 +432,12 @@ const Trainers = () => {
 
             {/* Edit Modal */}
             <ModalOverlay isOpen={showEditModal} onClose={cancelEdit} title="Editar entrenador">
-                <TrainerForm form={form} setForm={setForm} editingId={editingId} initialForm={initialTrainerForm} onSubmit={handleSubmit} onCancel={cancelEdit} onOpenLibrary={openLibraryPicker} />
+                <TrainerForm form={form} setForm={setForm} editingId={editingId} initialForm={initialTrainerForm} onSubmit={handleSubmit} onCancel={cancelEdit} onOpenLibrary={openLibraryPicker} isSubmitting={isSubmitting} />
             </ModalOverlay>
 
             {/* New Trainer Modal */}
             <ModalOverlay isOpen={showNewModal} onClose={cancelNew} title="Nuevo entrenador">
-                <TrainerForm form={form} setForm={setForm} editingId={null} initialForm={initialTrainerForm} onSubmit={handleSubmit} onCancel={cancelNew} onOpenLibrary={openLibraryPicker} />
+                <TrainerForm form={form} setForm={setForm} editingId={null} initialForm={initialTrainerForm} onSubmit={handleSubmit} onCancel={cancelNew} onOpenLibrary={openLibraryPicker} isSubmitting={isSubmitting} />
             </ModalOverlay>
 
             {/* Library Modal */}
