@@ -20,7 +20,36 @@ const defaultSettings = {
   titulo: '',
   videoUrl: '',
   aboutUrl: '',
+  xLink: '',
+  instagramLink: '',
+  youtubeLink: '',
+  facebookLink: '',
+  tiktokLink: '',
 };
+
+const NAV_SECTIONS = [
+  { id: 'general', label: 'General', icon: '📝' },
+  { id: 'multimedia', label: 'Marca y multimedia', icon: '🖼' },
+  { id: 'galerias', label: 'Galerías', icon: '🖼' },
+  { id: 'contacto', label: 'Contacto', icon: '👤' },
+  { id: 'redes', label: 'Redes sociales', icon: '🔗' },
+];
+
+// ---- lightweight section wrapper used for standard settings groups ----
+const SettingsSection = ({ id, icon, title, description, children }) => (
+  <section id={id} className="scroll-mt-24">
+    <div className="mb-5 flex items-start gap-3">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#f1b80c]/15 text-lg">
+        {icon}
+      </span>
+      <div>
+        <h2 className="text-lg font-bold text-white">{title}</h2>
+        {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}
+      </div>
+    </div>
+    <div className="space-y-4">{children}</div>
+  </section>
+);
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -63,7 +92,12 @@ const Settings = () => {
               username: result_arr.username || '',
               email: result_arr.email || '',
               phone: result_arr.phone || '',
-              address: result_arr.address || ''
+              address: result_arr.address || '',
+              xLink: result_arr.x_link || '',
+              instagramLink: result_arr.instagram_link || '',
+              youtubeLink: result_arr.youtube_link || '',
+              facebookLink: result_arr.facebook_link || '',
+              tiktokLink: result_arr.tiktok_link || '',
             });
           }
         });
@@ -191,6 +225,11 @@ const Settings = () => {
       email: settings.email || '',
       phone: settings.phone || '',
       address: settings.address || '',
+      x_link: settings.xLink || '',
+      instagram_link: settings.instagramLink || '',
+      youtube_link: settings.youtubeLink || '',
+      facebook_link: settings.facebookLink || '',
+      tiktok_link: settings.tiktokLink || '',
     };
 
     try {
@@ -213,288 +252,377 @@ const Settings = () => {
     <>
       <Toaster position="top-center" toastOptions={{ duration: 3000, style: { background: '#1e293b', color: '#fff', borderRadius: 16 } }} />
       <div className="min-h-screen bg-[#0d1117] text-white">
-        <div className="mx-auto max-w-4xl space-y-6 p-6 lg:p-8">
+        <div className="mx-auto max-w-4xl p-4 sm:p-6 lg:max-w-6xl lg:p-10 2xl:max-w-7xl">
 
           {/* Header */}
-          <div className="flex flex-col gap-5 rounded-[40px] border border-slate-800 bg-[#141820] p-6 lg:p-8 shadow-2xl">
+          <div className="flex flex-col gap-5 rounded-[32px] border border-slate-800 bg-[#141820] p-6 shadow-2xl sm:rounded-[40px] lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:p-8">
             <div>
               <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Admin</p>
-              <h1 className="mt-3 text-4xl font-bold text-white">Ajustes de la web</h1>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-400">
-                Configura el logotipo, títulos, galerías y anuncios. Cada control muestra su vista previa en tiempo real.
+              <h1 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Ajustes de la web</h1>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-400 lg:max-w-2xl">
+                Configura el logotipo, títulos, galerías, contacto y redes sociales. Los cambios se reflejan en tiempo real.
               </p>
             </div>
             <button
               type="button"
               onClick={() => navigate('/dashboard')}
-              className="w-fit rounded-3xl bg-[#f1b80c] px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]"
+              className="w-fit shrink-0 rounded-3xl bg-[#f1b80c] px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]"
             >
               Volver al dashboard
             </button>
           </div>
 
-          {/* ---- SINGLE COLUMN PAIRED ROWS ---- */}
-          <form onSubmit={handleSubmit}>
+          {/* Mobile quick-jump pills */}
+          <nav className="sticky top-2 mt-6 flex gap-2 overflow-x-auto p-2 lg:hidden bg-slate-800 -ml-4">
+            {NAV_SECTIONS.map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className="shrink-0 rounded-2xl border border-slate-800 bg-[#141820] px-4 py-2 text-xs font-semibold text-slate-300 transition hover:border-[#f1b80c]/50 hover:text-white"
+              >
+                {item.icon} {item.label}
+              </a>
+            ))}
+          </nav>
 
-            {/* 1 — Título */}
-            <PairRow
-              icon="📝"
-              label="Título"
-              description="El título principal de la página."
-              controlsLeft={
-                <>
-                  <input
-                    name="titulo"
-                    value={settings.titulo}
-                    onChange={handleChange}
-                    className="w-full rounded-2xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-sm text-white outline-none transition focus:border-[#f1b80c]"
-                    placeholder="Ejemplo de título"
+          {/* ---- MAIN LAYOUT: sticky sidebar nav + content ---- */}
+          <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[220px_1fr] lg:gap-10">
+
+            {/* Sidebar nav (desktop only) */}
+            <nav className="hidden lg:block">
+              <div className="sticky top-10 space-y-1 rounded-[28px] border border-slate-800 bg-[#141820] p-3">
+                {NAV_SECTIONS.map((item) => (
+                  <a
+                    key={item.id}
+                    href={`#${item.id}`}
+                    className="flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-slate-900 hover:text-white"
+                  >
+                    <span className="text-base">{item.icon}</span>
+                    {item.label}
+                  </a>
+                ))}
+              </div>
+            </nav>
+
+            {/* Form content */}
+            <form onSubmit={handleSubmit} className="space-y-10">
+
+              {/* ============================================== */}
+              {/* GENERAL                                          */}
+              {/* ============================================== */}
+              <SettingsSection id="general" icon="📝" title="General" description="El título principal de tu página.">
+                <PairRowText
+                  icon="📝"
+                  label="Título"
+                  description="El título principal de la página."
+                  name="titulo"
+                  placeholder="Ejemplo de título"
+                  settings={settings}
+                  handleChange={handleChange}
+                  handleClear={handleClear}
+                />
+              </SettingsSection>
+
+              {/* ============================================== */}
+              {/* MARCA Y MULTIMEDIA                               */}
+              {/* ============================================== */}
+              <SettingsSection id="multimedia" icon="🖼" title="Marca y multimedia" description="Logotipo, foto personal y video de fondo con vista previa en tiempo real.">
+
+                <PairRow
+                  icon="🖼"
+                  label="Logotipo"
+                  description="Imagen del logotipo principal."
+                  controlsLeft={
+                    <>
+                      <input hidden name="logoUrl" value={settings.logoUrl} onChange={handleChange} />
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" onClick={() => openLibraryPicker('logo')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                          📚 Biblioteca
+                        </button>
+                        <button type="button" onClick={() => handleClear('logoUrl')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                          Limpiar
+                        </button>
+                      </div>
+                    </>
+                  }
+                  previewRight={
+                    previewUrls.logo ? (
+                      <div className="flex items-center gap-4 rounded-2xl border border-slate-700/50 bg-slate-900/60 px-4 py-3">
+                        <img src={previewUrls.logo} alt="Logotipo" className="h-14 w-auto rounded-xl object-contain" />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
+                        <span className="text-xl text-slate-600">🖼</span>
+                        <p className="text-sm text-slate-500">Sin logotipo seleccionado.</p>
+                      </div>
+                    )
+                  }
+                />
+
+                <PairRow
+                  icon="ℹ️"
+                  label="Mi foto"
+                  description="Foto Personal."
+                  controlsLeft={
+                    <>
+                      <input hidden name="aboutUrl" value={settings.aboutUrl} onChange={handleChange} />
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" onClick={() => openLibraryPicker('about')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                          📚 Biblioteca
+                        </button>
+                        <button type="button" onClick={() => handleClear('aboutUrl')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                          Limpiar
+                        </button>
+                      </div>
+                    </>
+                  }
+                  previewRight={
+                    previewUrls.about ? (
+                      <div className="flex items-center gap-4 rounded-2xl border border-slate-700/50 bg-slate-900/60 px-4 py-3">
+                        <img src={previewUrls.about} alt="Acerca de nosotros" className="h-14 w-auto rounded-xl object-contain" />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
+                        <span className="text-xl text-slate-600">ℹ️</span>
+                        <p className="text-sm text-slate-500">Sin imagen seleccionada.</p>
+                      </div>
+                    )
+                  }
+                />
+
+                <PairRow
+                  icon="🎬"
+                  label="Video de Fondo"
+                  description="URL del video para el fondo de cabecera."
+                  controlsLeft={
+                    <>
+                      <input hidden name="videoUrl" value={settings.videoUrl} onChange={handleChange} />
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" onClick={() => openLibraryPicker('video')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                          📚 Biblioteca
+                        </button>
+                        <button type="button" onClick={() => handleClear('videoUrl')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                          Limpiar
+                        </button>
+                      </div>
+                    </>
+                  }
+                  previewRight={
+                    settings.videoUrl ? (
+                      <video src={settings.videoUrl} className="w-full max-w-xs rounded-xl object-cover" autoPlay loop muted playsInline />
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
+                        <span className="text-xl text-slate-600">🎬</span>
+                        <p className="text-sm text-slate-500">Sin video seleccionado.</p>
+                      </div>
+                    )
+                  }
+                />
+              </SettingsSection>
+
+              {/* ============================================== */}
+              {/* GALERÍAS                                         */}
+              {/* ============================================== */}
+              <SettingsSection id="galerias" icon="🖼" title="Galerías" description="Imágenes del carrusel principal y de la sección de anuncios.">
+
+                <PairRow
+                  icon="🖼"
+                  label="Galería del Carrusel Principal"
+                  description="Imágenes para el slider principal. Puedes pegar URLs separadas por coma."
+                  controlsLeft={
+                    <>
+                      <textarea hidden name="homeCarouselUrls" value={settings.homeCarouselUrls} onChange={handleChange} rows={3} className="w-full rounded-2xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-sm text-white outline-none transition focus:border-[#f1b80c]" placeholder="https://.../foto-1.jpg, https://.../foto-2.jpg" />
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" onClick={() => openLibraryPicker('gallery')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                          📚 Biblioteca
+                        </button>
+                        <button type="button" onClick={() => handleClear('homeCarouselUrls')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                          Limpiar
+                        </button>
+                      </div>
+                    </>
+                  }
+                  previewRight={
+                    previewUrls.gallery.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {previewUrls.gallery.map((item) => (
+                          <img key={item} src={item} alt="Carrusel" className="h-16 w-16 rounded-xl border border-slate-700/50 object-cover bg-slate-900" />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
+                        <span className="text-xl text-slate-600">🖼</span>
+                        <p className="text-sm text-slate-500">Sin imágenes cargadas.</p>
+                      </div>
+                    )
+                  }
+                />
+
+                <PairRow
+                  icon="📢"
+                  label="Imágenes para Anuncios"
+                  description="URLs de las imágenes promocionales del carrusel de anuncios."
+                  controlsLeft={
+                    <>
+                      <textarea hidden name="adsCarouselUrls" value={settings.adsCarouselUrls} onChange={handleChange} rows={3} className="w-full rounded-2xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-sm text-white outline-none transition focus:border-[#f1b80c]" placeholder="https://.../ad-1.jpg, https://.../ad-2.jpg" />
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" onClick={() => openLibraryPicker('ads')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                          📚 Biblioteca
+                        </button>
+                        <button type="button" onClick={() => handleClear('adsCarouselUrls')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
+                          Limpiar
+                        </button>
+                      </div>
+                    </>
+                  }
+                  previewRight={
+                    previewUrls.ads.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {previewUrls.ads.map((item) => (
+                          <img key={item} src={item} alt="Anuncio" className="h-16 w-16 rounded-xl border border-slate-700/50 object-cover bg-slate-900" />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
+                        <span className="text-xl text-slate-600">📢</span>
+                        <p className="text-sm text-slate-500">Sin anuncios cargados.</p>
+                      </div>
+                    )
+                  }
+                />
+              </SettingsSection>
+
+              {/* ============================================== */}
+              {/* CONTACTO                                         */}
+              {/* ============================================== */}
+              <SettingsSection id="contacto" icon="👤" title="Contacto" description="Datos públicos de usuario y contacto directo.">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <PairRowText
+                    icon="👤"
+                    label="Username"
+                    description="Nombre de usuario público."
+                    name="username"
+                    placeholder="Ejemplo: johndoe123"
+                    settings={settings}
+                    handleChange={handleChange}
+                    handleClear={handleClear}
                   />
-                  <button type="button" onClick={() => handleClear('titulo')} className="w-fit rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
-                    Limpiar
-                  </button>
-                </>
-              }
-              previewRight={
-                settings.titulo ? (
-                  <div className="rounded-2xl border border-slate-700/50 bg-slate-900/60 px-4 py-3">
-                    <p className="text-lg font-extrabold text-white leading-tight">{settings.titulo}</p>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
-                    <span className="text-xl text-slate-600">⚠️</span>
-                    <p className="text-sm text-slate-500">Sin título establecido.</p>
-                  </div>
-                )
-              }
-            />
+                  <PairRowText
+                    icon="📧"
+                    label="Email"
+                    description="Correo electrónico de contacto principal."
+                    name="email"
+                    type="email"
+                    placeholder="Ejemplo: admin@example.com"
+                    settings={settings}
+                    handleChange={handleChange}
+                    handleClear={handleClear}
+                  />
+                  <PairRowText
+                    icon="📞"
+                    label="Teléfono"
+                    description="Número de teléfono de contacto."
+                    name="phone"
+                    type="tel"
+                    placeholder="Ejemplo: +52 123 456 7890"
+                    settings={settings}
+                    handleChange={handleChange}
+                    handleClear={handleClear}
+                  />
+                  <PairRowText
+                    icon="📍"
+                    label="Dirección"
+                    description="Dirección física de la ubicación."
+                    name="address"
+                    placeholder="Ejemplo: Av. Reforma 222, CDMX"
+                    settings={settings}
+                    handleChange={handleChange}
+                    handleClear={handleClear}
+                  />
+                </div>
+              </SettingsSection>
 
-            {/* 2 — Mi foto */}
-            <PairRow
-              icon="ℹ️"
-              label="Mi foto"
-              description="Foto Personal."
-              controlsLeft={
-                <>
-                  <input hidden name="aboutUrl" value={settings.aboutUrl} onChange={handleChange} />
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => openLibraryPicker('about')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
-                      📚 Biblioteca
-                    </button>
-                    <button type="button" onClick={() => handleClear('aboutUrl')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
-                      Limpiar
-                    </button>
-                  </div>
-                </>
-              }
-              previewRight={
-                previewUrls.about ? (
-                  <div className="flex items-center gap-4 rounded-2xl border border-slate-700/50 bg-slate-900/60 px-4 py-3">
-                    <img src={previewUrls.about} alt="Acerca de nosotros" className="h-14 w-auto rounded-xl object-contain" />
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
-                    <span className="text-xl text-slate-600">ℹ️</span>
-                    <p className="text-sm text-slate-500">Sin imagen seleccionada.</p>
-                  </div>
-                )
-              }
-            />
+              {/* ============================================== */}
+              {/* REDES SOCIALES                                   */}
+              {/* ============================================== */}
+              <SettingsSection id="redes" icon="🔗" title="Redes sociales" description="Enlaces a tus perfiles. Déjalos vacíos si no aplican.">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  <PairRowText
+                    icon="𝕏"
+                    label="X (Twitter)"
+                    description="URL completa de tu perfil en X."
+                    name="xLink"
+                    type="url"
+                    placeholder="https://x.com/tu-usuario"
+                    settings={settings}
+                    handleChange={handleChange}
+                    handleClear={handleClear}
+                  />
+                  <PairRowText
+                    icon="📸"
+                    label="Instagram"
+                    description="URL completa de tu perfil de Instagram."
+                    name="instagramLink"
+                    type="url"
+                    placeholder="https://instagram.com/tu-usuario"
+                    settings={settings}
+                    handleChange={handleChange}
+                    handleClear={handleClear}
+                  />
+                  <PairRowText
+                    icon="▶️"
+                    label="YouTube"
+                    description="URL completa de tu canal de YouTube."
+                    name="youtubeLink"
+                    type="url"
+                    placeholder="https://youtube.com/@tu-canal"
+                    settings={settings}
+                    handleChange={handleChange}
+                    handleClear={handleClear}
+                  />
+                  <PairRowText
+                    icon="📘"
+                    label="Facebook"
+                    description="URL completa de tu página de Facebook."
+                    name="facebookLink"
+                    type="url"
+                    placeholder="https://facebook.com/tu-pagina"
+                    settings={settings}
+                    handleChange={handleChange}
+                    handleClear={handleClear}
+                  />
+                  <PairRowText
+                    icon="🎵"
+                    label="TikTok"
+                    description="URL completa de tu perfil de TikTok."
+                    name="tiktokLink"
+                    type="url"
+                    placeholder="https://tiktok.com/@tu-usuario"
+                    settings={settings}
+                    handleChange={handleChange}
+                    handleClear={handleClear}
+                  />
+                </div>
+              </SettingsSection>
 
-            {/* 3 — Logotipo */}
-            <PairRow
-              icon="🖼"
-              label="Logotipo"
-              description="Imagen del logotipo principal."
-              controlsLeft={
-                <>
-                  <input hidden name="logoUrl" value={settings.logoUrl} onChange={handleChange} />
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => openLibraryPicker('logo')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
-                      📚 Biblioteca
-                    </button>
-                    <button type="button" onClick={() => handleClear('logoUrl')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
-                      Limpiar
-                    </button>
-                  </div>
-                </>
-              }
-              previewRight={
-                previewUrls.logo ? (
-                  <div className="flex items-center gap-4 rounded-2xl border border-slate-700/50 bg-slate-900/60 px-4 py-3">
-                    <img src={previewUrls.logo} alt="Logotipo" className="h-14 w-auto rounded-xl object-contain" />
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
-                    <span className="text-xl text-slate-600">🖼</span>
-                    <p className="text-sm text-slate-500">Sin logotipo seleccionado.</p>
-                  </div>
-                )
-              }
-            />
-
-            {/* 4 — Video de Fondo */}
-            <PairRow
-              icon="🎬"
-              label="Video de Fondo"
-              description="URL del video para el fondo de cabecera."
-              controlsLeft={
-                <>
-                  <input hidden name="videoUrl" value={settings.videoUrl} onChange={handleChange} />
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => openLibraryPicker('video')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
-                      📚 Biblioteca
-                    </button>
-                    <button type="button" onClick={() => handleClear('videoUrl')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
-                      Limpiar
-                    </button>
-                  </div>
-                </>
-              }
-              previewRight={
-                settings.videoUrl ? (
-                  <video src={settings.videoUrl} className="w-full max-w-xs rounded-xl object-cover" autoPlay loop muted playsInline />
-                ) : (
-                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
-                    <span className="text-xl text-slate-600">🎬</span>
-                    <p className="text-sm text-slate-500">Sin video seleccionado.</p>
-                  </div>
-                )
-              }
-            />
-
-            {/* 5 — Galería del carrusel principal */}
-            <PairRow
-              icon="🖼"
-              label="Galería del Carrusel Principal"
-              description="Imágenes para el slider principal. Puedes pegar URLs separadas por coma."
-              controlsLeft={
-                <>
-                  <textarea hidden name="homeCarouselUrls" value={settings.homeCarouselUrls} onChange={handleChange} rows={3} className="w-full rounded-2xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-sm text-white outline-none transition focus:border-[#f1b80c]" placeholder="https://.../foto-1.jpg, https://.../foto-2.jpg" />
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => openLibraryPicker('gallery')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
-                      📚 Biblioteca
-                    </button>
-                    <button type="button" onClick={() => handleClear('homeCarouselUrls')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
-                      Limpiar
-                    </button>
-                  </div>
-                </>
-              }
-              previewRight={
-                previewUrls.gallery.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {previewUrls.gallery.map((item) => (
-                      <img key={item} src={item} alt="Carrusel" className="h-16 w-16 rounded-xl border border-slate-700/50 object-cover bg-slate-900" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
-                    <span className="text-xl text-slate-600">🖼</span>
-                    <p className="text-sm text-slate-500">Sin imágenes cargadas.</p>
-                  </div>
-                )
-              }
-            />
-
-            {/* 6 — Imágenes para anuncios */}
-            <PairRow
-              icon="📢"
-              label="Imágenes para Anuncios"
-              description="URLs de las imágenes promocionales del carrusel de anuncios."
-              controlsLeft={
-                <>
-                  <textarea hidden name="adsCarouselUrls" value={settings.adsCarouselUrls} onChange={handleChange} rows={3} className="w-full rounded-2xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-sm text-white outline-none transition focus:border-[#f1b80c]" placeholder="https://.../ad-1.jpg, https://.../ad-2.jpg" />
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => openLibraryPicker('ads')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
-                      📚 Biblioteca
-                    </button>
-                    <button type="button" onClick={() => handleClear('adsCarouselUrls')} className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800">
-                      Limpiar
-                    </button>
-                  </div>
-                </>
-              }
-              previewRight={
-                previewUrls.ads.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {previewUrls.ads.map((item) => (
-                      <img key={item} src={item} alt="Anuncio" className="h-16 w-16 rounded-xl border border-slate-700/50 object-cover bg-slate-900" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-700/40 bg-slate-900/30 px-4 py-8">
-                    <span className="text-xl text-slate-600">📢</span>
-                    <p className="text-sm text-slate-500">Sin anuncios cargados.</p>
-                  </div>
-                )
-              }
-            />
-
-            {/* ============================================== */}
-            {/* 7 — Username                                    */}
-            {/* ============================================== */}
-            <PairRowText
-              icon="👤"
-              label="Username"
-              description="Nombre de usuario público."
-              name="username"
-              placeholder="Ejemplo: johndoe123"
-              settings={settings}
-              handleChange={handleChange}
-              handleClear={handleClear}
-            />
-
-            {/* 8 — Email */}
-            <PairRowText
-              icon="📧"
-              label="Email"
-              description="Correo electrónico de contacto principal."
-              name="email"
-              placeholder="Ejemplo: admin@example.com"
-              settings={settings}
-              handleChange={handleChange}
-              handleClear={handleClear}
-            />
-
-            {/* 9 — Phone */}
-            <PairRowText
-              icon="📞"
-              label="Teléfono"
-              description="Número de teléfono de contacto."
-              name="phone"
-              placeholder="Ejemplo: +52 123 456 7890"
-              settings={settings}
-              handleChange={handleChange}
-              handleClear={handleClear}
-            />
-
-            {/* 10 — Address */}
-            <PairRowText
-              icon="📍"
-              label="Dirección"
-              description="Dirección física de la ubicación."
-              name="address"
-              placeholder="Ejemplo: Av. Reforma 222, CDMX"
-              settings={settings}
-              handleChange={handleChange}
-              handleClear={handleClear}
-            />
-
-            {/* Submit */}
-            <button
-              type="submit"
-              className="w-full rounded-3xl bg-gradient-to-r from-[#f1b80c] to-[#e5a50a] px-6 py-4 text-sm font-bold tracking-wide text-slate-950 shadow-lg shadow-[#f1b80c]/20 transition hover:from-[#d69e2e] hover:to-[#c7940a]"
-            >
-              Guardar ajustes
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              className="w-full rounded-3xl bg-gradient-to-r from-[#f1b80c] to-[#e5a50a] px-6 py-4 text-sm font-bold tracking-wide text-slate-950 shadow-lg shadow-[#f1b80c]/20 transition hover:from-[#d69e2e] hover:to-[#c7940a] mt-4">
-              Volver al dashboard
-            </button>            
-          </form>
+              {/* Submit */}
+              <div className="sticky bottom-4 flex flex-col gap-3 rounded-[28px] border border-slate-800 bg-[#141820]/95 p-4 shadow-2xl backdrop-blur sm:flex-row-reverse sm:p-5">
+                <button
+                  type="submit"
+                  className="w-full rounded-3xl bg-gradient-to-r from-[#f1b80c] to-[#e5a50a] px-6 py-4 text-sm font-bold tracking-wide text-slate-950 shadow-lg shadow-[#f1b80c]/20 transition hover:from-[#d69e2e] hover:to-[#c7940a] sm:flex-1"
+                >
+                  Guardar ajustes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/dashboard')}
+                  className="w-full rounded-3xl border border-slate-700 bg-slate-900 px-6 py-4 text-sm font-bold tracking-wide text-slate-300 transition hover:bg-slate-800 sm:flex-1"
+                >
+                  Volver al dashboard
+                </button>
+              </div>
+            </form>
+          </div>
 
           {/* Library Modal */}
           {isLibraryOpen && (
