@@ -101,8 +101,8 @@ const TrainerForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel
             <label className="hidden *:block space-y-2 text-sm text-slate-200">
                 Estado
                 <select name="status" value={form.status} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
-                    <option value="Activo" className="bg-[#0f172a]">Activo</option>
-                    <option value="Inactivo" className="bg-[#0f172a]">Inactivo</option>
+                    <option value="1" className="bg-[#0f172a]">Activo</option>
+                    <option value="0" className="bg-[#0f172a]">Inactivo</option>
                 </select>
             </label>
 
