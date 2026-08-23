@@ -4,8 +4,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faPhone, faLocationDot } from '@fortawesome/free-solid-svg-icons';
 import { faFacebook, faXTwitter, faYoutube, faInstagram, faTiktok } from '@fortawesome/free-brands-svg-icons';
 import BigLink from './BigLink';
+import { Link } from 'react-router-dom';
 
-const Footer = ({ logoPath, email, trainerPhone, trainerAddress, links }) => {
+const Footer = ({ logoPath, email, trainerPhone, trainerAddress, facebook_url, x_url, youtube_url, instagram_url, tiktok_url, links }) => {
   const defaultLogoPath = logoPath || '/images/Logo-01-1-1.png';
 
   return (
@@ -31,14 +32,25 @@ const Footer = ({ logoPath, email, trainerPhone, trainerAddress, links }) => {
           <div className="flex flex-col gap-3 mt-4">
             <span className="text-sm opacity-80">Síguenos en</span>
             <div className="flex gap-3">
-              {[faFacebook, faXTwitter, faYoutube, faInstagram, faTiktok].map((icon, i) => (
-                <button
-                  key={i}
-                  className="bg-gray-200 hover:bg-customYellow transition p-3 rounded-lg"
-                >
-                  <FontAwesomeIcon icon={icon} className="text-black" size="lg" />
-                </button>
-              ))}
+              <Link to={facebook_url} className="bg-gray-200 hover:bg-customYellow transition p-3 rounded-lg">
+                <FontAwesomeIcon icon={faFacebook} className="text-black" size="lg" />
+              </Link>
+
+              <Link to={x_url} className="bg-gray-200 hover:bg-customYellow transition p-3 rounded-lg" >
+                <FontAwesomeIcon icon={faXTwitter} className="text-black" size="lg" />
+              </Link>
+
+              <Link to={youtube_url} className="bg-gray-200 hover:bg-customYellow transition p-3 rounded-lg" >
+                <FontAwesomeIcon icon={faYoutube} className="text-black" size="lg" />
+              </Link>
+
+              <Link to={instagram_url} className="bg-gray-200 hover:bg-customYellow transition p-3 rounded-lg" >
+                <FontAwesomeIcon icon={faInstagram} className="text-black" size="lg" />
+              </Link>
+
+              <Link to={tiktok_url} className="bg-gray-200 hover:bg-customYellow transition p-3 rounded-lg" >
+                <FontAwesomeIcon icon={faTiktok} className="text-black" size="lg" />
+              </Link>
             </div>
           </div>
         </div>

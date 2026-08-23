@@ -53,18 +53,23 @@ function Homepage() {
                     if (data) {
                         const { result } = data;
                         const result_arr = result[0];
-                        const { logo, title, video } = result_arr;
+                        const { logo, title, video_background } = result_arr;
                         setSettings({
-                            logoUrl: result_arr.logo || '',
+                            logoUrl: logo || '',
                             homeCarouselUrls: (JSON.parse(result_arr.gallery) || []).join('\n'),
                             adsCarouselUrls: (JSON.parse(result_arr.ads) || []).join('\n'),
-                            titulo: result_arr.title || '',
-                            videoUrl: result_arr.video_background || '',
+                            titulo: title || '',
+                            videoUrl: video_background || '',
                             aboutUrl: result_arr.about || '',
                             username: result_arr.username || '',
                             email: result_arr.email || '',
                             phone: result_arr.phone || '',
-                            address: result_arr.address || ''
+                            address: result_arr.address || '',
+                            x_link: result_arr.x_link || '',
+                            instagram_link: result_arr.instagram_link || '',
+                            youtube_link: result_arr.youtube_link || '',
+                            facebook_link: result_arr.facebook_link || '',
+                            tiktok_link: result_arr.tiktok_link || '',
                         });
                     }
                 });
@@ -255,7 +260,7 @@ function Homepage() {
     return (
         <>
             <Helmet>
-                <title>{settings.titulo || "Elite Fit Training"}</title>
+                <title>{settings.titulo || "GYM"}</title>
             </Helmet>
             <div className="homepage-wrapper bg-black overflow-x-hidden">
                 <div className="video-background-container ">
@@ -703,7 +708,7 @@ function Homepage() {
                     {/* <div className='separator lg:pt-32 pt-12 bg-black'></div> */}
                     <div className="bg-black flex-1">
                         {/* <Footer logoPath={logoPath} email={defaultEmail} links={["transformations", "about us", "pricing", "how to start", "faq"]}/> */}
-                        <Footer logoPath={logoPath} email={trainerEmail} trainerPhone={trainerPhone} trainerAddress={trainerAddress} />
+                        <Footer logoPath={logoPath} email={trainerEmail} trainerPhone={trainerPhone} trainerAddress={trainerAddress} facebook_url={settings.facebook_link || ''} x_url={settings.x_link || ''} youtube_url={settings.youtube_link || ''} instagram_url={settings.instagram_link || ''} tiktok_url={settings.tiktok_link || ''} />
                     </div>
                     <div className='separator lg:pt-32 pt-12 bg-black'></div>
                 </>

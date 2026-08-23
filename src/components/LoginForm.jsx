@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import BigTitle from '../components/BigTitle'; // Reusing the core component
 import { TextField, Input, InputLabel, FormControl, FormHelperText, Button } from "@mui/material";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -6,16 +6,16 @@ import { faArrowsRotate, faDotCircle } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { Tooltip } from 'react-tooltip';
-import {Link, useNavigate} from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useServerStatus } from '../hooks/useServerStatus';
-import {faHome} from '@fortawesome/free-solid-svg-icons';
-
+import { faHome } from '@fortawesome/free-solid-svg-icons';
+import { Helmet } from 'react-helmet-async';
 const LoginForm = () => {
     const ROLE_MAP = {
-    'admin': 1,
-    'trainer': 2,
-    'client': 3,
-    };    
+        'admin': 1,
+        'trainer': 2,
+        'client': 3,
+    };
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -23,14 +23,82 @@ const LoginForm = () => {
     const [serverStatusStr, setServerStatusStr] = useState('El servidor esta offline');
     const [fieldsEmpty, setFieldsEmpty] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [settings, setSettings] = useState([]);
+
+    const STORAGE_KEY = 'elitefit_settings';
+
+    const defaultSettings = {
+    logoUrl: '',
+    username: '',
+    email: '',
+    phone: '',
+    address: '',
+    homeCarouselUrls: '',
+    adsCarouselUrls: '',
+    titulo: '',
+    videoUrl: '',
+    aboutUrl: '',
+    xLink: '',
+    instagramLink: '',
+    youtubeLink: '',
+    facebookLink: '',
+    tiktokLink: '',
+    };
 
     useEffect(() => {
-        if(email != '' && password != ''){
+        if (email != '' && password != '') {
             setFieldsEmpty(false);
-        }else{
+        } else {
             setFieldsEmpty(true);
         }
     })
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                await axios.get(`${apiUrl}/admin/settings`).then((response) => {
+                    const { data } = response;
+                    console.log(data);
+                    if (data) {
+                        const { result } = data;
+                        const result_arr = result[0];
+                        const { logo, title, video_background } = result_arr;
+                        setSettings({
+                            logoUrl: logo || '',
+                            homeCarouselUrls: (JSON.parse(result_arr.gallery) || []).join('\n'),
+                            adsCarouselUrls: (JSON.parse(result_arr.ads) || []).join('\n'),
+                            titulo: title || '',
+                            videoUrl: video_background || '',
+                            aboutUrl: result_arr.about || '',
+                            username: result_arr.username || '',
+                            email: result_arr.email || '',
+                            phone: result_arr.phone || '',
+                            address: result_arr.address || '',
+                            xLink: result_arr.x_link || '',
+                            instagramLink: result_arr.instagram_link || '',
+                            youtubeLink: result_arr.youtube_link || '',
+                            facebookLink: result_arr.facebook_link || '',
+                            tiktokLink: result_arr.tiktok_link || '',
+                        });
+                    }
+                });
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+            } catch (error) {
+                console.error('Error cargando ajustes:', error);
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (!saved) return;
+
+                try {
+                    const parsed = JSON.parse(saved);
+                    console.log(parsed);
+                    setSettings({ ...defaultSettings, ...parsed });
+                } catch (error) {
+                    console.error('No se pudieron recuperar los ajustes:', error);
+                }
+            }
+        };
+        fetchSettings();
+    }, [])
 
     const loginSuccessNotif = () => {
         toast("Login Exitoso, redirigiendo...",
@@ -54,7 +122,7 @@ const LoginForm = () => {
             }
         )
     }
-    const isServerOnline = useServerStatus(apiUrl + "/testApi", 5000,setServerStatusStr);
+    const isServerOnline = useServerStatus(apiUrl + "/testApi", 5000, setServerStatusStr);
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
@@ -81,8 +149,8 @@ const LoginForm = () => {
                 : ROLE_MAP[roleFromResponse?.toLowerCase()] || 3;
             localStorage.setItem('role', role);
             localStorage.setItem('name', user.name || user.email || 'Usuario EliteFit');
-            localStorage.setItem('status',user.status);
-            localStorage.setItem('genre',user.genre);
+            localStorage.setItem('status', user.status);
+            localStorage.setItem('genre', user.genre);
             loginSuccessNotif();
             setLoading(true);
             setTimeout(() => {
@@ -104,8 +172,12 @@ const LoginForm = () => {
     };
 
     return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
-            <div className="w-full max-w-md bg-gray-800 p-8 rounded-xl shadow-2xl">
+        <>
+        <Helmet>
+            <title>{settings.titulo || "GYM"}</title>
+        </Helmet>        
+        <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4 ">
+            <div className="w-full max-w-md bg-gray-800 p-8 rounded-xl shadow-2xl bg-gradient-to-bl from-zinc-800 via-stone-700 to-zinc-900">
                 <div className="text-center mb-10">
                     <div className='text-right'>
                         {
@@ -116,7 +188,7 @@ const LoginForm = () => {
                         }
                     </div>
                     <Tooltip anchorSelect='#serverStatus' content={serverStatusStr} />
-                    <h1 className="text-4xl font-bold text-white mb-2">EliteFit</h1>
+                    <h1 className="text-4xl font-bold text-white mb-2">{settings.titulo}</h1>
                     <p className="text-xl text-yellow-400">Inicia sesión para comenzar tu transformación.</p>
                 </div>
 
@@ -173,10 +245,11 @@ const LoginForm = () => {
                     ¿No tienes cuenta? <Link to="/register" className="text-yellow-400 hover:text-yellow-300">Regístrate aquí</Link>
                 </p>
                 <p className="text-center text-sm mt-6 text-gray-400">
-                    <Link to="/" className="text-yellow-400 hover:text-yellow-300">Regresar a la página principal <FontAwesomeIcon icon={faHome}/></Link>
+                    <Link to="/" className="text-yellow-400 hover:text-yellow-300">Regresar a la página principal <FontAwesomeIcon icon={faHome} /></Link>
                 </p>
             </div>
         </div>
+        </>
     );
 };
 

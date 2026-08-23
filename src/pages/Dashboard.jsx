@@ -92,6 +92,29 @@ const Dashboard = () => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
   } = useNotifications();
+  var redirectPath = null;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const checkToken = async () => {
+        const redirectPath = await verifyToken();
+
+        if (redirectPath) {
+          navigate(redirectPath);
+        }
+      };
+
+      checkToken();
+    }, 500); // 1.5 segundos de delay
+
+    if (roleString.toLowerCase() === 'client' && status === '0') {
+      navigate('/wizard');
+    }
+
+    return () => clearTimeout(timer);
+
+
+  }, [progreso]);
+
 
   // ✅ Cerrar menú al presionar Escape en móvil
   useEffect(() => {
@@ -306,16 +329,6 @@ const Dashboard = () => {
   }, [userName]);
 
   useEffect(() => {
-    var redirectPath = null;
-    const checkToken = async () => {
-      redirectPath = await verifyToken();
-      if (redirectPath) {
-        navigate(redirectPath);
-      }
-    };
-
-    checkToken();
-
     const fetchCounts = async () => {
       try {
         const config = {
@@ -350,10 +363,6 @@ const Dashboard = () => {
       } catch (error) {
         console.error('Error fetching counts:', error);
       }
-    }
-
-    if (roleString.toLowerCase() === 'client' && status === '0') {
-      navigate('/wizard');
     }
 
     if (roleValue === 1 && redirectPath === null) {
@@ -504,7 +513,7 @@ const Dashboard = () => {
               if (p.status == "Pendiente") {
                 checkPayment(p)
               }
-            })            
+            })
           }
         }
 
@@ -694,380 +703,383 @@ const Dashboard = () => {
       );
     }
 
-    return (
-      <>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2 mb-6">
-          {[
-            { label: 'Rutinas activas', value: workouts.length },
-            { label: 'Entrenador', value: profile?.trainer_name || 'No asignado' },
-          ].map((card) => (
-            <div key={card.label} className="rounded-3xl bg-[#141820] border border-slate-800 p-5 shadow-xl">
-              <p className="text-sm text-slate-400 uppercase tracking-[0.25em]">{card.label}</p>
-              <p className="mt-4 text-3xl font-bold text-white">{card.value}&nbsp;{card.label === 'Entrenador' && profile?.trainer_phone ? <Link to={`https://wa.me/${profile?.trainer_phone}`} target='_blank' className="text-sm text-green-400 mt-1"><FontAwesomeIcon icon={faWhatsapp} size='2x'></FontAwesomeIcon></Link> : null}</p>
-            </div>
-          ))}
-        </div>
 
-        <div className="grid gap-4 xl:grid-cols-2 mb-6">
-          <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-            <div className="flex items-start justify-between mb-5 lg:flex-row flex-col">
-              <div>
-                <h2 className="text-xl font-semibold text-white">Progreso corporal</h2>
-                <p className="text-sm text-slate-400">Última actualización hace 3 días</p>
+    if (roleString.toLowerCase() === 'client' && status !== '0') {
+      return (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2 mb-6">
+            {[
+              { label: 'Rutinas activas', value: workouts.length },
+              { label: 'Entrenador', value: profile?.trainer_name || 'No asignado' },
+            ].map((card) => (
+              <div key={card.label} className="rounded-3xl bg-[#141820] border border-slate-800 p-5 shadow-xl">
+                <p className="text-sm text-slate-400 uppercase tracking-[0.25em]">{card.label}</p>
+                <p className="mt-4 text-3xl font-bold text-white">{card.value}&nbsp;{card.label === 'Entrenador' && profile?.trainer_phone ? <Link to={`https://wa.me/${profile?.trainer_phone}`} target='_blank' className="text-sm text-green-400 mt-1"><FontAwesomeIcon icon={faWhatsapp} size='2x'></FontAwesomeIcon></Link> : null}</p>
               </div>
-            </div>
-            <div>
-              <div className="mb-4 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setProgressTab('silhouette')}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'silhouette' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
-                >
-                  Silueta
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setProgressTab('chart')}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'chart' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
-                >
-                  Gráfico
-                </button>
-              </div>
+            ))}
+          </div>
 
-              <div>
-                {progressTab === 'silhouette' ? (
-                  <div className="space-y-4">
-                    <BodySilhouette genre={genre} cadera={Number(progreso[0]?.hips || progreso[0]?.cadera)} cintura={Number(progreso[0]?.waist || progreso[0]?.cintura)} piernas={Number(progreso[0]?.legs || progreso[0]?.piernas)} brazos={Number(progreso[0]?.arms || progreso[0]?.brazos)} />
-                  </div>
-                ) : (
-                  <div className="w-full chart-div mt-10">
-                    <div className="rounded-3xl bg-slate-950/90 border border-slate-800 p-4">
-                      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Evolución biométrica</p>
-                          <h3 className="text-lg font-semibold text-white">Peso y medidas</h3>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <label htmlFor="chart-limit" className="text-xs uppercase tracking-[0.25em] text-slate-400">Últimos</label>
-                          <select
-                            id="chart-limit"
-                            value={chartLimit}
-                            onChange={(e) => setChartLimit(Number(e.target.value))}
-                            className="rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-[#f1b80c]"
-                          >
-                            {[5, 10, 15, 20, 30, 0].map((limit) => (
-                              <option key={limit} value={limit}>
-                                {limit === 0 ? 'Todos' : limit}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                      <div className="h-[320px] w-full">
-                        <Line
-                          data={chartData}
-                          options={chartOptions}
-                          height={320}
-                          style={{ width: '100%', display: 'block' }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-            <h2 className="items-center text-xl font-semibold text-white mb-4">Datos Iniciales</h2>
-            <div className=" grid grid-cols-3 text-slate-300 mb-4">
-              {[
-                { label: "Edad", value: profile?.age },
-                { label: "Altura", value: profile?.height },
-                { label: "Peso", value: profile?.initial_weight },
-                { label: "Objetivo", value: profile?.goal?.replace('_', ' ').toUpperCase() },
-                { label: "Días a Entrenar", value: profile?.training_days },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className={`rounded-lg p-2 bg-slate-900/60 border border-slate-800 text-white justify-between items-center text-xs flex ${item.label === "Objetivo" ? 'col-span-2' : 'col-span-1'}`}
-                >
-                  <span className="text-slate-400">{item.label}</span>
-                  <span className="font-semibold">{item.value}</span>
+          <div className="grid gap-4 xl:grid-cols-2 mb-6">
+            <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+              <div className="flex items-start justify-between mb-5 lg:flex-row flex-col">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">Progreso corporal</h2>
+                  <p className="text-sm text-slate-400">Última actualización hace 3 días</p>
                 </div>
-              ))}
-            </div>
-
-
-            <div className="flex">
-              <h2 className="text-left text-xl font-semibold text-white mb-4 mt-1">Datos Biometricos</h2>
-              <div className="justify-end flex-grow flex">
-                <button
-                  onClick={() => setShowProgressModal(true)}
-                  className="text-nowrap flex items-center gap-2 bg-yellow-400 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 hover:bg-yellow-200 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
-                >
-                  Agregar Datos <FontAwesomeIcon icon={faAdd} />
-                </button>
               </div>
-            </div>
-            <div className="max-h-[395px] overflow-y-auto space-y-3 pr-1">
-              {progreso.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`rounded-xl p-3 border ${index === 0
-                    ? 'bg-yellow-400 text-black border-black'
-                    : 'bg-slate-800 border-yellow-400 text-white'
-                    }`}
-                >
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <p><span className="font-semibold">Cintura:</span> {item.hips}</p>
-                    <p><span className="font-semibold">Cadera:</span> {item.waist}</p>
-                    <p><span className="font-semibold">Brazos:</span> {item.arms}</p>
-                    <p><span className="font-semibold">Piernas:</span> {item.legs}</p>
-                    <p className="col-span-2">
-                      <span className="font-semibold">Fecha:</span> {moment(item.log_date).format('DD-MM-YYYY')}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2 mt-2">
-                    <img
-                      src={item.photo_front_url}
-                      className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
-                      onClick={() => setPreviewImage(item.photo_front_url)}
-                    />
-
-                    <img
-                      src={item.photo_back_url}
-                      className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
-                      onClick={() => setPreviewImage(item.photo_back_url)}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {previewImage && (
-              <div
-                className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
-                onClick={() => setPreviewImage(null)}
-              >
-                <img
-                  src={previewImage}
-                  className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl"
-                />
-              </div>
-            )}
-
-          </section>
-        </div>
-
-        <div className="grid gap-4 xl:grid-cols-2">
-          <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-            <h2 className="text-xl font-semibold text-white mb-4">Workout Diario</h2>
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-wrap items-center gap-2">
+              <div>
+                <div className="mb-4 flex items-center gap-3">
                   <button
-                    onClick={() => setCalendarView('week')}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${calendarView === 'week' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                    type="button"
+                    onClick={() => setProgressTab('silhouette')}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'silhouette' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
                   >
-                    Semana
+                    Silueta
                   </button>
                   <button
-                    onClick={() => setCalendarView('month')}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${calendarView === 'month' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                    type="button"
+                    onClick={() => setProgressTab('chart')}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'chart' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
                   >
-                    Mes
+                    Gráfico
                   </button>
                 </div>
-                <p className="text-sm text-slate-400">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faPencil}></FontAwesomeIcon>.</p>
+
+                <div>
+                  {progressTab === 'silhouette' ? (
+                    <div className="space-y-4">
+                      <BodySilhouette genre={genre} cadera={Number(progreso[0]?.hips || progreso[0]?.cadera)} cintura={Number(progreso[0]?.waist || progreso[0]?.cintura)} piernas={Number(progreso[0]?.legs || progreso[0]?.piernas)} brazos={Number(progreso[0]?.arms || progreso[0]?.brazos)} />
+                    </div>
+                  ) : (
+                    <div className="w-full chart-div mt-10">
+                      <div className="rounded-3xl bg-slate-950/90 border border-slate-800 p-4">
+                        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                          <div>
+                            <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Evolución biométrica</p>
+                            <h3 className="text-lg font-semibold text-white">Peso y medidas</h3>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <label htmlFor="chart-limit" className="text-xs uppercase tracking-[0.25em] text-slate-400">Últimos</label>
+                            <select
+                              id="chart-limit"
+                              value={chartLimit}
+                              onChange={(e) => setChartLimit(Number(e.target.value))}
+                              className="rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-[#f1b80c]"
+                            >
+                              {[5, 10, 15, 20, 30, 0].map((limit) => (
+                                <option key={limit} value={limit}>
+                                  {limit === 0 ? 'Todos' : limit}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        <div className="h-[320px] w-full">
+                          <Line
+                            data={chartData}
+                            options={chartOptions}
+                            height={320}
+                            style={{ width: '100%', display: 'block' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+              <h2 className="items-center text-xl font-semibold text-white mb-4">Datos Iniciales</h2>
+              <div className=" grid grid-cols-3 text-slate-300 mb-4">
+                {[
+                  { label: "Edad", value: profile?.age },
+                  { label: "Altura", value: profile?.height },
+                  { label: "Peso", value: profile?.initial_weight },
+                  { label: "Objetivo", value: profile?.goal?.replace('_', ' ').toUpperCase() },
+                  { label: "Días a Entrenar", value: profile?.training_days },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className={`rounded-lg p-2 bg-slate-900/60 border border-slate-800 text-white justify-between items-center text-xs flex ${item.label === "Objetivo" ? 'col-span-2' : 'col-span-1'}`}
+                  >
+                    <span className="text-slate-400">{item.label}</span>
+                    <span className="font-semibold">{item.value}</span>
+                  </div>
+                ))}
               </div>
 
-              {calendarView === 'week' ? (
-                <div className="grid grid-cols-7 gap-2 rounded-2xl bg-slate-900/80 p-2">
-                  {weekDays.map((day) => {
-                    const isSelected = day.isSame(selectedDate, 'day');
-                    return (
-                      <button
-                        key={day.format('YYYY-MM-DD')}
-                        type="button"
-                        onClick={() => selectWeekDay(day)}
-                        className={`rounded-2xl border p-2 text-center transition ${isSelected ? 'border-[#f1b80c] bg-[#f1b80c] text-slate-950 shadow-lg' : 'border-slate-800 bg-[#111827] text-slate-300 hover:border-slate-500 hover:bg-slate-800'}`}
-                      >
-                        <div className="text-[10px] uppercase tracking-[0.25em] text-slate-400">{weekDayLabels[day.isoWeekday() - 1]}</div>
-                        <div className="mt-1 text-base font-semibold">{day.format('D')}</div>
-                        <div className="mt-1 text-[10px] text-slate-500">{day.format('ddd')}</div>
-                      </button>
-                    );
-                  })}
+
+              <div className="flex">
+                <h2 className="text-left text-xl font-semibold text-white mb-4 mt-1">Datos Biometricos</h2>
+                <div className="justify-end flex-grow flex">
+                  <button
+                    onClick={() => setShowProgressModal(true)}
+                    className="text-nowrap flex items-center gap-2 bg-yellow-400 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 hover:bg-yellow-200 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
+                  >
+                    Agregar Datos <FontAwesomeIcon icon={faAdd} />
+                  </button>
                 </div>
-              ) : (
-                <div className="rounded-2xl bg-slate-900/80 p-3">
-                  <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-xs text-slate-400">{selectedDate.format('MMMM YYYY')}</p>
-                      <h3 className="text-lg font-semibold text-white">Calendario mensual</h3>
+              </div>
+              <div className="max-h-[395px] overflow-y-auto space-y-3 pr-1">
+                {progreso.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className={`rounded-xl p-3 border ${index === 0
+                      ? 'bg-yellow-400 text-black border-black'
+                      : 'bg-slate-800 border-yellow-400 text-white'
+                      }`}
+                  >
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <p><span className="font-semibold">Cintura:</span> {item.hips}</p>
+                      <p><span className="font-semibold">Cadera:</span> {item.waist}</p>
+                      <p><span className="font-semibold">Brazos:</span> {item.arms}</p>
+                      <p><span className="font-semibold">Piernas:</span> {item.legs}</p>
+                      <p className="col-span-2">
+                        <span className="font-semibold">Fecha:</span> {moment(item.log_date).format('DD-MM-YYYY')}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedDate((prev) => prev.clone().subtract(1, 'month'))}
-                        className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
-                      >
-                        ‹
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedDate((prev) => prev.clone().add(1, 'month'))}
-                        className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
-                      >
-                        ›
-                      </button>
+
+                    <div className="flex gap-2 mt-2">
+                      <img
+                        src={item.photo_front_url}
+                        className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
+                        onClick={() => setPreviewImage(item.photo_front_url)}
+                      />
+
+                      <img
+                        src={item.photo_back_url}
+                        className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
+                        onClick={() => setPreviewImage(item.photo_back_url)}
+                      />
                     </div>
                   </div>
-                  <div className="grid grid-cols-7 gap-1 text-center text-[10px] uppercase tracking-[0.2em] text-slate-500">
-                    {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'].map((label) => (
-                      <div key={label}>{label}</div>
-                    ))}
+                ))}
+              </div>
+
+              {previewImage && (
+                <div
+                  className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+                  onClick={() => setPreviewImage(null)}
+                >
+                  <img
+                    src={previewImage}
+                    className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl"
+                  />
+                </div>
+              )}
+
+            </section>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+              <h2 className="text-xl font-semibold text-white mb-4">Workout Diario</h2>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => setCalendarView('week')}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${calendarView === 'week' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                    >
+                      Semana
+                    </button>
+                    <button
+                      onClick={() => setCalendarView('month')}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${calendarView === 'month' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                    >
+                      Mes
+                    </button>
                   </div>
-                  <div className="mt-2 grid grid-cols-7 gap-1">
-                    {monthGrid.map((day) => {
-                      const isCurrentMonth = day.month() === monthStart.month();
+                  <p className="text-sm text-slate-400">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faPencil}></FontAwesomeIcon>.</p>
+                </div>
+
+                {calendarView === 'week' ? (
+                  <div className="grid grid-cols-7 gap-2 rounded-2xl bg-slate-900/80 p-2">
+                    {weekDays.map((day) => {
                       const isSelected = day.isSame(selectedDate, 'day');
                       return (
                         <button
                           key={day.format('YYYY-MM-DD')}
                           type="button"
-                          onClick={() => selectMonthDay(day)}
-                          className={`rounded-2xl border p-2 text-left transition ${isSelected ? 'border-[#f1b80c] bg-[#f1b80c] text-slate-950 shadow-lg' : isCurrentMonth ? 'border-slate-800 bg-[#111827] text-slate-200 hover:border-slate-500 hover:bg-slate-800' : 'border-transparent bg-slate-950/40 text-slate-600'}`}
+                          onClick={() => selectWeekDay(day)}
+                          className={`rounded-2xl border p-2 text-center transition ${isSelected ? 'border-[#f1b80c] bg-[#f1b80c] text-slate-950 shadow-lg' : 'border-slate-800 bg-[#111827] text-slate-300 hover:border-slate-500 hover:bg-slate-800'}`}
                         >
-                          <div className="text-sm font-semibold">{day.format('D')}</div>
-                          {day.isSame(moment(), 'day') && <div className="mt-1 text-[10px] uppercase text-slate-400">Hoy</div>}
+                          <div className="text-[10px] uppercase tracking-[0.25em] text-slate-400">{weekDayLabels[day.isoWeekday() - 1]}</div>
+                          <div className="mt-1 text-base font-semibold">{day.format('D')}</div>
+                          <div className="mt-1 text-[10px] text-slate-500">{day.format('ddd')}</div>
                         </button>
                       );
                     })}
                   </div>
-                </div>
-              )}
-
-              <div className="rounded-3xl bg-slate-900/70 p-4 text-slate-300">
-                <div className="mb-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-400">Rutinas para el día</p>
-                    <h3 className="text-lg font-semibold text-white">{selectedDate.format('dddd, D [de] MMMM')}</h3>
-                  </div>
-                </div>
-                {filteredWorkouts.length === 0 ? (
-                  <p className="text-sm text-slate-400">No hay rutinas asignadas para este día.</p>
                 ) : (
-                  <div className="grid gap-3">
-                    {filteredWorkouts.map((item) => (
-                      <div key={item.id || `${item.workout_id}-${item.day_of_week}-${item.title || item.name || item.workout_name}`}
-                        className="rounded-[32px] border border-[#f1b80c] bg-gradient-to-br from-slate-950 via-slate-900 to-[#111827] p-4 shadow-[0_16px_48px_rgba(241,184,12,0.18)] "
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="flex flex-col gap-1 workout-title">
-                            <h4 className="text-lg font-bold text-white">{item.title || item.name || item.workout_name || `Rutina ${item.workout_id || item.id}`}</h4>
-                            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#f1b80c]">Sets: {item.sets || '—'} Reps: {item.reps_text} {item.client_effort_notes}</p>
-                            {item.note && <span className='font-bold text-white'>Notas: <span className='font-normal text-slate-200'>{item.note}</span></span>}
-                          </div>
-                          <div className="rounded-2xl bg-slate-950/70 px-3 py-2 text-right text-sm font-semibold text-slate-300 flex">
-                            <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Video' onClick={() => handleExercisePreview(item.exercise_id)}><FontAwesomeIcon icon={faVideo} className="text-black"></FontAwesomeIcon></button>
-                            <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Nota' onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), item.title || item.name || item.workout_name, item.note)}><FontAwesomeIcon icon={faPencil} className='text-black'></FontAwesomeIcon></button>
-                          </div>
-                        </div>
-                        {item.description && <p className="mt-4 text-sm leading-6 text-slate-300">{item.description}</p>}
+                  <div className="rounded-2xl bg-slate-900/80 p-3">
+                    <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-xs text-slate-400">{selectedDate.format('MMMM YYYY')}</p>
+                        <h3 className="text-lg font-semibold text-white">Calendario mensual</h3>
                       </div>
-                    ))}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDate((prev) => prev.clone().subtract(1, 'month'))}
+                          className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                        >
+                          ‹
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDate((prev) => prev.clone().add(1, 'month'))}
+                          className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                        >
+                          ›
+                        </button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-7 gap-1 text-center text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                      {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'].map((label) => (
+                        <div key={label}>{label}</div>
+                      ))}
+                    </div>
+                    <div className="mt-2 grid grid-cols-7 gap-1">
+                      {monthGrid.map((day) => {
+                        const isCurrentMonth = day.month() === monthStart.month();
+                        const isSelected = day.isSame(selectedDate, 'day');
+                        return (
+                          <button
+                            key={day.format('YYYY-MM-DD')}
+                            type="button"
+                            onClick={() => selectMonthDay(day)}
+                            className={`rounded-2xl border p-2 text-left transition ${isSelected ? 'border-[#f1b80c] bg-[#f1b80c] text-slate-950 shadow-lg' : isCurrentMonth ? 'border-slate-800 bg-[#111827] text-slate-200 hover:border-slate-500 hover:bg-slate-800' : 'border-transparent bg-slate-950/40 text-slate-600'}`}
+                          >
+                            <div className="text-sm font-semibold">{day.format('D')}</div>
+                            {day.isSame(moment(), 'day') && <div className="mt-1 text-[10px] uppercase text-slate-400">Hoy</div>}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
-              </div>
-            </div>
-          </section>
 
-          <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-            <h2 className="text-xl font-semibold text-white mb-4">Pagos</h2>
-            <div className="space-y-3 text-slate-300">
-              <div className="flex items-center gap-3 mb-2">
-                <button
-                  onClick={() => setShowPaymentModal(true)}
-                  className='bg-yellow-400 hover:bg-yellow-200 text-black rounded-2xl p-2 font-semibold'
-                >
-                  Registrar Comprobante <FontAwesomeIcon icon={faPlus}></FontAwesomeIcon>
-                </button>
-                <span className="ml-2 text-sm text-slate-400">Sube tu comprobante de pago para que tu entrenador pueda revisarlo.</span>
-              </div>
-              <div>
-                {loadingPayments ? (
-                  <p className="text-sm text-slate-400">Cargando pagos...</p>
-                ) : payments.length === 0 ? (
-                  <p className="text-sm text-slate-400">No se han enviado comprobantes todavía.</p>
-                ) : (
-                  <div className="max-h-[450px] overflow-y-auto space-y-3 pr-1">
-                    {payments.map((p, idx) => {
-                      const isFirst = idx === 0;
-                      const dateText = (p.payment_date || p.paymentDate) ? moment(p.payment_date || p.paymentDate).format('DD/MM/YYYY') : '—';
-                      const amount = Number(p.amount || p.total || 0).toFixed(2);
-                      const method = p.payment_method || p.paymentMethod || '—';
-                      const period = p.period_covered || p.period_cover || p.periodCovered || '—';
-                      const statusText = p.status || '—';
-                      const receiptUrl = p.receipt_image_url || p.receipt_image || p.receiptImageUrl || '';
-                      const clientLabel = (p.client_name || p.name) ? `${p.client_name || p.name}` : (p.client_email || p.email || '—');
-                      return (
-                        <div
-                          key={p.id || `${p.client_id || p.clientId}-${idx}`}
-                          className='rounded-xl p-3 border bg-slate-800 border-yellow-400 text-white'
+                <div className="rounded-3xl bg-slate-900/70 p-4 text-slate-300">
+                  <div className="mb-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-slate-400">Rutinas para el día</p>
+                      <h3 className="text-lg font-semibold text-white">{selectedDate.format('dddd, D [de] MMMM')}</h3>
+                    </div>
+                  </div>
+                  {filteredWorkouts.length === 0 ? (
+                    <p className="text-sm text-slate-400">No hay rutinas asignadas para este día.</p>
+                  ) : (
+                    <div className="grid gap-3">
+                      {filteredWorkouts.map((item) => (
+                        <div key={item.id || `${item.workout_id}-${item.day_of_week}-${item.title || item.name || item.workout_name}`}
+                          className="rounded-[32px] border border-[#f1b80c] bg-gradient-to-br from-slate-950 via-slate-900 to-[#111827] p-4 shadow-[0_16px_48px_rgba(241,184,12,0.18)] "
                         >
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <p><span className="font-semibold">Fecha:</span> {dateText}</p>
-                            <p className="text-right"><span className="font-semibold">Monto:</span> ${amount}</p>
-                            <p><span className="font-semibold">Método:</span> {method}</p>
-                            <p className="text-right"><span className="font-semibold">Periodo:</span> {period}</p>
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-col gap-1 workout-title">
+                              <h4 className="text-lg font-bold text-white">{item.title || item.name || item.workout_name || `Rutina ${item.workout_id || item.id}`}</h4>
+                              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#f1b80c]">Sets: {item.sets || '—'} Reps: {item.reps_text} {item.client_effort_notes}</p>
+                              {item.note && <span className='font-bold text-white'>Notas: <span className='font-normal text-slate-200'>{item.note}</span></span>}
+                            </div>
+                            <div className="rounded-2xl bg-slate-950/70 px-3 py-2 text-right text-sm font-semibold text-slate-300 flex">
+                              <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Video' onClick={() => handleExercisePreview(item.exercise_id)}><FontAwesomeIcon icon={faVideo} className="text-black"></FontAwesomeIcon></button>
+                              <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Nota' onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), item.title || item.name || item.workout_name, item.note)}><FontAwesomeIcon icon={faPencil} className='text-black'></FontAwesomeIcon></button>
+                            </div>
                           </div>
+                          {item.description && <p className="mt-4 text-sm leading-6 text-slate-300">{item.description}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
 
-                          <div className="flex gap-2 mt-3 items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              {receiptUrl ? (
-                                <img
-                                  src={receiptUrl}
-                                  alt="comprobante"
-                                  className="h-14 w-20 object-cover rounded-md cursor-pointer hover:opacity-80"
-                                  onClick={() => setReceiptPreviewImage(receiptUrl)}
-                                />
-                              ) : (
-                                <div className="h-14 w-20 rounded-md bg-slate-900/50 flex items-center justify-center text-slate-500">—</div>
-                              )}
+            <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+              <h2 className="text-xl font-semibold text-white mb-4">Pagos</h2>
+              <div className="space-y-3 text-slate-300">
+                <div className="flex items-center gap-3 mb-2">
+                  <button
+                    onClick={() => setShowPaymentModal(true)}
+                    className='bg-yellow-400 hover:bg-yellow-200 text-black rounded-2xl p-2 font-semibold'
+                  >
+                    Registrar Comprobante <FontAwesomeIcon icon={faPlus}></FontAwesomeIcon>
+                  </button>
+                  <span className="ml-2 text-sm text-slate-400">Sube tu comprobante de pago para que tu entrenador pueda revisarlo.</span>
+                </div>
+                <div>
+                  {loadingPayments ? (
+                    <p className="text-sm text-slate-400">Cargando pagos...</p>
+                  ) : payments.length === 0 ? (
+                    <p className="text-sm text-slate-400">No se han enviado comprobantes todavía.</p>
+                  ) : (
+                    <div className="max-h-[450px] overflow-y-auto space-y-3 pr-1">
+                      {payments.map((p, idx) => {
+                        const isFirst = idx === 0;
+                        const dateText = (p.payment_date || p.paymentDate) ? moment(p.payment_date || p.paymentDate).format('DD/MM/YYYY') : '—';
+                        const amount = Number(p.amount || p.total || 0).toFixed(2);
+                        const method = p.payment_method || p.paymentMethod || '—';
+                        const period = p.period_covered || p.period_cover || p.periodCovered || '—';
+                        const statusText = p.status || '—';
+                        const receiptUrl = p.receipt_image_url || p.receipt_image || p.receiptImageUrl || '';
+                        const clientLabel = (p.client_name || p.name) ? `${p.client_name || p.name}` : (p.client_email || p.email || '—');
+                        return (
+                          <div
+                            key={p.id || `${p.client_id || p.clientId}-${idx}`}
+                            className='rounded-xl p-3 border bg-slate-800 border-yellow-400 text-white'
+                          >
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <p><span className="font-semibold">Fecha:</span> {dateText}</p>
+                              <p className="text-right"><span className="font-semibold">Monto:</span> ${amount}</p>
+                              <p><span className="font-semibold">Método:</span> {method}</p>
+                              <p className="text-right"><span className="font-semibold">Periodo:</span> {period}</p>
+                            </div>
 
-                              <div className="text-slate-300 text-sm">
-                                <p className="font-semibold text-white">{clientLabel}</p>
-                                {(p.client_email || p.email) && <p className="text-xs text-gray-400">{p.client_email || p.email}</p>}
+                            <div className="flex gap-2 mt-3 items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                {receiptUrl ? (
+                                  <img
+                                    src={receiptUrl}
+                                    alt="comprobante"
+                                    className="h-14 w-20 object-cover rounded-md cursor-pointer hover:opacity-80"
+                                    onClick={() => setReceiptPreviewImage(receiptUrl)}
+                                  />
+                                ) : (
+                                  <div className="h-14 w-20 rounded-md bg-slate-900/50 flex items-center justify-center text-slate-500">—</div>
+                                )}
+
+                                <div className="text-slate-300 text-sm">
+                                  <p className="font-semibold text-white">{clientLabel}</p>
+                                  {(p.client_email || p.email) && <p className="text-xs text-gray-400">{p.client_email || p.email}</p>}
+                                </div>
+                              </div>
+
+                              <div className="text-right text-xs">
+                                <p className="col-span-2"><span className="font-semibold"></span>{renderStatusBadge(statusText)}</p>
                               </div>
                             </div>
-
-                            <div className="text-right text-xs">
-                              <p className="col-span-2"><span className="font-semibold"></span>{renderStatusBadge(statusText)}</p>
-                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                {receiptPreviewImage && (
+                  <div
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+                    onClick={() => setReceiptPreviewImage(null)}
+                  >
+                    <img src={receiptPreviewImage} className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" />
                   </div>
                 )}
               </div>
-              {receiptPreviewImage && (
-                <div
-                  className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
-                  onClick={() => setReceiptPreviewImage(null)}
-                >
-                  <img src={receiptPreviewImage} className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" />
-                </div>
-              )}
-            </div>
-          </section>
-        </div>
-      </>
-    );
-  };
+            </section>
+          </div>
+        </>
+      );
+    };
+  }
 
   // ✅ Función para manejar la navegación + cierre del menú móvil
   const handleMenuNavigation = (item) => {
