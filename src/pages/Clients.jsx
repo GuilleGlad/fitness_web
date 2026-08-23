@@ -142,6 +142,94 @@ const ClientForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel,
   );
 };
 
+/* ───────── Trainer creation (copiado de Trainers.jsx) ───────── */
+const initialTrainerForm = {
+  name: '',
+  email: '',
+  password: '',
+  role: 'Trainer',
+  genre: '',
+  phone: '',
+  picture: '/images/avatar.png',
+  status: 'Activo',
+  deleted: 0,
+};
+
+const TrainerForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel, onOpenLibrary, isSubmitting }) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-5">
+      {/* Credenciales */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="block space-y-2 text-sm text-slate-200">
+          Email
+          <input name="email" value={form.email} type="email" placeholder="entrenador@fit.com" onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+        </label>
+        <label className="block space-y-2 text-sm text-slate-200">
+          Contraseña
+          <input name="password" value={form.password} type="password" placeholder={editingId ? "Dejar vacío para mantener actual" : "••••••••"} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+        </label>
+      </div>
+
+      {/* Datos personales */}
+      <label className="block space-y-2 text-sm text-slate-200">
+        Nombre completo
+        <input name="name" value={form.name} type="text" placeholder="Ej. Carlos García" onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+      </label>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <label className="block space-y-2 text-sm text-slate-200">
+          Género
+          <select name="genre" value={form.genre} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
+            <option value="" disabled className="bg-[#0f172a]">Seleccione</option>
+            <option value="m" className="bg-[#0f172a]">Masculino</option>
+            <option value="f" className="bg-[#0f172a]">Femenino</option>
+            <option value="n" className="bg-[#0f172a]">Prefiere no decirlo</option>
+          </select>
+        </label>
+
+        <label className="block space-y-2 text-sm text-slate-200">
+          Teléfono
+          <input name="phone" value={form.phone} type="tel" placeholder="+34 600 000 000" onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+        </label>
+
+        <label className="hidden space-y-2 text-sm text-slate-200">
+          Rol
+          <input name="role" value={form.role} readOnly disabled className="w-full rounded-3xl border border-slate-700 bg-[#1e293b] px-4 py-3 text-slate-400 cursor-not-allowed" />
+        </label>
+      </div>
+
+      {/* Foto de perfil - solo en edición */}
+      {editingId && (
+        <label className="block space-y-2 text-sm text-slate-200">
+          Foto de perfil
+          <input name="picture" value={form.picture} type="url" readOnly placeholder="https://ejemplo.com/foto.jpg" onChange={handleChange} className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+          {form.picture && form.picture !== '/images/avatar.png' && <img src={form.picture} alt="preview" className="mt-2 w-full rounded-lg object-cover border border-slate-700" />}
+          <div className="flex gap-3 mt-2">
+            <button type="button" onClick={() => onOpenLibrary((url) => setForm((p) => ({ ...p, picture: url })))} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">📚 Biblioteca</button>
+            <button type="button" onClick={() => setForm((p) => ({ ...p, picture: initialForm.picture }))} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">🗑️ Limpiar</button>
+          </div>
+        </label>
+      )}
+
+      <div className="grid gap-3 pt-2">
+        <button type="submit" disabled={isSubmitting} className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-60">
+          {isSubmitting ? (editingId ? 'Guardando...' : 'Creando...') : (editingId ? 'Guardar cambios' : 'Crear entrenador')}
+        </button>
+        {editingId && (
+          <button type="button" onClick={onCancel} disabled={isSubmitting} className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60">
+            Cancelar edición
+          </button>
+        )}
+      </div>
+    </form>
+  );
+};
+
 /* ───────── Main Component ───────── */
 const Clients = () => {
   const navigate = useNavigate();
@@ -173,6 +261,16 @@ const Clients = () => {
   const [loadingNoteModal, setLoadingNoteModal] = useState(false);
   const [savingNoteFeedback, setSavingNoteFeedback] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /* ── Crear Entrenador (solo Administrador) ── */
+  const [showNewTrainerModal, setShowNewTrainerModal] = useState(false);
+  const [trainerForm, setTrainerForm] = useState(initialTrainerForm);
+  const [isSubmittingTrainer, setIsSubmittingTrainer] = useState(false);
+  const [showTrainerLibraryModal, setShowTrainerLibraryModal] = useState(false);
+  const [trainerLibraryCallback, setTrainerLibraryCallback] = useState(null);
+
+  /* ── Eliminación permanente de usuarios ya eliminados lógicamente (solo Administrador) ── */
+  const [isPurging, setIsPurging] = useState(false);
 
   const dayOptions = [
     { key: 'L', label: 'Lunes' },
@@ -490,6 +588,66 @@ const Clients = () => {
   const cancelEdit = () => { setForm(initialForm); setEditingId(null); setShowEditModal(false); };
   const cancelNew = () => { setForm(initialForm); setEditingId(null); setShowNewModal(false); };
 
+  /* ── Crear Entrenador (solo Administrador) ── */
+  const handleNewTrainer = () => { setTrainerForm(initialTrainerForm); setShowNewTrainerModal(true); };
+  const cancelNewTrainer = () => { setTrainerForm(initialTrainerForm); setShowNewTrainerModal(false); };
+
+  const openTrainerLibraryPicker = (callback) => {
+    setTrainerLibraryCallback(() => callback);
+    setShowTrainerLibraryModal(true);
+  };
+
+  const closeTrainerLibraryModal = () => {
+    setShowTrainerLibraryModal(false);
+    setTrainerLibraryCallback(null);
+  };
+
+  const handleSelectTrainerLibraryItem = (media) => {
+    const items = Array.isArray(media) ? media : [media];
+    if (trainerLibraryCallback && items.length > 0 && items[0]?.url) {
+      setTrainerForm((prev) => ({ ...prev, picture: items[0].url }));
+      trainerLibraryCallback(items[0].url);
+    }
+    closeTrainerLibraryModal();
+  };
+
+  const handleTrainerSubmit = async (e) => {
+    e.preventDefault();
+
+    // Evita doble registro si se hace doble click en "Crear entrenador".
+    if (isSubmittingTrainer) return;
+
+    if (!trainerForm.name.trim() || !trainerForm.email.trim()) return toast.error('Nombre y email son obligatorios.');
+    if (!trainerForm.password) return toast.error('La contraseña es obligatoria para crear un entrenador.');
+
+    const token = localStorage.getItem('token');
+    if (!token) return toast.error('Token no disponible.');
+
+    const payload = {
+      name: trainerForm.name.trim(),
+      email: trainerForm.email.trim(),
+      password: trainerForm.password,
+      role: 'Trainer',
+      genre: trainerForm.genre.trim(),
+      phone: trainerForm.phone.trim(),
+      picture: trainerForm.picture.trim(),
+      status: trainerForm.status,
+    };
+    const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
+
+    setIsSubmittingTrainer(true);
+    try {
+      await axios.post(`${apiUrl}/auth/register`, payload, config);
+      toast.success('Entrenador creado correctamente.');
+      cancelNewTrainer();
+    } catch (err) {
+      console.error(err);
+      toast.error('No se pudo crear el entrenador. Verifique los datos.');
+    } finally {
+      setIsSubmittingTrainer(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -563,6 +721,36 @@ const Clients = () => {
     } catch { toast.error('No se pudo restaurar el cliente.'); }
   };
 
+  /* ── Eliminación permanente de usuarios ya eliminados lógicamente (solo Administrador) ── */
+  const handlePurgeDeleted = () => {
+    const deletedCount = clients.filter((c) => c.deleted).length;
+
+    if (deletedCount === 0) {
+      toast('No hay usuarios eliminados para purgar.');
+      return;
+    }
+
+    yesNo(
+      `Se eliminarán PERMANENTEMENTE ${deletedCount} usuario${deletedCount === 1 ? '' : 's'} que ya ${deletedCount === 1 ? 'está' : 'están'} en la papelera. Esta acción no se puede deshacer. ¿Continuar?`,
+      async () => {
+        const token = localStorage.getItem('token');
+        if (!token) return toast.error('Token no disponible.');
+
+        setIsPurging(true);
+        try {
+          await axios.delete(`${apiUrl}/admin/users/purge`, { headers: { Authorization: `Bearer ${token}` } });
+          setClients((prev) => prev.filter((c) => !c.deleted));
+          toast.success('Usuarios eliminados permanentemente.');
+        } catch (err) {
+          console.error(err);
+          toast.error('No se pudo completar la eliminación permanente.');
+        } finally {
+          setIsPurging(false);
+        }
+      }
+    );
+  };
+
   const yesNo = (msg, onConfirm) => {
     toast((t) => (
       <div className="flex items-center gap-3 px-4 py-2">
@@ -588,9 +776,20 @@ const Clients = () => {
             <h1 className="mt-3 text-3xl font-bold md:text-4xl text-white">Gestión de usuarios</h1>
             <p className="mt-2 max-w-xl text-sm text-slate-400">Crea, modifica o elimina usuarios con nombre, email y estado.</p>
           </div>
-          <button onClick={() => navigate('/dashboard')} className="inline-flex items-center justify-center rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]">
-            Volver al dashboard
-          </button>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            {roleValue === '1' && (
+              <button
+                onClick={handlePurgeDeleted}
+                disabled={isPurging}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-red-600 bg-red-600/10 px-5 py-3 text-sm font-semibold text-red-400 transition hover:bg-red-600/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isPurging ? 'Eliminando...' : '🗑️ Vaciar papelera'}
+              </button>
+            )}
+            <button onClick={() => navigate('/dashboard')} className="inline-flex items-center justify-center rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]">
+              Volver al dashboard
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -611,9 +810,16 @@ const Clients = () => {
         <section className="overflow-hidden rounded-[40px] border border-slate-800 bg-[#141820]">
           <div className="flex items-center justify-between px-6 py-5">
             <h2 className="text-xl font-semibold text-white">Lista de usuarios</h2>
-            <button onClick={handleNewClient} disabled={isSubmitting} className="rounded-full bg-[#f1b80c] px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-60">
-              + Nuevo cliente
-            </button>
+            <div className="flex gap-2">
+              {roleValue === '1' && (
+                <button onClick={handleNewTrainer} disabled={isSubmittingTrainer} className="rounded-full border border-[#f1b80c] bg-transparent px-5 py-2.5 text-sm font-semibold text-[#f1b80c] transition hover:bg-[#f1b80c]/10 disabled:cursor-not-allowed disabled:opacity-60">
+                  + Nuevo entrenador
+                </button>
+              )}
+              <button onClick={handleNewClient} disabled={isSubmitting} className="rounded-full bg-[#f1b80c] px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-60">
+                + Nuevo cliente
+              </button>
+            </div>
           </div>
 
           {/* Desktop Table */}
@@ -999,6 +1205,20 @@ const Clients = () => {
       <ModalOverlay isOpen={showNewModal} onClose={cancelNew} title="Nuevo cliente">
         <ClientForm form={form} setForm={setForm} editingId={null} initialForm={initialForm} onSubmit={handleSubmit} onCancel={cancelNew} onOpenLibrary={openLibraryPicker} isSubmitting={isSubmitting} />
       </ModalOverlay>
+
+      {/* New Trainer Modal (solo Administrador) */}
+      <ModalOverlay isOpen={showNewTrainerModal} onClose={cancelNewTrainer} title="Nuevo entrenador">
+        <TrainerForm form={trainerForm} setForm={setTrainerForm} editingId={null} initialForm={initialTrainerForm} onSubmit={handleTrainerSubmit} onCancel={cancelNewTrainer} onOpenLibrary={openTrainerLibraryPicker} isSubmitting={isSubmittingTrainer} />
+      </ModalOverlay>
+
+      {/* Trainer Library Modal */}
+      {showTrainerLibraryModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-6xl">
+            <TrainerLibrary isModal selectionMode="single" onSelectMedia={handleSelectTrainerLibraryItem} onClose={closeTrainerLibraryModal} />
+          </div>
+        </div>
+      )}
 
       {/* Library Modal */}
       {isLibraryOpen && (
