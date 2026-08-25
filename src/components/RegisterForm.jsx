@@ -162,26 +162,10 @@ export default function RegisterForm() {
     };
 
     const registroSuccessNotif = (text) => {
-        toast(text,
-            {
-                icon: '👍',
-                style: {
-                    color: 'white',
-                    background: 'green'
-                }
-            }
-        );
+        toast.success(text);
     }
     const registroErrorNotif = (text) => {
-        toast(text,
-            {
-                icon: '👎',
-                style: {
-                    color: 'white',
-                    background: 'red'
-                }
-            }
-        )
+        toast.error(text);
     }
     const handleChange = (e) => {
         const { name, value } = e.target;

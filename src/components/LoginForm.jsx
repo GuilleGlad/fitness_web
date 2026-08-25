@@ -101,26 +101,10 @@ const LoginForm = () => {
     }, [])
 
     const loginSuccessNotif = () => {
-        toast("Login Exitoso, redirigiendo...",
-            {
-                icon: '👍',
-                style: {
-                    color: 'white',
-                    background: 'green'
-                }
-            }
-        );
+        toast.success("Login Exitoso, redirigiendo...");
     }
     const loginErrorNotif = () => {
-        toast("Error de Login.",
-            {
-                icon: '👎',
-                style: {
-                    color: 'white',
-                    background: 'red'
-                }
-            }
-        )
+        toast.error("Error de Login.");
     }
     const isServerOnline = useServerStatus(apiUrl + "/testApi", 5000, setServerStatusStr);
     const navigate = useNavigate();

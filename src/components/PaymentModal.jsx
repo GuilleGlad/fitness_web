@@ -5,7 +5,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 
-const PaymentModal = ({ isOpen, onClose, clientId, trainerId }) => {
+const PaymentModal = ({ isOpen, onClose, clientId, trainerId, paymentCount, onPaymentDayReceived }) => {
   const apiUrl = process.env.REACT_APP_API_URL;
   const token = localStorage.getItem('token');
 
@@ -22,6 +22,7 @@ const PaymentModal = ({ isOpen, onClose, clientId, trainerId }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [paymentDay, setPaymentDay] = useState(null);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -37,6 +38,7 @@ const PaymentModal = ({ isOpen, onClose, clientId, trainerId }) => {
       });
       setErrors({});
       setShowConfirmation(false);
+      setPaymentDay(null);
     }
   }, [isOpen, clientId, trainerId]);
 
@@ -97,6 +99,11 @@ const PaymentModal = ({ isOpen, onClose, clientId, trainerId }) => {
       const response = await axios.post(`${apiUrl}/payments`, formDataToSend, config);
       
       if (response.status === 200 || response.status === 201) {
+        const receivedPaymentDay = response.data?.payment_day ?? response.data?.payment?.payment_day;
+        setPaymentDay(receivedPaymentDay);
+        if (receivedPaymentDay !== null && receivedPaymentDay !== undefined && receivedPaymentDay !== '') {
+          onPaymentDayReceived?.(receivedPaymentDay);
+        }
         setShowConfirmation(true);
         // Don't close immediately, show confirmation
       }
@@ -163,6 +170,11 @@ const PaymentModal = ({ isOpen, onClose, clientId, trainerId }) => {
               <p className="text-slate-300 mb-6 leading-relaxed">
                 Tu comprobante de pago ha sido registrado y está <strong className="text-[#f1b80c]">pendiente de revisión</strong> por nuestro equipo administrativo.
               </p>
+              {paymentDay !== null && paymentDay !== undefined && paymentDay !== '' && paymentCount == 0 && (
+                <p className="mb-6 rounded-xl border border-[#f1b80c]/50 bg-[#f1b80c]/10 p-4 text-sm font-semibold text-[#f1b80c]">
+                  Tu fecha de pago mensual será el día {paymentDay} de cada mes.
+                </p>
+              )}
               <div className="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50 text-left mb-6">
                 <p className="text-sm text-slate-400 mb-2">Detalles del registro:</p>
                 <ul className="space-y-1 text-slate-300 text-sm">
@@ -281,9 +293,9 @@ const PaymentModal = ({ isOpen, onClose, clientId, trainerId }) => {
               >
                 <option value="" disabled>Selecciona un período</option>
                 <option value="mensual">Mensual</option>
-                <option value="trimestral">Trimestral (3 meses)</option>
+                {/* <option value="trimestral">Trimestral (3 meses)</option>
                 <option value="semestral">Semestral (6 meses)</option>
-                <option value="anual">Anual (12 meses)</option>
+                <option value="anual">Anual (12 meses)</option> */}
                 {/* <option value="personalizado">Personalizado</option> */}
               </select>
               {errors.period_covered && <p className="text-red-400 text-[10px] mt-1">{errors.period_covered}</p>}

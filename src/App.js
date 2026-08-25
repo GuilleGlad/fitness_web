@@ -29,26 +29,34 @@ function App() {
     <>
       <Toaster
         containerStyle={{
-          zIndex: 9999 // For the container
+          zIndex: 9999
         }}
         position="top-center"
         toastOptions={{
-          duration: 4000,
-          style: {
-            color: 'white',
-            background: 'green',
-            zIndex: 9999 // For toasts
-          },
+          duration: 5000,
+          dismissOnClick: true,
+
           success: {
             icon: '👍',
+            style: {
+              color: 'black',
+              fontWeight: '600',
+              background: "linear-gradient(113deg, rgba(155,121,42,1) 0%, rgba(255,238,0,1) 50%, rgba(153,130,0,1) 100%)",
+              zIndex: 9999
+            }
           },
+
           error: {
             icon: '👎',
-            background: 'red',
-            zIndex: 9999 // For toasts
+            style: {
+              background: "linear-gradient(113deg, rgba(155,42,42,1) 0%, rgba(232,50,14,1) 51%, rgba(153,31,0,1) 100%)",
+              color: "white",
+              zIndex: 9999
+            }
           }
-        }
-        } />
+        }}
+      />
+
       <NotificationsProvider>
         <BrowserRouter>
           <Routes>

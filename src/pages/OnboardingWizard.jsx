@@ -53,26 +53,10 @@ const OnboardingWizard = () => {
     };
 
   const registroSuccessNotif = (text) => {
-    toast(text,
-      {
-        icon: '👍',
-        style: {
-          color: 'white',
-          background: 'green'
-        }
-      }
-    );
+    toast.success(text);
   }
   const registroErrorNotif = (text) => {
-    toast(text,
-      {
-        icon: '👎',
-        style: {
-          color: 'white',
-          background: 'red'
-        }
-      }
-    )
+    toast.error(text);
   }
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 4));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));

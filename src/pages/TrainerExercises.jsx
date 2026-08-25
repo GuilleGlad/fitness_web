@@ -208,7 +208,7 @@ const WorkoutModal = ({
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 const yesNo = (msg, onConfirm) => {
-    toast((t) => (
+    toast.success((t) => (
       <div className="flex items-center gap-3 px-4 py-2">
         <span>{msg}</span>
         <div className="flex gap-2">
@@ -689,7 +689,7 @@ const TrainerExercises = () => {
   };
 
   const yesNo = (msg, onConfirm) => {
-    toast((t) => (
+    toast.success((t) => (
       <div className="flex items-center gap-3 px-4 py-2">
         <span>{msg}</span>
         <div className="flex gap-2">

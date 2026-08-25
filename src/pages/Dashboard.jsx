@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { verifyToken } from '../utils/tokenUtils';
+import { getClientStatusLabel } from '../utils/clientUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
@@ -28,7 +29,7 @@ const ROLE_MAP = {
 
 const ROLE_MENUS = {
   1: [
-    'Perfil de Usuario',
+    '💻 Dashboard',
     '👤 Usuarios',
     '💪 Entrenadores',
     '🏋️ Ejercicios',
@@ -37,7 +38,7 @@ const ROLE_MENUS = {
     '⚙️ Ajustes',
   ],
   2: [
-    'Perfil de Usuario',
+    'Dashboard',
     'Clientes',
     'Ejercicios',
     'Fotos/Videos',
@@ -45,7 +46,7 @@ const ROLE_MENUS = {
     'Pagos',
   ],
   3: [
-    'Perfil de Usuario',
+    'Dashboard',
     'Rutinas',
     'Progreso',
     'Pagos'
@@ -57,7 +58,7 @@ const Dashboard = () => {
   // ✅ Estado para controlar el menú móvil
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const [selectedMenu, setSelectedMenu] = useState('Perfil de Usuario');
+  const [selectedMenu, setSelectedMenu] = useState('Dashboard');
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const roleValue = parseInt(localStorage.getItem('role'), 10) || 3;
@@ -82,6 +83,8 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState(moment().startOf('day'));
   const [progressTab, setProgressTab] = useState('silhouette');
   const [chartLimit, setChartLimit] = useState(10);
+  const [clients, setClients] = useState([]);
+  const [payDayMessage, setPayDayMessage] = useState("");
   const {
     notifications,
     showNotificationsModal,
@@ -115,6 +118,32 @@ const Dashboard = () => {
 
   }, [progreso]);
 
+
+  useEffect(() => {
+      if (profile?.payment_day) {
+        const fetch_payday_validation = async () => {
+          const config = {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            }
+          };
+          const p = await axios.get(`${apiUrl}/payments/client/${clientId}/check-payment-day`, config);
+          const d = p.data;
+          setPayDayMessage(d.message);
+          // console.log(d.message);
+          // console.log(d.payment_day);
+          // console.log(d.days_remaining);
+          // console.log(d.payment_exists);
+          // console.log(d.data);
+          if (d.days_remaining <= 5) {
+            toast.success(d.message);
+          }
+        }
+
+        // console.log(profile.payment_day);
+        fetch_payday_validation();
+      }
+  },[profile])
 
   // ✅ Cerrar menú al presionar Escape en móvil
   useEffect(() => {
@@ -158,6 +187,54 @@ const Dashboard = () => {
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => weekStart.clone().add(i, 'day')),
     [weekStart]
+  );
+
+  // Un pago "existe" en cuanto el cliente lo sube, pero queda en Pendiente
+  // hasta que el Trainer lo aprueba. No basta con que exista ALGÚN pago
+  // Aprobado en el historial: tiene que haber uno Aprobado dentro del
+  // ciclo/período actual (misma lógica de ciclo que usa el backend en
+  // checkPaymentDay, anclada a profile.payment_day).
+  const getPaymentCycleDate = (paymentDay, year, month) => {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    return new Date(year, month, Math.min(paymentDay, daysInMonth));
+  };
+
+  const hasApprovedPayment = useMemo(() => {
+    const paymentDay = Number(profile?.payment_day);
+    if (!Number.isInteger(paymentDay) || paymentDay < 1 || paymentDay > 31) {
+      return false;
+    }
+
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const currentCycleDate = getPaymentCycleDate(paymentDay, startOfDay.getFullYear(), startOfDay.getMonth());
+    const nextCycleDate = getPaymentCycleDate(paymentDay, startOfDay.getFullYear(), startOfDay.getMonth() + 1);
+    const previousCycleDate = getPaymentCycleDate(paymentDay, startOfDay.getFullYear(), startOfDay.getMonth() - 1);
+    const cycleStart = startOfDay >= currentCycleDate ? currentCycleDate : previousCycleDate;
+    const cycleEnd = startOfDay >= currentCycleDate ? nextCycleDate : currentCycleDate;
+
+    return payments.some((p) => {
+      if (p.status !== 'Aprobado') return false;
+      const paymentDate = new Date(p.payment_date);
+      return paymentDate >= cycleStart && paymentDate < cycleEnd;
+    });
+  }, [payments, profile?.payment_day]);
+
+  const PaymentGateMessage = () => (
+    <section className="rounded-3xl border border-dashed border-slate-700 bg-[#141820] p-6 shadow-xl w-full flex flex-col items-center justify-center text-center gap-2 min-h-[180px]">
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c]">Sección bloqueada</p>
+      <p className="max-w-sm text-sm text-slate-400">
+        Esta sección se habilita cuando tu entrenador aprueba el pago de tu mensualidad correspondiente al período actual.
+      </p>
+      <button
+        hidden
+        type="button"
+        onClick={() => setShowPaymentModal(true)}
+        className="mt-2 rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-[#d69e2e]"
+      >
+        Registrar comprobante
+      </button>
+    </section>
   );
 
   const monthStart = useMemo(() => selectedDate.clone().startOf('month'), [selectedDate]);
@@ -365,8 +442,37 @@ const Dashboard = () => {
       }
     }
 
+    const fetchClients = async () => {
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+        const res = await axios.get(`${apiUrl}/admin/clients`, config);
+        const list = res.data?.clientes || res.data || [];
+        setClients(
+          list.map((item) => ({
+            ...item,
+            id: item.user_id ?? item.id,
+            name: item.name,
+            email: item.email,
+            password: item.password || '',
+            genre: item.genre || '',
+            phone: item.phone || '',
+            picture: item.picture || '/images/avatar.png',
+            role: item.role || '',
+          }))
+        );
+      } catch (err) {
+        console.error(err);
+        console.error('No se pudieron cargar los usuarios para el dashboard');
+      }
+    };
+
     if (roleValue === 1 && redirectPath === null) {
       fetchCounts();
+      fetchClients();
     }
     if (roleValue === 2) {
       fetchCountsByTrainer();
@@ -382,7 +488,7 @@ const Dashboard = () => {
         await axios.get(`${apiUrl}/progress/get-profile`, config).then((response) => {
           if (response.status === 200) {
             setProfile(response.data.profile[0]);
-            console.log(response.data.profile[0]);
+            // console.log(response.data.profile[0]);
           }
         })
       } catch (error) {
@@ -424,7 +530,7 @@ const Dashboard = () => {
         };
         await axios.get(`${apiUrl}/workouts/list/${clientId}`, config).then((response) => {
           if (response.status === 200) {
-            console.log('Workouts:', response.data.filas);
+            // console.log('Workouts:', response.data.filas);
             setWorkouts(response.data.filas);
           }
         })
@@ -644,21 +750,51 @@ const Dashboard = () => {
           </div>
 
           <div className="grid gap-4 xl:grid-cols-1">
-            <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl">
-              <h2 className="text-xl font-semibold text-white mb-4">Actividad reciente</h2>
-              <div className="space-y-3 text-slate-300">
-                <div className="rounded-2xl bg-slate-900/70 p-4">
-                  <p className="font-semibold text-white">Nuevo entrenador aprobado</p>
-                  <p className="text-sm">María López se unió como trainer hace 2 horas.</p>
-                </div>
-                <div className="rounded-2xl bg-slate-900/70 p-4">
-                  <p className="font-semibold text-white">Cliente nuevo en plan premium</p>
-                  <p className="text-sm">Sergio creó una suscripción de 12 semanas.</p>
-                </div>
-                <div className="rounded-2xl bg-slate-900/70 p-4">
-                  <p className="font-semibold text-white">Receta destacada</p>
-                  <p className="text-sm">Nueva receta de batidos cargada por trainer Ana.</p>
-                </div>
+
+            {/* Dashboard Admin Section - Users Table */}
+            <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+              <Link to="/clients" className="items-center text-xl font-semibold text-white mb-4 hover:text-customYellow">Usuarios</Link>
+              <div className="rounded-2xl bg-slate-900/60 border border-slate-700 p-4">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400">ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400">Foto</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400">Nombre</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400">Teléfono</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400">Rol</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400">Estado</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400">Cuenta</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clients.map((client) => (
+                      <tr key={client.id}>
+                        <td className="px-6 py-3">{client.id}</td>
+                        <td className="px-6 py-3">
+                          <img src={client.picture || '/images/avatar.png'} alt={client.name} className="h-8 w-8 rounded-full object-cover" />
+                        </td>
+                        <td className="px-6 py-3">{client.name}</td>
+                        <td className="px-6 py-3">{client.email}</td>
+                        <td className="px-6 py-3">{client.phone || '—'}</td>
+                        <td className="px-6 py-3">
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${client.role === 'admin' ? 'bg-red-600 text-white' : client.role === 'trainer' ? 'bg-blue-500 text-white' : 'bg-green-600 text-white'}`}>
+                            {client.role || '—'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3">
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${client.deleted === 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                            {getClientStatusLabel(client)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3">
+                          {client.deleted === 0 ? 'Activa' : 'Inactiva'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </section>
           </div>
@@ -707,295 +843,307 @@ const Dashboard = () => {
     if (roleString.toLowerCase() === 'client' && status !== '0') {
       return (
         <>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2 mb-6">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 mb-6">
             {[
-              { label: 'Rutinas activas', value: workouts.length },
-              { label: 'Entrenador', value: profile?.trainer_name || 'No asignado' },
+              { label: 'Rutinas activas', value: workouts.length , extra:''},
+              { label: 'Entrenador', value: profile?.trainer_name || 'No asignado', extra: '' },
+              { label: 'Día de pago mensual', value: profile?.payment_day ? `Día ${profile.payment_day}` : 'No definido', extra: payDayMessage?payDayMessage:'' },
             ].map((card) => (
               <div key={card.label} className="rounded-3xl bg-[#141820] border border-slate-800 p-5 shadow-xl">
                 <p className="text-sm text-slate-400 uppercase tracking-[0.25em]">{card.label}</p>
                 <p className="mt-4 text-3xl font-bold text-white">{card.value}&nbsp;{card.label === 'Entrenador' && profile?.trainer_phone ? <Link to={`https://wa.me/${profile?.trainer_phone}`} target='_blank' className="text-sm text-green-400 mt-1"><FontAwesomeIcon icon={faWhatsapp} size='2x'></FontAwesomeIcon></Link> : null}</p>
+                {card.extra !== '' && <p className='mt-4 text-[0.6em] text-slate-200 uppercase tracking-[0.25em]'>{payDayMessage}</p>}
               </div>
             ))}
           </div>
 
           <div className="grid gap-4 xl:grid-cols-2 mb-6">
-            <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-              <div className="flex items-start justify-between mb-5 lg:flex-row flex-col">
+            {hasApprovedPayment ? (
+              <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+                <div className="flex items-start justify-between mb-5 lg:flex-row flex-col">
+                  <div>
+                    <h2 className="text-xl font-semibold text-white">Progreso corporal</h2>
+                    <p className="text-sm text-slate-400">Última actualización hace 3 días</p>
+                  </div>
+                </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-white">Progreso corporal</h2>
-                  <p className="text-sm text-slate-400">Última actualización hace 3 días</p>
-                </div>
-              </div>
-              <div>
-                <div className="mb-4 flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setProgressTab('silhouette')}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'silhouette' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
-                  >
-                    Silueta
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setProgressTab('chart')}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'chart' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
-                  >
-                    Gráfico
-                  </button>
-                </div>
+                  <div className="mb-4 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setProgressTab('silhouette')}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'silhouette' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                    >
+                      Silueta
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProgressTab('chart')}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'chart' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                    >
+                      Gráfico
+                    </button>
+                  </div>
 
-                <div>
-                  {progressTab === 'silhouette' ? (
-                    <div className="space-y-4">
-                      <BodySilhouette genre={genre} cadera={Number(progreso[0]?.hips || progreso[0]?.cadera)} cintura={Number(progreso[0]?.waist || progreso[0]?.cintura)} piernas={Number(progreso[0]?.legs || progreso[0]?.piernas)} brazos={Number(progreso[0]?.arms || progreso[0]?.brazos)} />
-                    </div>
-                  ) : (
-                    <div className="w-full chart-div mt-10">
-                      <div className="rounded-3xl bg-slate-950/90 border border-slate-800 p-4">
-                        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                          <div>
-                            <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Evolución biométrica</p>
-                            <h3 className="text-lg font-semibold text-white">Peso y medidas</h3>
+                  <div>
+                    {progressTab === 'silhouette' ? (
+                      <div className="space-y-4">
+                        <BodySilhouette genre={genre} cadera={Number(progreso[0]?.hips || progreso[0]?.cadera)} cintura={Number(progreso[0]?.waist || progreso[0]?.cintura)} piernas={Number(progreso[0]?.legs || progreso[0]?.piernas)} brazos={Number(progreso[0]?.arms || progreso[0]?.brazos)} />
+                      </div>
+                    ) : (
+                      <div className="w-full chart-div mt-10">
+                        <div className="rounded-3xl bg-slate-950/90 border border-slate-800 p-4">
+                          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                              <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Evolución biométrica</p>
+                              <h3 className="text-lg font-semibold text-white">Peso y medidas</h3>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <label htmlFor="chart-limit" className="text-xs uppercase tracking-[0.25em] text-slate-400">Últimos</label>
+                              <select
+                                id="chart-limit"
+                                value={chartLimit}
+                                onChange={(e) => setChartLimit(Number(e.target.value))}
+                                className="rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-[#f1b80c]"
+                              >
+                                {[5, 10, 15, 20, 30, 0].map((limit) => (
+                                  <option key={limit} value={limit}>
+                                    {limit === 0 ? 'Todos' : limit}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <label htmlFor="chart-limit" className="text-xs uppercase tracking-[0.25em] text-slate-400">Últimos</label>
-                            <select
-                              id="chart-limit"
-                              value={chartLimit}
-                              onChange={(e) => setChartLimit(Number(e.target.value))}
-                              className="rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-[#f1b80c]"
-                            >
-                              {[5, 10, 15, 20, 30, 0].map((limit) => (
-                                <option key={limit} value={limit}>
-                                  {limit === 0 ? 'Todos' : limit}
-                                </option>
-                              ))}
-                            </select>
+                          <div className="h-[320px] w-full">
+                            <Line
+                              data={chartData}
+                              options={chartOptions}
+                              height={320}
+                              style={{ width: '100%', display: 'block' }}
+                            />
                           </div>
-                        </div>
-                        <div className="h-[320px] w-full">
-                          <Line
-                            data={chartData}
-                            options={chartOptions}
-                            height={320}
-                            style={{ width: '100%', display: 'block' }}
-                          />
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-              <h2 className="items-center text-xl font-semibold text-white mb-4">Datos Iniciales</h2>
-              <div className=" grid grid-cols-3 text-slate-300 mb-4">
-                {[
-                  { label: "Edad", value: profile?.age },
-                  { label: "Altura", value: profile?.height },
-                  { label: "Peso", value: profile?.initial_weight },
-                  { label: "Objetivo", value: profile?.goal?.replace('_', ' ').toUpperCase() },
-                  { label: "Días a Entrenar", value: profile?.training_days },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className={`rounded-lg p-2 bg-slate-900/60 border border-slate-800 text-white justify-between items-center text-xs flex ${item.label === "Objetivo" ? 'col-span-2' : 'col-span-1'}`}
-                  >
-                    <span className="text-slate-400">{item.label}</span>
-                    <span className="font-semibold">{item.value}</span>
+                    )}
                   </div>
-                ))}
-              </div>
-
-
-              <div className="flex">
-                <h2 className="text-left text-xl font-semibold text-white mb-4 mt-1">Datos Biometricos</h2>
-                <div className="justify-end flex-grow flex">
-                  <button
-                    onClick={() => setShowProgressModal(true)}
-                    className="text-nowrap flex items-center gap-2 bg-yellow-400 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 hover:bg-yellow-200 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
-                  >
-                    Agregar Datos <FontAwesomeIcon icon={faAdd} />
-                  </button>
                 </div>
-              </div>
-              <div className="max-h-[395px] overflow-y-auto space-y-3 pr-1">
-                {progreso.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className={`rounded-xl p-3 border ${index === 0
-                      ? 'bg-yellow-400 text-black border-black'
-                      : 'bg-slate-800 border-yellow-400 text-white'
-                      }`}
-                  >
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <p><span className="font-semibold">Cintura:</span> {item.hips}</p>
-                      <p><span className="font-semibold">Cadera:</span> {item.waist}</p>
-                      <p><span className="font-semibold">Brazos:</span> {item.arms}</p>
-                      <p><span className="font-semibold">Piernas:</span> {item.legs}</p>
-                      <p className="col-span-2">
-                        <span className="font-semibold">Fecha:</span> {moment(item.log_date).format('DD-MM-YYYY')}
-                      </p>
+              </section>
+            ) : (
+              <PaymentGateMessage />
+            )}
+            {hasApprovedPayment ? (
+              <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+                <h2 className="items-center text-xl font-semibold text-white mb-4">Datos Iniciales</h2>
+                <div className=" grid grid-cols-3 text-slate-300 mb-4">
+                  {[
+                    { label: "Edad", value: profile?.age },
+                    { label: "Altura", value: profile?.height },
+                    { label: "Peso", value: profile?.initial_weight },
+                    { label: "Objetivo", value: profile?.goal?.replace('_', ' ').toUpperCase() },
+                    { label: "Días a Entrenar", value: profile?.training_days },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className={`rounded-lg p-2 bg-slate-900/60 border border-slate-800 text-white justify-between items-center text-xs flex ${item.label === "Objetivo" ? 'col-span-2' : 'col-span-1'}`}
+                    >
+                      <span className="text-slate-400">{item.label}</span>
+                      <span className="font-semibold">{item.value}</span>
                     </div>
+                  ))}
+                </div>
 
-                    <div className="flex gap-2 mt-2">
-                      <img
-                        src={item.photo_front_url}
-                        className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
-                        onClick={() => setPreviewImage(item.photo_front_url)}
-                      />
 
-                      <img
-                        src={item.photo_back_url}
-                        className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
-                        onClick={() => setPreviewImage(item.photo_back_url)}
-                      />
-                    </div>
+                <div className="flex">
+                  <h2 className="text-left text-xl font-semibold text-white mb-4 mt-1">Datos Biometricos</h2>
+                  <div className="justify-end flex-grow flex">
+                    <button
+                      onClick={() => setShowProgressModal(true)}
+                      className="text-nowrap flex items-center gap-2 bg-yellow-400 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 hover:bg-yellow-200 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
+                    >
+                      Agregar Datos <FontAwesomeIcon icon={faAdd} />
+                    </button>
                   </div>
-                ))}
-              </div>
-
-              {previewImage && (
-                <div
-                  className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
-                  onClick={() => setPreviewImage(null)}
-                >
-                  <img
-                    src={previewImage}
-                    className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl"
-                  />
                 </div>
-              )}
+                <div className="max-h-[395px] overflow-y-auto space-y-3 pr-1">
+                  {progreso.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className={`rounded-xl p-3 border ${index === 0
+                        ? 'bg-yellow-400 text-black border-black'
+                        : 'bg-slate-800 border-yellow-400 text-white'
+                        }`}
+                    >
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <p><span className="font-semibold">Cintura:</span> {item.hips}</p>
+                        <p><span className="font-semibold">Cadera:</span> {item.waist}</p>
+                        <p><span className="font-semibold">Brazos:</span> {item.arms}</p>
+                        <p><span className="font-semibold">Piernas:</span> {item.legs}</p>
+                        <p className="col-span-2">
+                          <span className="font-semibold">Fecha:</span> {moment(item.log_date).format('DD-MM-YYYY')}
+                        </p>
+                      </div>
 
-            </section>
+                      <div className="flex gap-2 mt-2">
+                        <img
+                          src={item.photo_front_url}
+                          className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
+                          onClick={() => setPreviewImage(item.photo_front_url)}
+                        />
+
+                        <img
+                          src={item.photo_back_url}
+                          className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
+                          onClick={() => setPreviewImage(item.photo_back_url)}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {previewImage && (
+                  <div
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+                    onClick={() => setPreviewImage(null)}
+                  >
+                    <img
+                      src={previewImage}
+                      className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl"
+                    />
+                  </div>
+                )}
+
+              </section>
+            ) : (
+              <PaymentGateMessage />
+            )}
           </div>
 
           <div className="grid gap-4 xl:grid-cols-2">
-            <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-              <h2 className="text-xl font-semibold text-white mb-4">Workout Diario</h2>
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      onClick={() => setCalendarView('week')}
-                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${calendarView === 'week' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
-                    >
-                      Semana
-                    </button>
-                    <button
-                      onClick={() => setCalendarView('month')}
-                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${calendarView === 'month' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
-                    >
-                      Mes
-                    </button>
+            {hasApprovedPayment ? (
+              <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+                <h2 className="text-xl font-semibold text-white mb-4">Workout Diario</h2>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => setCalendarView('week')}
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${calendarView === 'week' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                      >
+                        Semana
+                      </button>
+                      <button
+                        onClick={() => setCalendarView('month')}
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${calendarView === 'month' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                      >
+                        Mes
+                      </button>
+                    </div>
+                    <p className="text-sm text-slate-400">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faPencil}></FontAwesomeIcon>.</p>
                   </div>
-                  <p className="text-sm text-slate-400">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faPencil}></FontAwesomeIcon>.</p>
-                </div>
 
-                {calendarView === 'week' ? (
-                  <div className="grid grid-cols-7 gap-2 rounded-2xl bg-slate-900/80 p-2">
-                    {weekDays.map((day) => {
-                      const isSelected = day.isSame(selectedDate, 'day');
-                      return (
-                        <button
-                          key={day.format('YYYY-MM-DD')}
-                          type="button"
-                          onClick={() => selectWeekDay(day)}
-                          className={`rounded-2xl border p-2 text-center transition ${isSelected ? 'border-[#f1b80c] bg-[#f1b80c] text-slate-950 shadow-lg' : 'border-slate-800 bg-[#111827] text-slate-300 hover:border-slate-500 hover:bg-slate-800'}`}
-                        >
-                          <div className="text-[10px] uppercase tracking-[0.25em] text-slate-400">{weekDayLabels[day.isoWeekday() - 1]}</div>
-                          <div className="mt-1 text-base font-semibold">{day.format('D')}</div>
-                          <div className="mt-1 text-[10px] text-slate-500">{day.format('ddd')}</div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="rounded-2xl bg-slate-900/80 p-3">
-                    <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-xs text-slate-400">{selectedDate.format('MMMM YYYY')}</p>
-                        <h3 className="text-lg font-semibold text-white">Calendario mensual</h3>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedDate((prev) => prev.clone().subtract(1, 'month'))}
-                          className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
-                        >
-                          ‹
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedDate((prev) => prev.clone().add(1, 'month'))}
-                          className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
-                        >
-                          ›
-                        </button>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-7 gap-1 text-center text-[10px] uppercase tracking-[0.2em] text-slate-500">
-                      {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'].map((label) => (
-                        <div key={label}>{label}</div>
-                      ))}
-                    </div>
-                    <div className="mt-2 grid grid-cols-7 gap-1">
-                      {monthGrid.map((day) => {
-                        const isCurrentMonth = day.month() === monthStart.month();
+                  {calendarView === 'week' ? (
+                    <div className="grid grid-cols-7 gap-2 rounded-2xl bg-slate-900/80 p-2">
+                      {weekDays.map((day) => {
                         const isSelected = day.isSame(selectedDate, 'day');
                         return (
                           <button
                             key={day.format('YYYY-MM-DD')}
                             type="button"
-                            onClick={() => selectMonthDay(day)}
-                            className={`rounded-2xl border p-2 text-left transition ${isSelected ? 'border-[#f1b80c] bg-[#f1b80c] text-slate-950 shadow-lg' : isCurrentMonth ? 'border-slate-800 bg-[#111827] text-slate-200 hover:border-slate-500 hover:bg-slate-800' : 'border-transparent bg-slate-950/40 text-slate-600'}`}
+                            onClick={() => selectWeekDay(day)}
+                            className={`rounded-2xl border p-2 text-center transition ${isSelected ? 'border-[#f1b80c] bg-[#f1b80c] text-slate-950 shadow-lg' : 'border-slate-800 bg-[#111827] text-slate-300 hover:border-slate-500 hover:bg-slate-800'}`}
                           >
-                            <div className="text-sm font-semibold">{day.format('D')}</div>
-                            {day.isSame(moment(), 'day') && <div className="mt-1 text-[10px] uppercase text-slate-400">Hoy</div>}
+                            <div className="text-[10px] uppercase tracking-[0.25em] text-slate-400">{weekDayLabels[day.isoWeekday() - 1]}</div>
+                            <div className="mt-1 text-base font-semibold">{day.format('D')}</div>
+                            <div className="mt-1 text-[10px] text-slate-500">{day.format('ddd')}</div>
                           </button>
                         );
                       })}
                     </div>
-                  </div>
-                )}
-
-                <div className="rounded-3xl bg-slate-900/70 p-4 text-slate-300">
-                  <div className="mb-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-slate-400">Rutinas para el día</p>
-                      <h3 className="text-lg font-semibold text-white">{selectedDate.format('dddd, D [de] MMMM')}</h3>
-                    </div>
-                  </div>
-                  {filteredWorkouts.length === 0 ? (
-                    <p className="text-sm text-slate-400">No hay rutinas asignadas para este día.</p>
                   ) : (
-                    <div className="grid gap-3">
-                      {filteredWorkouts.map((item) => (
-                        <div key={item.id || `${item.workout_id}-${item.day_of_week}-${item.title || item.name || item.workout_name}`}
-                          className="rounded-[32px] border border-[#f1b80c] bg-gradient-to-br from-slate-950 via-slate-900 to-[#111827] p-4 shadow-[0_16px_48px_rgba(241,184,12,0.18)] "
-                        >
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="flex flex-col gap-1 workout-title">
-                              <h4 className="text-lg font-bold text-white">{item.title || item.name || item.workout_name || `Rutina ${item.workout_id || item.id}`}</h4>
-                              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#f1b80c]">Sets: {item.sets || '—'} Reps: {item.reps_text} {item.client_effort_notes}</p>
-                              {item.note && <span className='font-bold text-white'>Notas: <span className='font-normal text-slate-200'>{item.note}</span></span>}
-                            </div>
-                            <div className="rounded-2xl bg-slate-950/70 px-3 py-2 text-right text-sm font-semibold text-slate-300 flex">
-                              <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Video' onClick={() => handleExercisePreview(item.exercise_id)}><FontAwesomeIcon icon={faVideo} className="text-black"></FontAwesomeIcon></button>
-                              <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Nota' onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), item.title || item.name || item.workout_name, item.note)}><FontAwesomeIcon icon={faPencil} className='text-black'></FontAwesomeIcon></button>
-                            </div>
-                          </div>
-                          {item.description && <p className="mt-4 text-sm leading-6 text-slate-300">{item.description}</p>}
+                    <div className="rounded-2xl bg-slate-900/80 p-3">
+                      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-xs text-slate-400">{selectedDate.format('MMMM YYYY')}</p>
+                          <h3 className="text-lg font-semibold text-white">Calendario mensual</h3>
                         </div>
-                      ))}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDate((prev) => prev.clone().subtract(1, 'month'))}
+                            className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                          >
+                            ‹
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDate((prev) => prev.clone().add(1, 'month'))}
+                            className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                          >
+                            ›
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-7 gap-1 text-center text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                        {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'].map((label) => (
+                          <div key={label}>{label}</div>
+                        ))}
+                      </div>
+                      <div className="mt-2 grid grid-cols-7 gap-1">
+                        {monthGrid.map((day) => {
+                          const isCurrentMonth = day.month() === monthStart.month();
+                          const isSelected = day.isSame(selectedDate, 'day');
+                          return (
+                            <button
+                              key={day.format('YYYY-MM-DD')}
+                              type="button"
+                              onClick={() => selectMonthDay(day)}
+                              className={`rounded-2xl border p-2 text-left transition ${isSelected ? 'border-[#f1b80c] bg-[#f1b80c] text-slate-950 shadow-lg' : isCurrentMonth ? 'border-slate-800 bg-[#111827] text-slate-200 hover:border-slate-500 hover:bg-slate-800' : 'border-transparent bg-slate-950/40 text-slate-600'}`}
+                            >
+                              <div className="text-sm font-semibold">{day.format('D')}</div>
+                              {day.isSame(moment(), 'day') && <div className="mt-1 text-[10px] uppercase text-slate-400">Hoy</div>}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
-                </div>
-              </div>
-            </section>
 
+                  <div className="rounded-3xl bg-slate-900/70 p-4 text-slate-300">
+                    <div className="mb-3 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-slate-400">Rutinas para el día</p>
+                        <h3 className="text-lg font-semibold text-white">{selectedDate.format('dddd, D [de] MMMM')}</h3>
+                      </div>
+                    </div>
+                    {filteredWorkouts.length === 0 ? (
+                      <p className="text-sm text-slate-400">No hay rutinas asignadas para este día.</p>
+                    ) : (
+                      <div className="grid gap-3">
+                        {filteredWorkouts.map((item) => (
+                          <div key={item.id || `${item.workout_id}-${item.day_of_week}-${item.title || item.name || item.workout_name}`}
+                            className="rounded-[32px] border border-[#f1b80c] bg-gradient-to-br from-slate-950 via-slate-900 to-[#111827] p-4 shadow-[0_16px_48px_rgba(241,184,12,0.18)] "
+                          >
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="flex flex-col gap-1 workout-title">
+                                <h4 className="text-lg font-bold text-white">{item.title || item.name || item.workout_name || `Rutina ${item.workout_id || item.id}`}</h4>
+                                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#f1b80c]">Sets: {item.sets || '—'} Reps: {item.reps_text} {item.client_effort_notes}</p>
+                                {item.note && <span className='font-bold text-white'>Notas: <span className='font-normal text-slate-200'>{item.note}</span></span>}
+                              </div>
+                              <div className="rounded-2xl bg-slate-950/70 px-3 py-2 text-right text-sm font-semibold text-slate-300 flex">
+                                <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Video' onClick={() => handleExercisePreview(item.exercise_id)}><FontAwesomeIcon icon={faVideo} className="text-black"></FontAwesomeIcon></button>
+                                <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Nota' onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), item.title || item.name || item.workout_name, item.note)}><FontAwesomeIcon icon={faPencil} className='text-black'></FontAwesomeIcon></button>
+                              </div>
+                            </div>
+                            {item.description && <p className="mt-4 text-sm leading-6 text-slate-300">{item.description}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+            ) : (
+              <PaymentGateMessage />
+            )}
             <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
               <h2 className="text-xl font-semibold text-white mb-4">Pagos</h2>
               <div className="space-y-3 text-slate-300">
@@ -1139,18 +1287,25 @@ const Dashboard = () => {
           <h1 className="mt-3 text-2xl font-bold text-white">{userName}</h1>
           <p className="mt-1 text-sm text-slate-400">{roleString}</p>
         </div>
-
-        <div className="mt-8 space-y-2">
-          {menuLinks.map((item) => (
-            <button
-              key={item}
-              onClick={() => handleMenuNavigation(item)}
-              className={`w-full rounded-3xl px-4 py-3 text-left text-md font-semibold transition-all ${selectedMenu === item ? 'bg-[#f1b80c] text-[#1e222b]' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
+        {
+          (roleString !== "CLIENT" || (roleString === "CLIENT" && hasApprovedPayment)) ? (
+            <div className="mt-8 space-y-2">
+              {menuLinks.map((item) => (
+                <button
+                  key={item}
+                  onClick={() => handleMenuNavigation(item)}
+                  className={`w-full rounded-3xl px-4 py-3 text-left text-md font-semibold transition-all ${selectedMenu === item ? 'bg-[#f1b80c] text-[#1e222b]' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-8 rounded-3xl border border-dashed border-slate-700 bg-slate-900/60 p-4 text-xs text-slate-400">
+              Tu menú se habilitará cuando tu entrenador apruebe el pago de tu mensualidad correspondiente al período actual.
+            </div>
+          )
+        }
       </div>
 
       <div className="mt-8 space-y-3 sticky bottom-0">
@@ -1447,6 +1602,8 @@ const Dashboard = () => {
         onClose={() => setShowPaymentModal(false)}
         clientId={clientId}
         trainerId={profile?.trainer_id}
+        paymentCount={payments.length}
+        onPaymentDayReceived={(paymentDay) => setProfile((currentProfile) => ({ ...currentProfile, payment_day: paymentDay }))}
       />
     </>
   );

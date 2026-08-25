@@ -218,7 +218,7 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
     };
 
     const triggerYesNoToast = (handle, ...params) => {
-        toast((t) => (
+        toast.success((t) => (
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <span>¿Está seguro que desea eliminar el elemento?</span>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -262,7 +262,7 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
         const ids = selectedItems.map((item) => item.id).filter(Boolean);
         if (ids.length === 0) return;
 
-        toast((t) => (
+        toast.success((t) => (
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <span>¿Está seguro que desea eliminar los elementos?</span>
                 <div style={{ display: 'flex', gap: '8px' }}>

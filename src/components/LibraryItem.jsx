@@ -85,7 +85,7 @@ const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUpload
     }, [apiUrl, item?.file, item?.id, item?.new, item?.size, item?.filename, onUploadSuccess, onUploadError, token, trainerId]);
 
     const triggerYesNoToast = (handle, ...params) => {
-        toast((t) => (
+        toast.success((t) => (
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <span>¿Está seguro que desea eliminar el elemento?</span>
                 <div style={{ display: 'flex', gap: '8px' }}>

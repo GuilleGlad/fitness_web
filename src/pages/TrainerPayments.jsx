@@ -62,7 +62,6 @@ const TrainerPayments = () => {
   const [paymentPreviewImage, setPaymentPreviewImage] = useState('');
 
   useEffect(() => {
-
     var redirectPath = null;
     const checkToken = async () => {
       redirectPath = await verifyToken();
@@ -71,7 +70,10 @@ const TrainerPayments = () => {
       }
     };
 
-    checkToken();
+    checkToken();    
+  },[]);
+
+  useEffect(() => {
 
     const fetchPayments = async () => {
       if (!trainerId) return;
@@ -86,10 +88,11 @@ const TrainerPayments = () => {
         const config = { headers: { Authorization: `Bearer ${token}` } };
         const res = await axios.get(`${apiUrl}/payments/?trainer_id=${trainerId}`, config);
         const data = res.data?.data || [];
+        console.log("PAGOS: ",data);
         setPayments(data);
       } catch (err) {
         console.error('Error cargando recetas:', err.message);
-        toast.error('No se pudieron cargar las recetas.');
+        toast.error('No se pudieron cargar los pagos.');
       } finally {
         setLoading(false);
       }
@@ -145,7 +148,7 @@ const TrainerPayments = () => {
       };
       await axios.get(`${apiUrl}/payments/${id}/check-expiration`, config).then((response) => {
         console.log(response);
-        if (response.data?.status_modification == true) {
+        if (response.data?.status_modification === true) {
           const status_str = "Expirado";
           setPayments(prevPayments =>
             prevPayments.map(payment =>
@@ -161,7 +164,7 @@ const TrainerPayments = () => {
   }
 
   const yesNo = (msg, onConfirm) => {
-    toast((t) => (
+    toast.success((t) => (
       <div className="flex items-center gap-3 px-4 py-2">
         <span>{msg}</span>
         <div className="flex gap-2">
@@ -213,7 +216,7 @@ const TrainerPayments = () => {
               <thead>
                 <tr className="border-b border-slate-700/60">
                   <th className="px-6 py-4 font-medium text-slate-400">Cliente</th>
-                  <th className="px-6 py-4 font-medium text-slate-400">Cantidad</th>
+                  <th className="px-6 py-4 font-medium text-slate-400">Monto</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Fecha de Pago</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Método de Pago</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Período</th>

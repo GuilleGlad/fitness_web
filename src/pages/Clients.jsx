@@ -726,7 +726,7 @@ const Clients = () => {
     const deletedCount = clients.filter((c) => c.deleted).length;
 
     if (deletedCount === 0) {
-      toast('No hay usuarios eliminados para purgar.');
+      toast.error('No hay usuarios eliminados para purgar.');
       return;
     }
 
@@ -752,7 +752,7 @@ const Clients = () => {
   };
 
   const yesNo = (msg, onConfirm) => {
-    toast((t) => (
+    toast.success((t) => (
       <div className="flex items-center gap-3 px-4 py-2">
         <span>{msg}</span>
         <div className="flex gap-2">
@@ -832,6 +832,7 @@ const Clients = () => {
                   <th className="px-6 py-4 font-medium text-slate-400">Nombre</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Email</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Teléfono</th>
+                  <th className="px-6 py-4 font-medium text-slate-400">Rol</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Estado</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Cuenta</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Acciones</th>
@@ -839,9 +840,9 @@ const Clients = () => {
               </thead>
               <tbody className="divide-y divide-slate-800/50">
                 {loading ? (
-                  <tr><td colSpan="6" className="py-12 text-center text-slate-400">Cargando usuarios…</td></tr>
+                  <tr><td colSpan="7" className="py-12 text-center text-slate-400">Cargando usuarios…</td></tr>
                 ) : clients.length === 0 ? (
-                  <tr><td colSpan="6" className="py-12 text-center text-slate-400">No hay usuarios aún.</td></tr>
+                  <tr><td colSpan="7" className="py-12 text-center text-slate-400">No hay usuarios aún.</td></tr>
                 ) : clients.map((client) => (
                   
                     <tr key={client.id} className={`group transition ${client.deleted ? 'bg-red-950/30' : 'hover:bg-slate-800/40'}`}>
@@ -850,6 +851,11 @@ const Clients = () => {
                     <td className="px-6 py-4 font-medium text-white">{client.name}</td>
                     <td className="px-6 py-4 text-slate-300">{client.email}</td>
                     <td className="px-6 py-4 text-slate-300">{client.phone || '—'}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${(client.role == "client")?"bg-slate-700":""} ${(client.role == "admin")?"bg-red-700":""} ${(client.role == "trainer")?"bg-blue-700":""} text-slate-200`}>
+                        {client.role || '—'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getClientStatusLabel(client) === 'Activo' ? 'bg-[#f1b80c]/15 text-orange-400' : 'bg-red-500/15 text-yellow-400'}`}>
                         {getClientStatusLabel(client)}
@@ -927,6 +933,9 @@ const Clients = () => {
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
                       {client.phone && <span>Tel: {client.phone}</span>}
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${(client.role == "client")?"bg-slate-700":""} ${(client.role == "admin")?"bg-red-700":""} ${(client.role == "trainer")?"bg-blue-700":""} text-slate-200`}>
+                        {client.role || '—'}
+                      </span>
                       <span className={`rounded-full px-3 py-1 ${getClientStatusLabel(client) === 'Activo' ? 'bg-[#f1b80c]/15 text-orange-400' : 'bg-red-500/15 text-yellow-400'}`}>
                         {getClientStatusLabel(client)}
                       </span>
