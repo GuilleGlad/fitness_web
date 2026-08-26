@@ -132,7 +132,7 @@ const ExerciseForm = ({ form, setForm, editingId, initialForm, onSubmit, onCance
       </div>
 {/* Selector de Entrenador */}
       {role == 2 &&
-      <input name="trainer_id" type="text" value={user_id} className='text-black'/>
+      <input name="trainer_id" type="hidden" value={user_id} className='text-black'/>
       }
       {role == 1 &&
       <label className="block space-y-2 text-sm text-slate-200">
