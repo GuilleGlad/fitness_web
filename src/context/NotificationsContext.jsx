@@ -78,6 +78,11 @@ export const NotificationsProvider = ({ children }) => {
       const current_id = Number(localStorage.getItem('client_id'));
       if(current_id === data.destination_id){
         toast.success(data.message);
+        if(data.message.includes("Aprobado")){
+          setTimeout(() => {
+            window.location.reload(false);
+          },2000)
+        }
       }
     };
 

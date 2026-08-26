@@ -11,6 +11,7 @@ const initialForm = {
   photoUrl: '',
   videoUrl: '',
   publico: 0,
+  trainer_id: '',
 };
 
 /* ───────── Reusable Modal Wrapper ───────── */
@@ -33,7 +34,9 @@ const ModalOverlay = ({ isOpen, onClose, title, children }) => {
 };
 
 /* ───────── Form Component (receives setForm via props) ───────── */
-const ExerciseForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel, onOpenLibrary, libraryTarget }) => {
+const ExerciseForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel, onOpenLibrary, trainers = [] }) => {
+  const role = localStorage.getItem('role');
+  const user_id = localStorage.getItem('client_id');
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -68,16 +71,16 @@ const ExerciseForm = ({ form, setForm, editingId, initialForm, onSubmit, onCance
         <label className="block space-y-2 text-sm text-slate-200">
           <span className='mr-2'>Foto</span>
           {
-          form.photoUrl && <div className="flex flex-col gap-2 sm:flex-row">
-            <input
-              name="photoUrl"
-              value={form.photoUrl}
-              onChange={handleChange}
-              className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-              placeholder="https://.../foto.jpg"
-            />
-            <img src={form.photoUrl} className='w-full'/>
-          </div>
+            form.photoUrl && <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                name="photoUrl"
+                value={form.photoUrl}
+                onChange={handleChange}
+                className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                placeholder="https://.../foto.jpg"
+              />
+              <img src={form.photoUrl} className='w-full' />
+            </div>
           }
           <div className="block space-y-2 text-sm text-slate-200">
             <button
@@ -86,29 +89,29 @@ const ExerciseForm = ({ form, setForm, editingId, initialForm, onSubmit, onCance
               className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800"
             >
               📚 Biblioteca
-            </button>      
-            <button 
-              type="button" 
-              onClick={() => setForm((p) => ({ ...p, photoUrl: initialForm.photoUrl }))} 
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm((p) => ({ ...p, photoUrl: initialForm.photoUrl }))}
               className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">
-                🗑️ Limpiar
-            </button>  
+              🗑️ Limpiar
+            </button>
           </div>
         </label>
 
         <label className="block space-y-2 text-sm text-slate-200">
           <span className='mr-2'>Video</span>
           {
-          form.videoUrl != "" && <div className="flex flex-col gap-2 sm:flex-row">
-            <input
-              name="videoUrl"
-              value={form.videoUrl}
-              onChange={handleChange}
-              className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-              placeholder="https://.../video.mp4"
-            />
-            <video key={form.videoUrl} name="videoEjercicio" src={form.videoUrl} className="mt-4 w-auto rounded-2xl object-contain " autoPlay loop muted playsInline/>
-          </div>
+            form.videoUrl != "" && <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                name="videoUrl"
+                value={form.videoUrl}
+                onChange={handleChange}
+                className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                placeholder="https://.../video.mp4"
+              />
+              <video key={form.videoUrl} name="videoEjercicio" src={form.videoUrl} className="mt-4 w-auto rounded-2xl object-contain " autoPlay loop muted playsInline />
+            </div>
           }
           <div className="block space-y-2 text-sm text-slate-200">
             <button
@@ -118,16 +121,38 @@ const ExerciseForm = ({ form, setForm, editingId, initialForm, onSubmit, onCance
             >
               📚 Biblioteca
             </button>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => setForm((p) => ({ ...p, videoUrl: initialForm.videoUrl }))}
               className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">
-                🗑️ Limpiar
-            </button>                  
+              🗑️ Limpiar
+            </button>
           </div>
         </label>
       </div>
-
+{/* Selector de Entrenador */}
+      {role == 2 &&
+      <input name="trainer_id" type="text" value={user_id} className='text-black'/>
+      }
+      {role == 1 &&
+      <label className="block space-y-2 text-sm text-slate-200">
+        <span>Entrenador</span>
+        <select
+          required={true}
+          name="trainer_id"
+          value={form.trainer_id}
+          onChange={handleChange}
+          className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+        >
+          <option value="" className="bg-[#0f172a]">Selecciona un entrenador</option>
+          {trainers.map((trainer) => (
+            <option key={trainer.id} value={trainer.id} className="bg-[#0f172a]">
+              {trainer.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      }
       <label className="block space-y-2 text-sm text-slate-200">
         <span>Público</span>
         <select
@@ -156,14 +181,14 @@ const ExerciseForm = ({ form, setForm, editingId, initialForm, onSubmit, onCance
 };
 
 /* ───────── Workout Modal Component ───────── */
-const WorkoutModal = ({ 
-  isOpen, 
-  onClose, 
-  exercise, 
-  existingWorkouts, 
-  onSaveWorkout, 
+const WorkoutModal = ({
+  isOpen,
+  onClose,
+  exercise,
+  existingWorkouts,
+  onSaveWorkout,
   onDeleteWorkout,
-  onUpdateWorkout 
+  onUpdateWorkout
 }) => {
   const [formData, setFormData] = useState({
     sets: '',
@@ -175,7 +200,7 @@ const WorkoutModal = ({
   const token = localStorage.getItem('token');
   const trainerId = localStorage.getItem('client_id');
   const apiUrl = process.env.REACT_APP_API_URL || '';
-  
+
   // Reset form when modal opens or exercise changes
   useEffect(() => {
     if (isOpen && exercise) {
@@ -207,7 +232,7 @@ const WorkoutModal = ({
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-const yesNo = (msg, onConfirm) => {
+  const yesNo = (msg, onConfirm) => {
     toast.success((t) => (
       <div className="flex items-center gap-3 px-4 py-2">
         <span>{msg}</span>
@@ -220,7 +245,7 @@ const yesNo = (msg, onConfirm) => {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.sets || !formData.reps) {
       toast.error('Sets y Repeticiones son obligatorios.');
       return;
@@ -253,7 +278,7 @@ const yesNo = (msg, onConfirm) => {
         toast.success('Rutina guardada correctamente.');
         onSaveWorkout({ ...payload, id: newWorkout.insert_id || newWorkout.id || Date.now() });
       }
-      
+
       // Reset form
       setFormData({
         sets: '',
@@ -272,10 +297,10 @@ const yesNo = (msg, onConfirm) => {
   const handleDelete = async (workoutId) => {
     const token = localStorage.getItem('token');
     const apiUrl = process.env.REACT_APP_API_URL || '';
-    
+
     try {
-      await axios.delete(`${apiUrl}/workouts/delete-workout/${workoutId}`, { 
-        headers: { Authorization: `Bearer ${token}` } 
+      await axios.delete(`${apiUrl}/workouts/delete-workout/${workoutId}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Rutina eliminada correctamente.');
       onDeleteWorkout(workoutId);
@@ -343,7 +368,7 @@ const yesNo = (msg, onConfirm) => {
                     placeholder="Ej. 12"
                   />
                 </label>
-         
+
               </div>
 
               <div className="grid gap-3 pt-2">
@@ -356,10 +381,10 @@ const yesNo = (msg, onConfirm) => {
                     className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
                     placeholder="Ej. Cuidar la espalda, mantener la postura, etc."
                   />
-                </label>    
+                </label>
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isSubmitting}
                   className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:opacity-50"
                 >
@@ -398,14 +423,14 @@ const yesNo = (msg, onConfirm) => {
                         <td className="px-4 py-3 text-slate-300">{workout.client_effort_notes || '-'}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2">
-                            <button 
-                              onClick={() => startEdit(workout.workout_id)} 
+                            <button
+                              onClick={() => startEdit(workout.workout_id)}
                               className="rounded-full bg-[#f1b80c] px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e]"
                             >
                               Editar
                             </button>
-                            <button 
-                              onClick={() => yesNo('¿Eliminar esta rutina?', () => handleDelete(workout.workout_id))} 
+                            <button
+                              onClick={() => yesNo('¿Eliminar esta rutina?', () => handleDelete(workout.workout_id))}
                               className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500"
                             >
                               Eliminar
@@ -430,6 +455,7 @@ const TrainerExercises = () => {
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL || '';
   const trainerId = localStorage.getItem('client_id');
+  const role = localStorage.getItem('role');
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(initialForm);
@@ -440,7 +466,7 @@ const TrainerExercises = () => {
   const [showNewModal, setShowNewModal] = useState(false);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [libraryTarget, setLibraryTarget] = useState('photo');
-  
+
   /* Workout modal states */
   const [showWorkoutModal, setShowWorkoutModal] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState(null);
@@ -448,6 +474,27 @@ const TrainerExercises = () => {
   const [workoutsLoading, setWorkoutsLoading] = useState(false);
 
   const exercisesCount = exercises.length;
+
+  const [trainers, setTrainers] = useState([]);
+  const [loadingTrainers, setLoadingTrainers] = useState(true);
+  useEffect(() => {
+    const fetchTrainers = async () => {
+      setLoadingTrainers(true);
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return setLoadingTrainers(false);
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        const res = await axios.get(`${apiUrl}/admin/trainers`, config);
+        console.log(res.data?.entrenadores);
+        setTrainers(res.data?.entrenadores || []);
+      } catch (err) {
+        console.error('Error fetching trainers:', err);
+      } finally {
+        setLoadingTrainers(false);
+      }
+    };
+    fetchTrainers();
+  }, [])
 
   useEffect(() => {
     var redirectPath = null;
@@ -472,7 +519,13 @@ const TrainerExercises = () => {
       setLoading(true);
       try {
         const config = { headers: { Authorization: `Bearer ${token}` } };
-        const res = await axios.get(`${apiUrl}/exercises/list/${trainerId}`, config);
+        var res;
+        if(role == 1){
+          res = await axios.get(`${apiUrl}/exercises/list/`, config);
+        }else{
+          res = await axios.get(`${apiUrl}/exercises/list/${trainerId}`, config);
+        }
+
         const list = res.data?.exercises || res.data || [];
         setExercises(
           list.map((item) => ({
@@ -483,6 +536,7 @@ const TrainerExercises = () => {
             photoUrl: item.photo_url,
             videoUrl: item.video_url,
             publico: Number(item.publico),
+            username: item.username
           }))
         );
       } catch (err) {
@@ -499,7 +553,7 @@ const TrainerExercises = () => {
   // Fetch workouts for the selected exercise
   const fetchWorkouts = async (exerciseId) => {
     if (!trainerId) return;
-    
+
     const token = localStorage.getItem('token');
     if (!token) return;
 
@@ -571,6 +625,7 @@ const TrainerExercises = () => {
 
   const handleEdit = (exercise) => {
     setForm({
+      trainer_id: form.trainer_id || trainerId, // Toma el seleccionado en el dropdown o el valor por defecto
       title: exercise.title,
       description: exercise.description,
       photoUrl: exercise.photoUrl,
@@ -581,22 +636,22 @@ const TrainerExercises = () => {
     setShowEditModal(true);
   };
 
-  const handleNewExercise = () => { 
-    setForm(initialForm); 
-    setEditingId(null); 
-    setShowNewModal(true); 
+  const handleNewExercise = () => {
+    setForm(initialForm);
+    setEditingId(null);
+    setShowNewModal(true);
   };
 
-  const cancelEdit = () => { 
-    setForm(initialForm); 
-    setEditingId(null); 
-    setShowEditModal(false); 
+  const cancelEdit = () => {
+    setForm(initialForm);
+    setEditingId(null);
+    setShowEditModal(false);
   };
 
-  const cancelNew = () => { 
-    setForm(initialForm); 
-    setEditingId(null); 
-    setShowNewModal(false); 
+  const cancelNew = () => {
+    setForm(initialForm);
+    setEditingId(null);
+    setShowNewModal(false);
   };
 
   const handleSubmit = async (event) => {
@@ -619,7 +674,7 @@ const TrainerExercises = () => {
     }
 
     const payload = {
-      trainer_id: trainerId,
+      trainer_id: form.trainer_id || trainerId, // Toma el seleccionado en el dropdown o el valor por defecto
       title: form.title.trim(),
       description: form.description.trim(),
       photo_url: form.photoUrl.trim(),
@@ -773,6 +828,7 @@ const TrainerExercises = () => {
                   <th className="px-6 py-4 font-medium text-slate-400">Descripción</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Video</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Público</th>
+                  <th className="px-6 py-4 font-medium text-slate-400">Entrenador</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Acciones</th>
                 </tr>
               </thead>
@@ -800,9 +856,10 @@ const TrainerExercises = () => {
                       )}
                     </td>
                     <td>
-                    {exercise.publico === 1 && <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-green-400">Página Principal</span>}
-                    {exercise.publico === 0 && <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-yellow-400">Para Clientes</span>}
+                      {exercise.publico === 1 && <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-green-400">Página Principal</span>}
+                      {exercise.publico === 0 && <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-yellow-400">Para Clientes</span>}
                     </td>
+                    <td className="px-6 py-4 font-medium text-white">{exercise.username}</td>                    
                     <td className="px-6 py-4">
                       <div className="flex gap-2 opacity-70 group-hover:opacity-100">
                         <button onClick={() => handleEdit(exercise)} className="rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e]">Editar</button>
@@ -854,12 +911,12 @@ const TrainerExercises = () => {
 
       {/* Edit Modal */}
       <ModalOverlay isOpen={showEditModal} onClose={cancelEdit} title="Editar ejercicio">
-        <ExerciseForm form={form} setForm={setForm} editingId={editingId} initialForm={initialForm} onSubmit={handleSubmit} onCancel={cancelEdit} onOpenLibrary={openLibraryPicker} libraryTarget={libraryTarget} />
+        <ExerciseForm form={form} setForm={setForm} editingId={editingId} initialForm={initialForm} onSubmit={handleSubmit} onCancel={cancelEdit} onOpenLibrary={openLibraryPicker} libraryTarget={libraryTarget} trainers={trainers} />
       </ModalOverlay>
 
       {/* New Exercise Modal */}
       <ModalOverlay isOpen={showNewModal} onClose={cancelNew} title="Nuevo ejercicio">
-        <ExerciseForm form={form} setForm={setForm} editingId={null} initialForm={initialForm} onSubmit={handleSubmit} onCancel={cancelNew} onOpenLibrary={openLibraryPicker} libraryTarget={libraryTarget} />
+        <ExerciseForm form={form} setForm={setForm} editingId={null} initialForm={initialForm} onSubmit={handleSubmit} onCancel={cancelNew} onOpenLibrary={openLibraryPicker} libraryTarget={libraryTarget} trainers={trainers}/>
       </ModalOverlay>
 
       {/* Library Modal */}

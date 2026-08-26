@@ -84,7 +84,11 @@ const Dashboard = () => {
   const [progressTab, setProgressTab] = useState('silhouette');
   const [chartLimit, setChartLimit] = useState(10);
   const [clients, setClients] = useState([]);
+  const [trainers, setTrainers] = useState([]);
+  const [loadingTrainers, setLoadingTrainers] = useState(true);
   const [payDayMessage, setPayDayMessage] = useState("");
+  const [exercises, setExercises] = useState([]);
+  const [loadingExercises, setLoadingExercises] = useState(true);
   const {
     notifications,
     showNotificationsModal,
@@ -120,30 +124,24 @@ const Dashboard = () => {
 
 
   useEffect(() => {
-      if (profile?.payment_day) {
-        const fetch_payday_validation = async () => {
-          const config = {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            }
-          };
-          const p = await axios.get(`${apiUrl}/payments/client/${clientId}/check-payment-day`, config);
-          const d = p.data;
-          setPayDayMessage(d.message);
-          // console.log(d.message);
-          // console.log(d.payment_day);
-          // console.log(d.days_remaining);
-          // console.log(d.payment_exists);
-          // console.log(d.data);
-          if (d.days_remaining <= 5) {
-            toast.success(d.message);
+    if (profile?.payment_day) {
+      const fetch_payday_validation = async () => {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
           }
+        };
+        const p = await axios.get(`${apiUrl}/payments/client/${clientId}/check-payment-day`, config);
+        const d = p.data;
+        setPayDayMessage(d.message);
+        if (d.days_remaining <= 5) {
+          toast.success(d.message);
         }
-
-        // console.log(profile.payment_day);
-        fetch_payday_validation();
       }
-  },[profile])
+
+      fetch_payday_validation();
+    }
+  }, [profile])
 
   // ✅ Cerrar menú al presionar Escape en móvil
   useEffect(() => {
@@ -161,10 +159,6 @@ const Dashboard = () => {
   }, [menuOpen]);
 
   const closeMenu = () => setMenuOpen(false);
-
-  // ========================
-  // Resto del código sin cambios hasta renderSectionContent()
-  // ========================
 
   const DAY_LETTER_BY_INDEX = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
@@ -189,11 +183,6 @@ const Dashboard = () => {
     [weekStart]
   );
 
-  // Un pago "existe" en cuanto el cliente lo sube, pero queda en Pendiente
-  // hasta que el Trainer lo aprueba. No basta con que exista ALGÚN pago
-  // Aprobado en el historial: tiene que haber uno Aprobado dentro del
-  // ciclo/período actual (misma lógica de ciclo que usa el backend en
-  // checkPaymentDay, anclada a profile.payment_day).
   const getPaymentCycleDate = (paymentDay, year, month) => {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     return new Date(year, month, Math.min(paymentDay, daysInMonth));
@@ -488,7 +477,6 @@ const Dashboard = () => {
         await axios.get(`${apiUrl}/progress/get-profile`, config).then((response) => {
           if (response.status === 200) {
             setProfile(response.data.profile[0]);
-            // console.log(response.data.profile[0]);
           }
         })
       } catch (error) {
@@ -510,8 +498,6 @@ const Dashboard = () => {
         await axios.get(`${apiUrl}/progress/get/${clientId}`, config).then((response) => {
           if (response.status === 200) {
             setProgreso(response.data.filas);
-            // console.log(progreso);
-
           }
         })
       } catch (error) {
@@ -530,7 +516,6 @@ const Dashboard = () => {
         };
         await axios.get(`${apiUrl}/workouts/list/${clientId}`, config).then((response) => {
           if (response.status === 200) {
-            // console.log('Workouts:', response.data.filas);
             setWorkouts(response.data.filas);
           }
         })
@@ -611,7 +596,6 @@ const Dashboard = () => {
           };
           const response = await axios.get(`${apiUrl}/payments/?trainer_id=${clientId}`, config);
           if (response.status === 200) {
-            // console.log(response);
             const data = response.data.payments || response.data.filas || response.data.data || response.data || [];
             const items = Array.isArray(data) ? data : (Array.isArray(response.data) ? response.data : [data]);
             setPayments(items);
@@ -633,6 +617,62 @@ const Dashboard = () => {
     fetchPayments();
 
   }, [navigate, apiUrl, roleValue, status, showPaymentModal]);
+
+  useEffect(() => {
+    const fetchTrainers = async () => {
+      setLoadingTrainers(true);
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return setLoadingTrainers(false);
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        const res = await axios.get(`${apiUrl}/admin/trainers`, config);
+        setTrainers(res.data?.entrenadores || []);
+      } catch (err) {
+        console.error('Error fetching trainers:', err);
+      } finally {
+        setLoadingTrainers(false);
+      }
+    };
+
+    if (roleValue === 1) {
+      fetchTrainers();
+    }
+
+    const fetchExercises = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Token no disponible. Inicia sesión.');
+        return;
+      }
+      try {
+        setLoadingExercises(true);
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        const res = await axios.get(`${apiUrl}/exercises/list`, config);
+        const list = res.data?.exercises || res.data || [];
+
+        setExercises(
+          list.map((item) => ({
+            id: item.id,
+            trainerId: item.trainer_id,
+            title: item.title,
+            description: item.description,
+            photoUrl: item.photo_url,
+            videoUrl: item.video_url,
+            publico: Number(item.publico),
+            username: item.username,
+          }))
+        );
+      } catch (err) {
+        console.error(err);
+        // toast.error('No se pudieron cargar los ejercicios.');
+      } finally {
+        setLoadingExercises(false);
+      }
+    };
+
+    fetchExercises();
+
+  }, [roleValue, apiUrl]);
 
   const handleLogout = () => {
     const keysToClear = ['token', 'role', 'name', 'client_id', 'status', 'genre'];
@@ -753,12 +793,14 @@ const Dashboard = () => {
 
             {/* Dashboard Admin Section - Users Table */}
             <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-              <Link to="/clients" className="items-center text-xl font-semibold text-white mb-4 hover:text-customYellow">Usuarios</Link>
-              <div className="rounded-2xl bg-slate-900/60 border border-slate-700 p-4">
+              <div className="flex items-center justify-between px-6 py-5">
+                <Link to="/clients" className="items-center text-xl font-semibold text-white mb-4 hover:text-customYellow">Usuarios</Link>
+              </div>
+              <div className="hidden overflow-x-auto lg:block">
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400">ID</th>
+                      {/* <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400">ID</th> */}
                       <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400">Foto</th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400">Nombre</th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400">Email</th>
@@ -771,7 +813,7 @@ const Dashboard = () => {
                   <tbody>
                     {clients.map((client) => (
                       <tr key={client.id}>
-                        <td className="px-6 py-3">{client.id}</td>
+                        {/* <td className="px-6 py-3">{client.id}</td> */}
                         <td className="px-6 py-3">
                           <img src={client.picture || '/images/avatar.png'} alt={client.name} className="h-8 w-8 rounded-full object-cover" />
                         </td>
@@ -797,6 +839,99 @@ const Dashboard = () => {
                 </table>
               </div>
             </section>
+
+            {/* Dashboard Admin Section - Trainers Table */}
+            <div className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-5">
+                <Link to="/trainer-exercises" className="items-center text-xl font-semibold text-white mb-4 hover:text-customYellow">Entrenadores</Link>
+              </div>
+
+              {/* Desktop Table */}
+              <div className="hidden overflow-x-auto lg:block">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700/60">
+                      <th className="px-6 py-4 font-medium text-slate-400">Nombre</th>
+                      <th className="px-6 py-4 font-medium text-slate-400">Email</th>
+                      <th className="px-6 py-4 font-medium text-slate-400">Género</th>
+                      <th className="px-6 py-4 font-medium text-slate-400">Teléfono</th>
+                      <th className="px-6 py-4 font-medium text-slate-400">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/50">
+                    {loadingTrainers ? (
+                      <tr><td colSpan="6" className="py-12 text-center text-slate-400">Cargando entrenadores…</td></tr>
+                    ) : trainers.length === 0 ? (
+                      <tr><td colSpan="6" className="py-12 text-center text-slate-400">No hay entrenadores aún.</td></tr>
+                    ) : trainers.map((trainer) => (
+                      <tr key={trainer.id} className={`group transition ${trainer.deleted ? 'bg-red-950/30' : 'hover:bg-slate-800/40'}`}>
+                        <td className="px-6 py-4"><img src={trainer.picture || '/images/avatar.png'} alt={trainer.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-700" /></td>
+                        <td className="px-6 py-4 font-medium text-white">{trainer.name}</td>
+                        <td className="px-6 py-4 text-slate-300">{trainer.email}</td>
+                        <td className="px-6 py-4 text-slate-300">{trainer.genre ? (trainer.genre === 'm' ? 'Masc.' : trainer.genre === 'f' ? 'Fem.' : 'N/D') : '—'}</td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${trainer.status === 'Activo' ? 'bg-[#f1b80c]/15 text-orange-400' : 'bg-red-500/15 text-yellow-400'}`}>
+                            {trainer.deleted ? 'Inactivo' : 'Activo'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {/* End Trainers Table */}
+          </div>
+          {/* Desktop Workouts Table */}
+          <div className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5">
+              <Link to="/trainer-exercises" className="items-center text-xl font-semibold text-white mb-4 hover:text-customYellow">Ejercicios</Link>
+            </div>
+            <div className="hidden max-h-[400px] overflow-y-auto lg:block">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-700/60">
+                    <th className="px-6 py-4 font-medium text-slate-400">Foto</th>
+                    <th className="px-6 py-4 font-medium text-slate-400">Título</th>
+                    <th className="px-6 py-4 font-medium text-slate-400">Descripción</th>
+                    <th className="px-6 py-4 font-medium text-slate-400">Video</th>
+                    <th className="px-6 py-4 font-medium text-slate-400">Público</th>
+                    <th className="px-6 py-4 font-medium text-slate-400">Entrenador</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/50">
+                  {loadingExercises ? (
+                    <tr><td colSpan="6" className="py-12 text-center text-slate-400">Cargando ejercicios…</td></tr>
+                  ) : exercises.length === 0 ? (
+                    <tr><td colSpan="6" className="py-12 text-center text-slate-400">No hay ejercicios aún.</td></tr>
+                  ) : exercises.map((exercise) => (
+                    <tr key={exercise.id} className="group transition hover:bg-slate-800/40">
+                      <td className="px-6 py-4">
+                        {exercise.photoUrl ? (
+                          <img src={exercise.photoUrl} alt={exercise.title} className="h-10 w-10 rounded-lg object-cover ring-2 ring-slate-700" />
+                        ) : (
+                          <span className="text-slate-500 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 font-medium text-white">{exercise.title}</td>
+                      <td className="px-6 py-4 text-slate-300 max-w-xs truncate">{exercise.description}</td>
+                      <td className="px-6 py-4 text-slate-300">
+                        {exercise.videoUrl ? (
+                          <span className="rounded-full bg-slate-800 px-3 py-1 text-xs">Video</span>
+                        ) : (
+                          <span className="text-slate-500 text-xs">—</span>
+                        )}
+                      </td>
+                      <td>
+                        {exercise.publico === 1 && <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-green-400">Página Principal</span>}
+                        {exercise.publico === 0 && <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-yellow-400">Para Clientes</span>}
+                      </td>
+                      <td className="px-6 py-4 font-medium text-white">{exercise.username}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       );
@@ -845,9 +980,9 @@ const Dashboard = () => {
         <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 mb-6">
             {[
-              { label: 'Rutinas activas', value: workouts.length , extra:''},
+              { label: 'Rutinas activas', value: workouts.length, extra: '' },
               { label: 'Entrenador', value: profile?.trainer_name || 'No asignado', extra: '' },
-              { label: 'Día de pago mensual', value: profile?.payment_day ? `Día ${profile.payment_day}` : 'No definido', extra: payDayMessage?payDayMessage:'' },
+              { label: 'Día de pago mensual', value: profile?.payment_day ? `Día ${profile.payment_day}` : 'No definido', extra: payDayMessage ? payDayMessage : '' },
             ].map((card) => (
               <div key={card.label} className="rounded-3xl bg-[#141820] border border-slate-800 p-5 shadow-xl">
                 <p className="text-sm text-slate-400 uppercase tracking-[0.25em]">{card.label}</p>
@@ -1164,7 +1299,6 @@ const Dashboard = () => {
                   ) : (
                     <div className="max-h-[450px] overflow-y-auto space-y-3 pr-1">
                       {payments.map((p, idx) => {
-                        const isFirst = idx === 0;
                         const dateText = (p.payment_date || p.paymentDate) ? moment(p.payment_date || p.paymentDate).format('DD/MM/YYYY') : '—';
                         const amount = Number(p.amount || p.total || 0).toFixed(2);
                         const method = p.payment_method || p.paymentMethod || '—';
@@ -1278,7 +1412,7 @@ const Dashboard = () => {
   // ✅ Componente reutilizable del panel de navegación (se usa tanto en móvil como escritorio)
   const SidebarPanel = () => (
     <div className="flex h-full flex-col justify-between p-6">
-      <div>
+      <div className='sticky top-10'>
         <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-[#f1b80c] to-[#d97706] text-xl font-bold text-slate-950 shadow-xl shadow-[#f1b80c]/20">
           {initials}
         </div>
@@ -1339,7 +1473,7 @@ const Dashboard = () => {
           <main className="flex-1 bg-[#0d1117] p-6 lg:p-8">
 
             {/* ✅ Botón hamburguesa — solo visible en móvil */}
-            <div className="mb-4 lg:hidden  top-4 sticky text-right">
+            <div className="mb-4 lg:hidden top-4 sticky text-right">
               <button
                 onClick={() => setMenuOpen(true)}
                 aria-label="Abrir menú"
@@ -1532,7 +1666,6 @@ const Dashboard = () => {
                           <p className="text-sm font-semibold text-white">{n.message}</p>
                           {n.navigate_to &&
                             <p className="mt-1 text-xs text-slate-400">
-                              {/* <Link to={n.navigate_to} className="text-slate-300">{n.navigate_to}</Link> */}
                               {n.navigate_to}
                             </p>
                           }
@@ -1552,8 +1685,6 @@ const Dashboard = () => {
                         <span className={`rounded-full px-3 py-1 font-semibold ${isRead ? 'bg-green-600 text-white' : 'bg-orange-400 text-black'}`}>
                           {isRead ? 'Leída' : 'Pendiente'}
                         </span>
-                        {/* <span>Creada: {moment(n.created_at).format('DD-MM-YYYY HH:mm')}</span> */}
-                        {/* {n.updated_at && <span>Actualizada: {moment(n.updated_at).format('DD-MM-YYYY HH:mm')}</span>} */}
                         <span>{moment(n.created_at).format('DD-MM-YYYY HH:mm')}</span>
                       </div>
                     </>
@@ -1564,7 +1695,7 @@ const Dashboard = () => {
                       key={n.id}
                       to={n.navigate_to}
                       onClick={closeNotificationsModal}
-                      className="block rounded-2xl border border-slate-800 bg-slate-900/70 p-4 transition hover:border-[#f1b80c]"
+                      className="block rounded-2xl border border-slate-800 bg-[#141820] p-4 transition hover:border-[#f1b80c]"
                     >
                       {content}
                     </Link>

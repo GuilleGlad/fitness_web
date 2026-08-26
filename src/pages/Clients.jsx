@@ -7,6 +7,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faNoteSticky, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { verifyToken } from '../utils/tokenUtils';
 import { getClientStatusLabel, getCuentaLabel, normalizeClientRow, normalizeStatusCode } from '../utils/clientUtils';
+import moment from 'moment';
+import 'moment/locale/es';
 
 const initialForm = {
   name: '',
@@ -51,7 +53,7 @@ const ClientForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel,
 
       {editingId && (
         <label className="space-y-2 text-sm text-slate-200 flex flex-col items-center">
-          {form.picture && form.picture === '/images/avatar.png' &&<img src={form.picture} className='mt-2 w-full rounded-[50%] lg:w-1/4 object-cover border border-slate-700'/>}
+          {form.picture && form.picture === '/images/avatar.png' && <img src={form.picture} className='mt-2 w-full rounded-[50%] lg:w-1/4 object-cover border border-slate-700' />}
           <input name="picture" value={form.picture} type="url" readOnly placeholder="https://ejemplo.com/foto.jpg" onChange={handleChange} className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
           {form.picture && form.picture !== '/images/avatar.png' && <img src={form.picture} alt="preview" className="mt-2 w-full rounded-[50%] lg:w-1/4 object-cover border border-slate-700" />}
           <div className="flex gap-3 mt-2">
@@ -262,6 +264,12 @@ const Clients = () => {
   const [savingNoteFeedback, setSavingNoteFeedback] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /* ── Datos biométricos del cliente (modal Asignar rutina) ── */
+  const [clientProfileData, setClientProfileData] = useState(null);
+  const [clientProgressHistory, setClientProgressHistory] = useState([]);
+  const [loadingBioData, setLoadingBioData] = useState(false);
+  const [bioPhotoPreview, setBioPhotoPreview] = useState(null);
+
   /* ── Crear Entrenador (solo Administrador) ── */
   const [showNewTrainerModal, setShowNewTrainerModal] = useState(false);
   const [trainerForm, setTrainerForm] = useState(initialTrainerForm);
@@ -330,6 +338,26 @@ const Clients = () => {
     }
   };
 
+  const fetchClientBioData = async (clientId) => {
+    setLoadingBioData(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return toast.error('Token no disponible. Inicia sesión.');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const [profileRes, progressRes] = await Promise.all([
+        axios.get(`${apiUrl}/progress/get-profile-by-id/${clientId}`, config),
+        axios.get(`${apiUrl}/progress/get/${clientId}`, config),
+      ]);
+      setClientProfileData(profileRes.data?.profile?.[0] || null);
+      setClientProgressHistory(progressRes.data?.filas || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('No se pudieron cargar los datos biométricos del cliente.');
+    } finally {
+      setLoadingBioData(false);
+    }
+  };
+
   const handleOpenAssignModal = async (client) => {
     setShowAssignModal(true);
     setSelectedClient(client);
@@ -348,6 +376,7 @@ const Clients = () => {
       setTrainerId(currentTrainerId);
       await fetchTrainerWorkouts(currentTrainerId);
       await fetchAssignedWorkouts(client.id);
+      await fetchClientBioData(client.id);
     } catch (err) {
       console.error(err);
       toast.error('No se pudo obtener el entrenador actual.');
@@ -359,6 +388,8 @@ const Clients = () => {
     setSelectedClient(null);
     setTrainerWorkouts([]);
     setAssignedWorkouts([]);
+    setClientProfileData(null);
+    setClientProgressHistory([]);
     resetAssignForm();
   };
 
@@ -844,15 +875,15 @@ const Clients = () => {
                 ) : clients.length === 0 ? (
                   <tr><td colSpan="7" className="py-12 text-center text-slate-400">No hay usuarios aún.</td></tr>
                 ) : clients.map((client) => (
-                  
-                    <tr key={client.id} className={`group transition ${client.deleted ? 'bg-red-950/30' : 'hover:bg-slate-800/40'}`}>
+
+                  <tr key={client.id} className={`group transition ${client.deleted ? 'bg-red-950/30' : 'hover:bg-slate-800/40'}`}>
                     {/* <td className="px-6 py-4 text-slate-300">{client.id}</td> */}
                     <td className="px-6 py-4"><img src={client.role != 'admin' ? client.picture || '/images/avatar.png' : '/images/avatar.png'} alt={client.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-700" /></td>
                     <td className="px-6 py-4 font-medium text-white">{client.name}</td>
                     <td className="px-6 py-4 text-slate-300">{client.email}</td>
                     <td className="px-6 py-4 text-slate-300">{client.phone || '—'}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${(client.role == "client")?"bg-slate-700":""} ${(client.role == "admin")?"bg-red-700":""} ${(client.role == "trainer")?"bg-blue-700":""} text-slate-200`}>
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${(client.role == "client") ? "bg-slate-700" : ""} ${(client.role == "admin") ? "bg-red-700" : ""} ${(client.role == "trainer") ? "bg-blue-700" : ""} text-slate-200`}>
                         {client.role || '—'}
                       </span>
                     </td>
@@ -882,19 +913,19 @@ const Clients = () => {
                             >
                               Editar
                             </button>
-                            {roleValue === '2' && <button
+                            {/* {roleValue === '2' && <button
                               onClick={() => handleRutina(client)}
                               disabled={client.role === 'admin'}
                               className="rounded-full bg-green-400 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-green-300"
                             >
                               Rutinas
-                            </button>}
+                            </button>} */}
                             {roleValue === '2' && <button
                               onClick={() => handleProgress(client)}
                               disabled={client.role === 'admin'}
                               className="rounded-full bg-blue-300 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-blue-200"
                             >
-                              Progreso
+                              Progreso y Rutinas
                             </button>}
                             <button
                               onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.user_id))}
@@ -933,7 +964,7 @@ const Clients = () => {
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
                       {client.phone && <span>Tel: {client.phone}</span>}
-                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${(client.role == "client")?"bg-slate-700":""} ${(client.role == "admin")?"bg-red-700":""} ${(client.role == "trainer")?"bg-blue-700":""} text-slate-200`}>
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${(client.role == "client") ? "bg-slate-700" : ""} ${(client.role == "admin") ? "bg-red-700" : ""} ${(client.role == "trainer") ? "bg-blue-700" : ""} text-slate-200`}>
                         {client.role || '—'}
                       </span>
                       <span className={`rounded-full px-3 py-1 ${getClientStatusLabel(client) === 'Activo' ? 'bg-[#f1b80c]/15 text-orange-400' : 'bg-red-500/15 text-yellow-400'}`}>
@@ -986,6 +1017,115 @@ const Clients = () => {
       <ModalOverlay isOpen={showAssignModal} onClose={closeAssignModal} title={selectedClient ? `Asignar rutina a ${selectedClient.name}` : 'Asignar rutina'}>
         <div className="flex flex-col">
           <div>
+            <section id='datos_biometricos' className="mb-6 space-y-5">
+              {loadingBioData ? (
+                <p className="rounded-3xl border border-slate-700 bg-[#0f172a] p-4 text-center text-sm text-slate-400">
+                  Cargando datos biométricos…
+                </p>
+              ) : (
+                <>
+                  {/* Datos personales */}
+                  <div className="overflow-hidden rounded-3xl border border-slate-700 bg-[#0f172a]">
+                    <h4 className="border-b border-slate-700 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c]">
+                      Datos personales
+                    </h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[560px] text-left text-sm">
+                        <thead>
+                          <tr className="border-b border-slate-700/60">
+                            <th className="px-4 py-3 font-medium text-slate-400">Nombre</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Edad</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Altura</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Peso</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Días a entrenar</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Objetivo</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td className="px-4 py-3 font-medium text-white whitespace-nowrap">{selectedClient?.name || '—'}</td>
+                            <td className="px-4 py-3 text-slate-300">{clientProfileData?.age ?? '—'}</td>
+                            <td className="px-4 py-3 text-slate-300">{clientProfileData?.height ?? '—'}</td>
+                            <td className="px-4 py-3 text-slate-300">{clientProfileData?.initial_weight ?? '—'}</td>
+                            <td className="px-4 py-3 text-slate-300">{clientProfileData?.training_days ?? '—'}</td>
+                            <td className="px-4 py-3 text-slate-300 capitalize">{clientProfileData?.goal?.toString().replace(/_/g, ' ') || '—'}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Historial biométrico */}
+                  <div className="overflow-hidden rounded-3xl border border-slate-700 bg-[#0f172a]">
+                    <h4 className="border-b border-slate-700 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c]">
+                      Historial biométrico
+                    </h4>
+                    <div className="max-h-[320px] overflow-y-auto overflow-x-auto">
+                      <table className="w-full min-w-[720px] text-left text-sm">
+                        <thead>
+                          <tr className="sticky top-0 z-10 border-b border-slate-700/60 bg-[#0f172a]">
+                            <th className="px-4 py-3 font-medium text-slate-400">Fecha</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Peso</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Cintura</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Cadera</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Brazos</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Piernas</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Fotos</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Notas del entrenador</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/50">
+                          {clientProgressHistory.length === 0 ? (
+                            <tr>
+                              <td colSpan="8" className="px-4 py-6 text-center text-slate-400">
+                                Este cliente todavía no tiene registros de progreso.
+                              </td>
+                            </tr>
+                          ) : (
+                            clientProgressHistory.map((entry) => (
+                              <tr key={entry.id} className="hover:bg-slate-800/40">
+                                <td className="px-4 py-3 whitespace-nowrap text-slate-300">
+                                  {entry.log_date ? moment(entry.log_date).format('DD-MM-YYYY') : '—'}
+                                </td>
+                                <td className="px-4 py-3 text-slate-300">{entry.weight ?? '—'}</td>
+                                <td className="px-4 py-3 text-slate-300">{entry.waist ?? '—'}</td>
+                                <td className="px-4 py-3 text-slate-300">{entry.hips ?? '—'}</td>
+                                <td className="px-4 py-3 text-slate-300">{entry.arms ?? '—'}</td>
+                                <td className="px-4 py-3 text-slate-300">{entry.legs ?? '—'}</td>
+                                <td className="px-4 py-3">
+                                  <div className="flex gap-2">
+                                    {entry.photo_front_url ? (
+                                      <img
+                                        src={entry.photo_front_url}
+                                        alt="Foto frontal"
+                                        className="h-12 w-12 cursor-pointer rounded-lg object-cover ring-2 ring-slate-700 hover:opacity-80"
+                                        onClick={() => setBioPhotoPreview(entry.photo_front_url)}
+                                      />
+                                    ) : null}
+                                    {entry.photo_back_url ? (
+                                      <img
+                                        src={entry.photo_back_url}
+                                        alt="Foto trasera"
+                                        className="h-12 w-12 cursor-pointer rounded-lg object-cover ring-2 ring-slate-700 hover:opacity-80"
+                                        onClick={() => setBioPhotoPreview(entry.photo_back_url)}
+                                      />
+                                    ) : null}
+                                    {!entry.photo_front_url && !entry.photo_back_url && (
+                                      <span className="text-xs text-slate-500">—</span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 max-w-xs text-slate-300">{entry.trainer_notes || '—'}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
+            </section>
             <form onSubmit={handleAssignSubmit} className="space-y-5">
               <label className="block space-y-2 text-sm text-slate-200">
                 Rutina
@@ -1235,6 +1375,16 @@ const Clients = () => {
           <div className="w-full max-w-6xl">
             <TrainerLibrary isModal selectionMode="single" onSelectMedia={handleSelectLibraryItem} onClose={() => setIsLibraryOpen(false)} />
           </div>
+        </div>
+      )}
+
+      {/* Biometric photo preview */}
+      {bioPhotoPreview && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setBioPhotoPreview(null)}
+        >
+          <img src={bioPhotoPreview} alt="Foto de progreso" className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" />
         </div>
       )}
     </div>
