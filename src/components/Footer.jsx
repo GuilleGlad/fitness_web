@@ -6,7 +6,7 @@ import { faFacebook, faXTwitter, faYoutube, faInstagram, faTiktok } from '@forta
 import BigLink from './BigLink';
 import { Link } from 'react-router-dom';
 
-const Footer = ({ logoPath, email, trainerPhone, trainerAddress, facebook_url, x_url, youtube_url, instagram_url, tiktok_url, links }) => {
+const Footer = ({ logoPath, email, trainerPhone, trainerAddress, facebook_url, x_url, youtube_url, instagram_url, tiktok_url, links, loading = false }) => {
   const defaultLogoPath = logoPath || '/images/Logo-01-1-1.png';
 
   return (
@@ -17,7 +17,11 @@ const Footer = ({ logoPath, email, trainerPhone, trainerAddress, facebook_url, x
 
         {/* Columna 1: Logo + Contacto */}
         <div className="flex flex-col gap-6">
-          <img src={defaultLogoPath} alt="Logo" className="w-32" />
+          {loading ? (
+            <div className="h-12 w-32 animate-pulse rounded-md bg-gray-700/60" />
+          ) : (
+            <img src={defaultLogoPath} alt="Logo" className="w-32" />
+          )}
 
           <p className="text-sm opacity-80">
             ¿Alguna pregunta? No dude en contactarnos.
@@ -25,13 +29,17 @@ const Footer = ({ logoPath, email, trainerPhone, trainerAddress, facebook_url, x
 
           <div className="flex items-center gap-3">
             <FontAwesomeIcon icon={faEnvelope} className="text-customYellow" />
-            <span className="text-xl font-bold"><a href={`mailto:${email}`}>{email}</a></span>
+            {loading ? (
+              <span className="inline-block h-5 w-40 animate-pulse rounded bg-gray-700/60" />
+            ) : (
+              <span className="text-xl font-bold"><a href={`mailto:${email}`}>{email}</a></span>
+            )}
           </div>
 
           {/* Redes sociales */}
           <div className="flex flex-col gap-3 mt-4">
             <span className="text-sm opacity-80">Síguenos en</span>
-            <div className="flex gap-3">
+            <div className={`flex gap-3 ${loading ? 'pointer-events-none opacity-40' : ''}`}>
               <Link to={facebook_url} className="bg-gray-200 hover:bg-customYellow transition p-3 rounded-lg">
                 <FontAwesomeIcon icon={faFacebook} className="text-black" size="lg" />
               </Link>
@@ -73,12 +81,20 @@ const Footer = ({ logoPath, email, trainerPhone, trainerAddress, facebook_url, x
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <FontAwesomeIcon icon={faPhone} className="text-customYellow" />
-            <span className="text-sm"><a href={`tel:${trainerPhone}`}>{trainerPhone}</a></span>
+            {loading ? (
+              <span className="inline-block h-4 w-28 animate-pulse rounded bg-gray-700/60" />
+            ) : (
+              <span className="text-sm"><a href={`tel:${trainerPhone}`}>{trainerPhone}</a></span>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
             <FontAwesomeIcon icon={faLocationDot} className="text-customYellow" />
-            <span className="text-sm">{trainerAddress}</span>
+            {loading ? (
+              <span className="inline-block h-4 w-40 animate-pulse rounded bg-gray-700/60" />
+            ) : (
+              <span className="text-sm">{trainerAddress}</span>
+            )}
           </div>
         </div>
 

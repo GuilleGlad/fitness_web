@@ -18,7 +18,7 @@ import Logout from './pages/Logout';
 import Routines from './pages/Routines'; // ajusta la ruta según tu estructura
 import Progress from './pages/Progress';   // ajusta la ruta según tu estructura
 import Payments from './pages/Payments';   // ajusta la ruta según tu estructura
-
+import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -56,7 +56,6 @@ function App() {
           }
         }}
       />
-
       <NotificationsProvider>
         <BrowserRouter>
           <Routes>

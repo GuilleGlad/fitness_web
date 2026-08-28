@@ -35,7 +35,7 @@
     position: relative;
     z-index: 2; /* Ensures content is above the background video */
     color: white;
-    padding: 40px;
+    padding-top: 40px;
 }
 
 

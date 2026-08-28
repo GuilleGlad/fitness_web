@@ -6,7 +6,7 @@ import TrainerLibrary from './TrainerLibrary';
 import { verifyToken } from '../utils/tokenUtils';
 import PairRow from '../components/PairRow';
 import PairRowText from '../components/PairRowText';
-
+import { Helmet } from 'react-helmet-async';
 const STORAGE_KEY = 'elitefit_settings';
 
 const defaultSettings = {
@@ -250,6 +250,9 @@ const Settings = () => {
 
   return (
     <>
+            <Helmet>
+                <title>{settings.titulo || "GYM"}</title>
+            </Helmet>
       <Toaster position="top-center" toastOptions={{ duration: 3000, style: { background: '#1e293b', color: '#fff', borderRadius: 16 } }} />
       <div className="min-h-screen bg-[#0d1117] text-white">
         <div className="mx-auto max-w-4xl p-4 sm:p-6 lg:max-w-6xl lg:p-10 2xl:max-w-7xl">

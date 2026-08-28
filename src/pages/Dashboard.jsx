@@ -18,7 +18,7 @@ import { yellow } from '@mui/material/colors';
 import toast from 'react-hot-toast';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { useNotifications } from '../context/NotificationsContext';
-
+import { Helmet } from 'react-helmet-async';
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 
 const ROLE_MAP = {
@@ -1508,6 +1508,9 @@ const Dashboard = () => {
             </div>
 
             <div className="rounded-[40px] border border-slate-800 bg-[#141820] shadow-2xl">
+              <Helmet>
+                <title>Ajustes</title>
+              </Helmet>
               {renderSectionContent()}
             </div>
           </main>

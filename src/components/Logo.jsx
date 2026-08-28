@@ -1,15 +1,23 @@
 import React from 'react';
 
-const Logo = ({ logoPath, isMenuOpen }) => {
-    let defaultLogo = '/images/Logo-01-1-1.png';
+const Logo = ({ logoPath, isMenuOpen, settingsLoading }) => {
+    let defaultLogo;
 
     if (logoPath) {
         defaultLogo = logoPath;
     }
     return (
-        <div className='text-xl font-bold text-indigo-600 tracking-wider'>
-            <img className={`${isMenuOpen ? 'min-w-24' : 'min-w-32'}`} src={defaultLogo} alt='AdrianFitness'></img>
-        </div>
+        (settingsLoading ? (
+            <div className="video-background bg-gray-800 animate-pulse" />
+        ) : (
+            <div className='text-xl font-bold text-indigo-600 tracking-wider'>
+                <img
+                    src={logoPath}
+                    alt="Logo"
+                    className="lg:ml-20 h-44 w-auto object-contain drop-shadow-2xl rounded-xl"
+                />
+            </div>
+        ))
     )
 }
 

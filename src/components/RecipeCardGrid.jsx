@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import RecipeCard from './RecipeCard';
+import Reveal from './Reveal';
 
 const RecipeCardGrid = ({ recipes, title = 'Recetas', loading = false }) => {
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -76,8 +77,8 @@ const RecipeCardGrid = ({ recipes, title = 'Recetas', loading = false }) => {
       {/* Recipe Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {recipes.map((recipe, index) => (
+          <Reveal key={recipe.id || index} delay={Math.min(index, 8) * 80}>
           <article
-            key={recipe.id || index}
             onClick={() => handleCardClick(index)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -149,6 +150,7 @@ const RecipeCardGrid = ({ recipes, title = 'Recetas', loading = false }) => {
               </div>
             </div>
           </article>
+          </Reveal>
         ))}
       </div>
 

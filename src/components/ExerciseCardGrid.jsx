@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ExerciseCard from './ExerciseCard';
+import Reveal from './Reveal';
 
 const ExerciseCardGrid = ({ exercises, title = 'Ejercicios', loading = false }) => {
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -76,8 +77,8 @@ const ExerciseCardGrid = ({ exercises, title = 'Ejercicios', loading = false }) 
       {/* Exercise Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {exercises.map((exercise, index) => (
+          <Reveal key={exercise.id || index} delay={Math.min(index, 8) * 80}>
           <article
-            key={exercise.id || index}
             onClick={() => handleCardClick(index)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -158,6 +159,7 @@ const ExerciseCardGrid = ({ exercises, title = 'Ejercicios', loading = false }) 
               </div>
             </div>
           </article>
+          </Reveal>
         ))}
       </div>
 

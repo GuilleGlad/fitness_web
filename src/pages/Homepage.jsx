@@ -18,6 +18,7 @@ import ExerciseCardGrid from '../components/ExerciseCardGrid';
 import axios from 'axios';
 import { Helmet } from 'react-helmet-async';
 import ImageCard from '../components/ImageCard';
+import Reveal from '../components/Reveal';
 import { faRandom } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -42,8 +43,16 @@ function Homepage() {
     const [news, setNews] = useState([]);
     const [recipes, setRecipes] = useState([]);
     const [exercises, setExercises] = useState([]);
+    const [settingsLoading, setSettingsLoading] = useState(true);
+    const [newsLoading, setNewsLoading] = useState(true);
+    const [recipesLoading, setRecipesLoading] = useState(true);
+    const [exercisesLoading, setExercisesLoading] = useState(true);
     const sliderRef = useRef(null);
     const sliderNewsRef = useRef(null);
+
+    const Skeleton = ({ className = '' }) => (
+        <div className={`animate-pulse bg-gray-700/60 rounded-md ${className}`} />
+    );
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -87,6 +96,8 @@ function Homepage() {
                 } catch (error) {
                     console.error('No se pudieron recuperar los ajustes:', error);
                 }
+            } finally {
+                setSettingsLoading(false);
             }
         }
 
@@ -102,6 +113,8 @@ function Homepage() {
             }
             catch (error) {
                 console.error('Error cargando noticias:', error);
+            } finally {
+                setNewsLoading(false);
             }
         }
 
@@ -117,6 +130,8 @@ function Homepage() {
             }
             catch (error) {
                 console.error('Error cargando noticias:', error);
+            } finally {
+                setRecipesLoading(false);
             }
         }
 
@@ -132,6 +147,8 @@ function Homepage() {
             }
             catch (error) {
                 console.error('Error cargando noticias:', error);
+            } finally {
+                setExercisesLoading(false);
             }
         }
 
@@ -177,7 +194,7 @@ function Homepage() {
     // NOTE: Replace '/videos/hero-bg.mp4' with the actual path to your video asset.
     const videoPath1 = settings.videoUrl || '/videos/videoplayback.mp4';
     const videoPath2 = '/videos/videoplayback2.mp4';
-    const logoPath = settings.logoUrl || '/images/Logo-01-1-1.png';
+    const logoPath = settings.logoUrl;
     const trainerPic = settings.aboutUrl || '/images/Image-02.jpg';
     const trainerName = settings.username || 'Sergio Zane';
     const trainerPhone = settings.phone || '';
@@ -189,16 +206,21 @@ function Homepage() {
             .split(/\n|,/)
             .map((item) => item.trim())
             .filter(Boolean);
-        return urls.length > 0 ? urls : ['/images/Image-03.jpg'];
-    }, [settings.homeCarouselUrls]);
+        if (urls.length > 0) return urls;
+        // Mientras carga, no mostramos la imagen "de fábrica": el carrusel
+        // se oculta y se ve un skeleton (ver más abajo) hasta saber si hay
+        // imágenes reales configuradas.
+        return settingsLoading ? [] : ['/images/Image-03.jpg'];
+    }, [settings.homeCarouselUrls, settingsLoading]);
 
     const adsImages = useMemo(() => {
         const urls = (settings.adsCarouselUrls || '')
             .split(/\n|,/)
             .map((item) => item.trim())
             .filter(Boolean);
-        return urls.length > 0 ? urls : ['/images/cards/Image-07.jpg'];
-    }, [settings.adsCarouselUrls]);
+        if (urls.length > 0) return urls;
+        return settingsLoading ? [] : ['/images/cards/Image-07.jpg'];
+    }, [settings.adsCarouselUrls, settingsLoading]);
 
     // --- ADS: en mobile se muestran como desplegable ---
     // Barajamos el orden una sola vez por cada set de adsImages (no en cada
@@ -270,34 +292,44 @@ function Homepage() {
                     - autoPlay, loop, muted: Standard practices for background video players. 
                     (It's highly recommended to mute background videos).
                 */}
-                    <video
-                        className="video-background"
-                        src={videoPath1}
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        poster="/path/to/placeholder.jpg" // Optional: shows an image before video loads
-                    >
-                        {/* Fallback for older browsers */}
-                        Your browser does not support the video tag.
-                    </video>
+                    {settingsLoading ? (
+                        <div className="video-background bg-gray-800 animate-pulse" />
+                    ) : (
+                        <video
+                            className="video-background"
+                            src={videoPath1}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            poster="/path/to/placeholder.jpg" // Optional: shows an image before video loads
+                        >
+                            {/* Fallback for older browsers */}
+                            Your browser does not support the video tag.
+                        </video>
+                    )}
 
                     {/* 
                     This wrapper div is crucial for placing foreground content (text, buttons, etc.) 
                     on top of the video background, using z-index.
                 */}
-                    <div className="video-content-overlay lg:ml-16">
+                    <div className="video-content-overlay">
                         {/* PARENT COMPONENTS SHOULD PLACE THEIR CONTENT HERE */}
                         {/* Example Content: */}
                         <div className='min-h-[80vh]'>
-                            <Navbar logoPath={logoPath}></Navbar>
-                            <div className='items-center absolute bottom-0 flex-1 md:flex'>
+                            <Reveal direction="down" duration={600}>
+                                <Navbar logoPath={logoPath} loading={settingsLoading}></Navbar>
+                            </Reveal>
+                            <div className='items-center absolute bottom-0 w-full px-4 lg:px-0 sm:flex sm:flex-row'>
                                 <div className="w-full lg:w-1/2 mb-10">
-                                    <FloatingCard trainerPic={trainerPic} trainerName={trainerName} trainerPhone={trainerPhone} trainerEmail={trainerEmail} ></FloatingCard>
+                                    <Reveal direction="left" delay={150}>
+                                        <FloatingCard trainerPic={trainerPic} trainerName={trainerName} trainerPhone={trainerPhone} trainerEmail={trainerEmail} loading={settingsLoading} ></FloatingCard>
+                                    </Reveal>
                                 </div>
-                                <div className="w-full md:w-1/2 lg:w-2/3 mr-32">
-                                    <BigTitle title="ALCANZA TUS METAS JUNTO A NOSOTROS"></BigTitle>
+                                <div className="w-full md:w-1/2 lg:w-2/3">
+                                    <Reveal direction="right" delay={300}>
+                                        <BigTitle title="ALCANZA TUS METAS JUNTO A NOSOTROS"></BigTitle>
+                                    </Reveal>
                                 </div>
                             </div>
                         </div>
@@ -420,43 +452,61 @@ function Homepage() {
 
                         {/* Carrusel */}
                         <div className="flex-1 bg-black">
-                            <div
+                            <Reveal
+                                as="div"
                                 id="carousel"
                                 className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800"
                             >
-                                {slidersReady && (
-                                    <Slider key={sliderBucket} {...sliderSettings} ref={sliderRef}>
-                                        {pictures.map((image, index) => (
-                                            <div
-                                                key={`${image}-${index}`}
-                                                className="shadow-lg shadow-black drop-shadow-lg"
-                                            >
-                                                <img
-                                                    src={image}
-                                                    alt={`Slide ${index + 1}`}
-                                                    className="w-full h-auto object-cover rounded-md"
-                                                />
-                                            </div>
+                                {settingsLoading ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {[0, 1, 2].map((i) => (
+                                            <Skeleton key={i} className="h-56 w-full" />
                                         ))}
-                                    </Slider>
+                                    </div>
+                                ) : (
+                                    slidersReady && pictures.length > 0 && (
+                                        <Slider key={sliderBucket} {...sliderSettings} ref={sliderRef}>
+                                            {pictures.map((image, index) => (
+                                                <div
+                                                    key={`${image}-${index}`}
+                                                    className="shadow-lg shadow-black drop-shadow-lg"
+                                                >
+                                                    <img
+                                                        src={image}
+                                                        alt={`Slide ${index + 1}`}
+                                                        className="w-full h-auto object-cover rounded-md"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </Slider>
+                                    )
                                 )}
-                            </div>
+                            </Reveal>
                         </div>
 
                     </div>
 
-                    <div className="bg-black w-full flex-1 mr-32">
+                    <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
                         <div className="flex-1 lg:flex bg-black lg:mr-32">
-                            <div className="w-1/4">
+                            <div className="hidden lg:block lg:w-1/4">
                                 {/* <FloatingText text="ADS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText> */}
                             </div>
                             <div className="flex flex-col lg:flex-row bg-black lg:mr-32">
-                                <BigTitle title="MARCAS Y PATROCINADORES" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                                <Reveal>
+                                    <BigTitle title="MARCAS Y PATROCINADORES" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                                </Reveal>
                             </div>
                         </div>
                         <div className="flex-1 bg-black">
                             <div id='adsDiv' className='w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800'>
                                 <div className="w-full flex justify-center">
+                                    {settingsLoading ? (
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-4 max-w-7xl w-full">
+                                            {[0, 1, 2, 3].map((i) => (
+                                                <Skeleton key={i} className="h-28 w-full" />
+                                            ))}
+                                        </div>
+                                    ) : (
                                     <div
                                         className="
           columns-1
@@ -466,11 +516,13 @@ function Homepage() {
           gap-4
           p-4
           max-w-7xl
+          mx-auto
         "
                                     >
                                         {visibleAdsImages.map((src, index) => (
-                                            <div
+                                            <Reveal
                                                 key={index}
+                                                delay={index * 100}
                                                 className="
               mb-4
               break-inside-avoid
@@ -478,11 +530,7 @@ function Homepage() {
               rounded-xl
               shadow-lg
               bg-white
-              animate-fadeIn
             "
-                                                style={{
-                                                    animationDelay: `${index * 120}ms`,
-                                                }}
                                             >
                                                 <img
                                                     src={src}
@@ -496,9 +544,10 @@ function Homepage() {
                 duration-300
               "
                                                 />
-                                            </div>
+                                            </Reveal>
                                         ))}
                                     </div>
+                                    )}
                                 </div>
                                 {isMobileAds && adsImages.length > 1 && (
                                     <div className="w-full flex justify-center mt-2">
@@ -583,50 +632,70 @@ function Homepage() {
                     {/* NOTICIAS */}
                     <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
                         <div className="flex-1 lg:flex bg-black lg:mr-32">
-                            <div className="w-1/4">
+                            <div className="hidden lg:block lg:w-1/4">
                                 {/* <FloatingText text="SECCION INFORMATIVA" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText> */}
                             </div>
-                            <div className='w-3/4'>
-                                <BigTitle title="MUNDO FITNESS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                            <div className='w-full lg:w-3/4'>
+                                <Reveal>
+                                    <BigTitle title="MUNDO FITNESS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                                </Reveal>
                             </div>
                         </div>
-                        <div className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
-                            {slidersReady && (
-                                <Slider key={sliderBucket} {...sliderSettingsNews} ref={sliderNewsRef}>
-                                    {
-                                        news.map((item, index) => (
-                                            <News key={index} text={item.text} image={item.image_url} title={item.title} />
-                                        ))
-                                    }
-                                </Slider>
+                        <Reveal className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
+                            {newsLoading ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {[0, 1, 2].map((i) => (
+                                        <Skeleton key={i} className="h-48 w-full" />
+                                    ))}
+                                </div>
+                            ) : (
+                                slidersReady && news.length > 0 && (
+                                    <Slider key={sliderBucket} {...sliderSettingsNews} ref={sliderNewsRef}>
+                                        {
+                                            news.map((item, index) => (
+                                                <News key={index} text={item.text} image={item.image_url} title={item.title} />
+                                            ))
+                                        }
+                                    </Slider>
+                                )
                             )}
-                        </div>
+                        </Reveal>
 
                     </div>
                     <div className='separator lg:pt-32 pt-12 bg-black'></div>
                     {/* RECIPES */}
                     <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
                         <div className="flex-1 lg:flex bg-black lg:mr-32">
-                            <div className="w-1/4">
+                            <div className="hidden lg:block lg:w-1/4">
                                 {/* <FloatingText text="RECETAS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText> */}
                             </div>
-                            <div className='w-3/4'>
-                                <BigTitle title="FITNESS PARA LLEVAR" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                            <div className='w-full lg:w-3/4'>
+                                <Reveal>
+                                    <BigTitle title="FITNESS PARA LLEVAR" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                                </Reveal>
                             </div>
                         </div>
-                        <div className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
-                            <RecipeCardGrid
-                                recipes={recipes.map(r => ({
-                                    id: r.id,
-                                    title: r.title,
-                                    ingredients: r.ingredients,
-                                    instructions: r.instructions,
-                                    image_url: r.image_url,
-                                    status: true
-                                }))}
-                                title=""
-                            />
-                        </div>
+                        <Reveal className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
+                            {recipesLoading ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {[0, 1, 2].map((i) => (
+                                        <Skeleton key={i} className="h-64 w-full" />
+                                    ))}
+                                </div>
+                            ) : (
+                                <RecipeCardGrid
+                                    recipes={recipes.map(r => ({
+                                        id: r.id,
+                                        title: r.title,
+                                        ingredients: r.ingredients,
+                                        instructions: r.instructions,
+                                        image_url: r.image_url,
+                                        status: true
+                                    }))}
+                                    title=""
+                                />
+                            )}
+                        </Reveal>
 
                     </div>
                     <div className='separator lg:pt-32 pt-12 bg-black'></div>
@@ -634,25 +703,35 @@ function Homepage() {
                     {/* EJERCICIOS PUBLICOS */}
                     <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
                         <div className="flex-1 lg:flex bg-black lg:mr-32">
-                            <div className="w-1/4">
+                            <div className="hidden lg:block lg:w-1/4">
                                 {/* <FloatingText text="EJERCICIOS" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText> */}
                             </div>
-                            <div className='w-3/4'>
-                                <BigTitle title="DESTACADOS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                            <div className='w-full lg:w-3/4'>
+                                <Reveal>
+                                    <BigTitle title="DESTACADOS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                                </Reveal>
                             </div>
                         </div>
-                        <div className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
-                            <ExerciseCardGrid
-                                exercises={exercises.map(e => ({
-                                    id: e.id,
-                                    title: e.title,
-                                    description: e.description,
-                                    photo_url: e.photo_url,
-                                    video_url: e.video_url
-                                }))}
-                                title=""
-                            />
-                        </div>
+                        <Reveal className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
+                            {exercisesLoading ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {[0, 1, 2].map((i) => (
+                                        <Skeleton key={i} className="h-64 w-full" />
+                                    ))}
+                                </div>
+                            ) : (
+                                <ExerciseCardGrid
+                                    exercises={exercises.map(e => ({
+                                        id: e.id,
+                                        title: e.title,
+                                        description: e.description,
+                                        photo_url: e.photo_url,
+                                        video_url: e.video_url
+                                    }))}
+                                    title=""
+                                />
+                            )}
+                        </Reveal>
 
                     </div>
                     <div className='separator lg:pt-32 pt-12 bg-black'></div>
@@ -708,7 +787,9 @@ function Homepage() {
                     {/* <div className='separator lg:pt-32 pt-12 bg-black'></div> */}
                     <div className="bg-black flex-1">
                         {/* <Footer logoPath={logoPath} email={defaultEmail} links={["transformations", "about us", "pricing", "how to start", "faq"]}/> */}
-                        <Footer logoPath={logoPath} email={trainerEmail} trainerPhone={trainerPhone} trainerAddress={trainerAddress} facebook_url={settings.facebook_link || ''} x_url={settings.x_link || ''} youtube_url={settings.youtube_link || ''} instagram_url={settings.instagram_link || ''} tiktok_url={settings.tiktok_link || ''} />
+                        <Reveal>
+                            <Footer logoPath={logoPath} email={trainerEmail} trainerPhone={trainerPhone} trainerAddress={trainerAddress} facebook_url={settings.facebook_link || ''} x_url={settings.x_link || ''} youtube_url={settings.youtube_link || ''} instagram_url={settings.instagram_link || ''} tiktok_url={settings.tiktok_link || ''} loading={settingsLoading} />
+                        </Reveal>
                     </div>
                     <div className='separator lg:pt-32 pt-12 bg-black'></div>
                 </>
