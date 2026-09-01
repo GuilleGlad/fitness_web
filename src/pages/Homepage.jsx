@@ -788,7 +788,7 @@ function Homepage() {
                     <div className="bg-black flex-1">
                         {/* <Footer logoPath={logoPath} email={defaultEmail} links={["transformations", "about us", "pricing", "how to start", "faq"]}/> */}
                         <Reveal>
-                            <Footer logoPath={logoPath} email={trainerEmail} trainerPhone={trainerPhone} trainerAddress={trainerAddress} facebook_url={settings.facebook_link || ''} x_url={settings.x_link || ''} youtube_url={settings.youtube_link || ''} instagram_url={settings.instagram_link || ''} tiktok_url={settings.tiktok_link || ''} loading={settingsLoading} />
+                            <Footer logoPath={logoPath} email={trainerEmail} trainerPhone={trainerPhone} trainerAddress={trainerAddress} facebook_url={settings.facebook_link || ''} x_url={settings.x_link || ''} youtube_url={settings.youtube_link || ''} instagram_url={settings.instagram_link || ''} tiktok_url={settings.tiktok_link || ''} loading={settingsLoading} title={settings.titulo}/>
                         </Reveal>
                     </div>
                     <div className='separator lg:pt-32 pt-12 bg-black'></div>

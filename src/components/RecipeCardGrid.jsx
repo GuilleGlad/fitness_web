@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import RecipeCard from './RecipeCard';
 import Reveal from './Reveal';
+import {createPortal} from 'react-dom';
 
 const RecipeCardGrid = ({ recipes, title = 'Recetas', loading = false }) => {
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -155,7 +156,7 @@ const RecipeCardGrid = ({ recipes, title = 'Recetas', loading = false }) => {
       </div>
 
       {/* Modal for detailed view */}
-      {isModalOpen && selectedIndex !== null && (
+      {isModalOpen && selectedIndex !== null && createPortal(
         <RecipeCard
           title={recipes[selectedIndex].title}
           ingredients={recipes[selectedIndex].ingredients}
@@ -166,7 +167,7 @@ const RecipeCardGrid = ({ recipes, title = 'Recetas', loading = false }) => {
           total={recipes.length}
           onClose={handleClose}
         />
-      )}
+      ,document.body)}
     </div>
   );
 };

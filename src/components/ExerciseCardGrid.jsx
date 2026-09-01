@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ExerciseCard from './ExerciseCard';
 import Reveal from './Reveal';
+import { createPortal } from 'react-dom';
 
 const ExerciseCardGrid = ({ exercises, title = 'Ejercicios', loading = false }) => {
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -164,7 +165,7 @@ const ExerciseCardGrid = ({ exercises, title = 'Ejercicios', loading = false }) 
       </div>
 
       {/* Modal for detailed view */}
-      {isModalOpen && selectedIndex !== null && (
+      {isModalOpen && selectedIndex !== null && createPortal(
         <ExerciseCard
           title={exercises[selectedIndex].title}
           description={exercises[selectedIndex].description}
@@ -175,7 +176,7 @@ const ExerciseCardGrid = ({ exercises, title = 'Ejercicios', loading = false }) 
           total={exercises.length}
           onClose={handleClose}
         />
-      )}
+      ,document.body)}
     </div>
   );
 };

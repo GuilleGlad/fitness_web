@@ -6,7 +6,7 @@ import { faFacebook, faXTwitter, faYoutube, faInstagram, faTiktok } from '@forta
 import BigLink from './BigLink';
 import { Link } from 'react-router-dom';
 
-const Footer = ({ logoPath, email, trainerPhone, trainerAddress, facebook_url, x_url, youtube_url, instagram_url, tiktok_url, links, loading = false }) => {
+const Footer = ({ logoPath, email, trainerPhone, trainerAddress, facebook_url, x_url, youtube_url, instagram_url, tiktok_url, links, loading = false , title}) => {
   const defaultLogoPath = logoPath || '/images/Logo-01-1-1.png';
 
   return (
@@ -102,7 +102,7 @@ const Footer = ({ logoPath, email, trainerPhone, trainerAddress, facebook_url, x
 
       {/* Línea inferior */}
       <div className="mt-16 border-t border-gray-700 pt-6 text-center text-sm opacity-70">
-        Copyright © 2025 Musclefit | Powered by Onecontributor
+        Copyright © 2026 {title} | Elaborado por guillegladstudios@gmail.com
       </div>
 
     </footer>
