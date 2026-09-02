@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import TrainerLibrary from './TrainerLibrary';
+import { normalizeStatusCode } from '../utils/clientUtils';
 
 const initialTrainerForm = {
     name: '',
@@ -12,9 +13,14 @@ const initialTrainerForm = {
     genre: '',
     phone: '',
     picture: '/images/avatar.png',
-    status: 'Activo',
+    status: 1,
     deleted: 0,
 };
+
+// Un trainer se considera inactivo si fue eliminado (papelera) o si su cuenta
+// fue desactivada explícitamente (status_cuenta = 0). Mismo criterio que
+// getCuentaLabel en clientUtils.js, adaptado al masculino ("entrenador").
+const isTrainerInactive = (trainer) => trainer.deleted === 1 || Number(trainer.status_cuenta) === 0;
 
 /* ───────── Modal Wrapper ───────── */
 const ModalOverlay = ({ isOpen, onClose, title, children }) => {
@@ -98,7 +104,7 @@ const TrainerForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel
             )}
 
 
-            <label className="hidden *:block space-y-2 text-sm text-slate-200">
+            <label className="block space-y-2 text-sm text-slate-200">
                 Estado
                 <select name="status" value={form.status} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
                     <option value="1" className="bg-[#0f172a]">Activo</option>
@@ -146,18 +152,24 @@ const Trainers = () => {
                 const res = await axios.get(`${apiUrl}/admin/trainers`, config);
                 const list = res.data?.entrenadores || [];
                 setTrainers(
-                    list.map((item) => ({
-                        id: item.id,
-                        name: item.name || '',
-                        email: item.email || '',
-                        password: item.password || '',
-                        role: item.role || 'Trainer',
-                        genre: item.genre || '',
-                        phone: item.phone || '',
-                        picture: item.picture || '/images/avatar.png',
-                        status: item.status || 'Activo',
-                        deleted: item.deleted || 0,
-                    }))
+                    list.map((item) => {
+                        const numericDeleted = Number(item.deleted ?? 0);
+                        const deleted = Number.isNaN(numericDeleted) ? 0 : (numericDeleted === 1 ? 1 : 0);
+                        return {
+                            id: item.id,
+                            name: item.name || '',
+                            email: item.email || '',
+                            role: item.role || 'Trainer',
+                            genre: item.genre || '',
+                            phone: item.phone || '',
+                            picture: item.picture || '/images/avatar.png',
+                            // "status" en la fila cruda del backend es la columna users.status
+                            // (cuenta activa/inactiva) — se normaliza a 0/1 aquí como status_cuenta,
+                            // igual que hace normalizeClientRow para clientes.
+                            status_cuenta: normalizeStatusCode(item.status ?? 0),
+                            deleted,
+                        };
+                    })
                 );
             } catch (err) {
                 console.error('Error fetching trainers:', err);
@@ -173,12 +185,12 @@ const Trainers = () => {
         setForm({
             name: trainer.name,
             email: trainer.email,
-            password: trainer.password || '',
+            password: '',
             role: 'Trainer',
             genre: trainer.genre || '',
             phone: trainer.phone || '',
             picture: trainer.picture || '/images/avatar.png',
-            status: trainer.status,
+            status: trainer.status_cuenta,
         });
         setEditingId(trainer.id);
         setShowEditModal(true);
@@ -242,7 +254,8 @@ const Trainers = () => {
             genre: form.genre.trim(),
             phone: form.phone.trim(),
             picture: form.picture.trim(),
-            status: form.status,
+            // El backend (updateUser) espera la clave "status_cuenta", no "status".
+            status_cuenta: Number(form.status) === 0 ? 0 : 1,
         };
 
         const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
@@ -250,7 +263,15 @@ const Trainers = () => {
         setIsSubmitting(true);
 
         if (editingId) {
-            setTrainers((p) => p.map((t) => t.id === editingId ? { ...t, ...form } : t));
+            setTrainers((p) => p.map((t) => t.id === editingId ? {
+                ...t,
+                name: payload.name,
+                email: payload.email,
+                genre: payload.genre,
+                phone: payload.phone,
+                picture: payload.picture,
+                status_cuenta: payload.status_cuenta,
+            } : t));
             cancelEdit();
             try {
                 await axios.put(`${apiUrl}/admin/user/${editingId}`, payload, config);
@@ -264,8 +285,19 @@ const Trainers = () => {
             }
             try {
                 const res = await axios.post(`${apiUrl}/auth/register`, payload, config);
-                const saved = res.data?.trainer || res.data || {};
-                setTrainers((p) => [...p, { id: saved.user.id || Date.now(), ...payload }]);
+                const saved = res.data?.trainer || res.data?.user || res.data || {};
+                const newId = saved?.id ?? Date.now();
+                setTrainers((p) => [...p, {
+                    id: newId,
+                    name: payload.name,
+                    email: payload.email,
+                    role: 'Trainer',
+                    genre: payload.genre,
+                    phone: payload.phone,
+                    picture: payload.picture,
+                    status_cuenta: payload.status_cuenta,
+                    deleted: 0,
+                }]);
                 toast.success('Entrenador guardado correctamente.');
                 cancelNew();
             } catch (err) {
@@ -305,8 +337,8 @@ const Trainers = () => {
         ), { duration: Infinity });
     };
 
-    const totalActive = trainers.filter((t) => t.status === 'Activo').length;
-    const totalInactive = trainers.filter((t) => t.status !== 'Activo').length;
+    const totalActive = trainers.filter((t) => !isTrainerInactive(t)).length;
+    const totalInactive = trainers.length - totalActive;
 
     return (
         <div className="min-h-screen bg-[#0d1117] text-white">
@@ -372,9 +404,8 @@ const Trainers = () => {
                                         <td className="px-6 py-4 text-slate-300">{trainer.genre ? (trainer.genre === 'm' ? 'Masc.' : trainer.genre === 'f' ? 'Fem.' : 'N/D') : '—'}</td>
                                         <td className="px-6 py-4 text-slate-300">{trainer.phone || '—'}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${trainer.status === 'Activo' ? 'bg-[#f1b80c]/15 text-orange-400' : 'bg-red-500/15 text-yellow-400'}`}>
-                                                {trainer.deleted ? 'Inactivo' : 'Activo'}
-                                                
+                                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${isTrainerInactive(trainer) ? 'bg-red-500/15 text-red-400' : 'bg-[#f1b80c]/15 text-orange-400'}`}>
+                                                {isTrainerInactive(trainer) ? 'Inactivo' : 'Activo'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
@@ -404,14 +435,14 @@ const Trainers = () => {
                         ) : (
                             <div className="divide-y divide-slate-800/50">
                                 {trainers.map((trainer) => (
-                                    <div key={trainer.id} className="flex flex-col gap-3 p-5">
+                                    <div key={trainer.id} className={`flex flex-col gap-3 p-5 ${trainer.deleted ? 'bg-red-950/20' : ''}`}>
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <h3 className="font-semibold text-white">{trainer.name}</h3>
                                                 <p className="text-sm text-slate-400">{trainer.email}</p>
                                             </div>
-                                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${trainer.status === 'Activo' ? 'bg-[#f1b80c]/15 text-orange-400' : 'bg-red-500/15 text-yellow-400'}`}>
-                                                {trainer.status}
+                                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isTrainerInactive(trainer) ? 'bg-red-500/15 text-red-400' : 'bg-[#f1b80c]/15 text-orange-400'}`}>
+                                                {isTrainerInactive(trainer) ? 'Inactivo' : 'Activo'}
                                             </span>
                                         </div>
                                         <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-400">
@@ -419,8 +450,14 @@ const Trainers = () => {
                                             <span>Tel: {trainer.phone || '—'}</span>
                                         </div>
                                         <div className="flex gap-2">
-                                            <button onClick={() => handleEdit(trainer)} className="flex-1 rounded-full bg-[#f1b80c] py-2.5 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e]">Editar</button>
-                                            <button onClick={() => yesNo('¿Eliminar este entrenador?', () => handleDelete(trainer.id))} className="flex-1 rounded-full bg-red-600 py-2.5 text-xs font-semibold text-white hover:bg-red-500">Eliminar</button>
+                                            {trainer.deleted ? (
+                                                <button onClick={() => yesNo('¿Restaurar este entrenador?', () => handleRestore(trainer.id))} className="flex-1 rounded-full bg-slate-600 py-2.5 text-xs font-semibold text-white hover:bg-slate-500">Restaurar</button>
+                                            ) : (
+                                                <>
+                                                    <button onClick={() => handleEdit(trainer)} className="flex-1 rounded-full bg-[#f1b80c] py-2.5 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e]">Editar</button>
+                                                    <button onClick={() => yesNo('¿Eliminar este entrenador?', () => handleDelete(trainer.id))} className="flex-1 rounded-full bg-red-600 py-2.5 text-xs font-semibold text-white hover:bg-red-500">Eliminar</button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 ))}

@@ -10,6 +10,7 @@ import { getClientStatusLabel, getCuentaLabel, normalizeClientRow, normalizeStat
 import moment from 'moment';
 import 'moment/locale/es';
 
+
 const initialForm = {
   name: '',
   email: '',
@@ -47,100 +48,114 @@ const ClientForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel,
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
+  const [previewImage, setPreviewImage] = useState(null);
 
   return (
-    <form onSubmit={onSubmit} >
-
-      {editingId && (
-        <label className="space-y-2 text-sm text-slate-200 flex flex-col items-center">
-          {form.picture && form.picture === '/images/avatar.png' && <img src={form.picture} className='mt-2 w-full rounded-[50%] lg:w-1/4 object-cover border border-slate-700' />}
-          <input name="picture" value={form.picture} type="url" readOnly placeholder="https://ejemplo.com/foto.jpg" onChange={handleChange} className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
-          {form.picture && form.picture !== '/images/avatar.png' && <img src={form.picture} alt="preview" className="mt-2 w-full rounded-[50%] lg:w-1/4 object-cover border border-slate-700" />}
-          <div className="flex gap-3 mt-2">
-            <button type="button" onClick={onOpenLibrary} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">📚 Biblioteca</button>
-            {form.picture && form.picture !== '/images/avatar.png' && <button type="button" onClick={() => setForm((p) => ({ ...p, picture: initialForm.picture }))} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">🗑️ Limpiar</button>}
-          </div>
-        </label>
-      )}
-
-      <div className="grid gap-5 lg:grid-cols-3">
-        <label className="block space-y-2 text-sm text-slate-200">
-          Nombre
-          <input
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            type="text"
-            placeholder="Ej. Juan Pérez"
-            className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-          />
-        </label>
-
-        <label className="block space-y-2 text-sm text-slate-200">
-          Email
-          <input
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            type="email"
-            placeholder="juan@email.com"
-            className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-          />
-        </label>
-
-        <label className="block space-y-2 text-sm text-slate-200">
-          Contraseña
-          <input
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            type="password"
-            placeholder="••••••••"
-            className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-          />
-        </label>
-      </div>
-
-      {/* Columna derecha */}
-      <div className="grid gap-5 lg:grid-cols-3">
-        <label className="block space-y-2 text-sm text-slate-200">
-          Género
-          <select name="genre" value={form.genre} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
-            <option value="" disabled className="bg-[#0f172a]">Seleccione un género</option>
-            <option value="m" className="bg-[#0f172a]">Masculino</option>
-            <option value="f" className="bg-[#0f172a]">Femenino</option>
-            <option value="n" className="bg-[#0f172a]">Prefiere no decirlo</option>
-          </select>
-        </label>
-
-        <label className="block space-y-2 text-sm text-slate-200">
-          Teléfono
-          <input name="phone" value={form.phone} type="tel" placeholder="+34 600 000 000" onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
-        </label>
+    <>
+      <form onSubmit={onSubmit} >
 
         {editingId && (
-          <label className="block space-y-2 text-sm text-slate-200">
-            Cuenta
-            <select name="status_cuenta" value={form.status_cuenta} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
-              <option value="1" className="bg-[#0f172a]">Activa</option>
-              <option value="0" className="bg-[#0f172a]">Inactiva</option>
-            </select>
+          <label className="space-y-2 text-sm text-slate-200 flex flex-col items-center">
+            {form.picture && form.picture === '/images/avatar.png' && <img src={form.picture} className='mt-2 w-full rounded-[50%] lg:w-1/4 object-cover border border-slate-700' />}
+            <input name="picture" value={form.picture} type="url" readOnly placeholder="https://ejemplo.com/foto.jpg" onChange={handleChange} className="hidden w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+            {form.picture && form.picture !== '/images/avatar.png' && <img onClick={() => setPreviewImage(form.picture)} src={form.picture} alt="preview" className="cursor-pointer mt-2 w-[20em] h-[20em] rounded-[50%] object-cover border border-slate-700" />}
+            <div className="flex gap-3 mt-2">
+              <button type="button" onClick={onOpenLibrary} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">📚 Biblioteca</button>
+              {form.picture && form.picture !== '/images/avatar.png' && <button type="button" onClick={() => setForm((p) => ({ ...p, picture: initialForm.picture }))} className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">🗑️ Limpiar</button>}
+            </div>
           </label>
         )}
-      </div>
 
-      {/* Botones - span 2 columnas en desktop */}
-      <div className="lg:col-span-2 grid gap-3 pt-2">
-        <button type="submit" disabled={isSubmitting} className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-60">
-          {isSubmitting ? (editingId ? 'Guardando...' : 'Creando...') : (editingId ? 'Guardar cambios' : 'Crear cliente')}
-        </button>
-        {editingId && (
-          <button type="button" onClick={onCancel} disabled={isSubmitting} className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60">
-            Cancelar edición
+        <div className="grid gap-5 lg:grid-cols-3">
+          <label className="block space-y-2 text-sm text-slate-200">
+            Nombre
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              type="text"
+              placeholder="Ej. Juan Pérez"
+              className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+            />
+          </label>
+
+          <label className="block space-y-2 text-sm text-slate-200">
+            Email
+            <input
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              type="email"
+              placeholder="juan@email.com"
+              className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+            />
+          </label>
+
+          <label className="block space-y-2 text-sm text-slate-200">
+            Contraseña
+            <input
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              type="password"
+              placeholder="••••••••"
+              className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+            />
+          </label>
+        </div>
+
+        {/* Columna derecha */}
+        <div className="grid gap-5 lg:grid-cols-3">
+          <label className="block space-y-2 text-sm text-slate-200">
+            Género
+            <select name="genre" value={form.genre} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
+              <option value="" disabled className="bg-[#0f172a]">Seleccione un género</option>
+              <option value="m" className="bg-[#0f172a]">Masculino</option>
+              <option value="f" className="bg-[#0f172a]">Femenino</option>
+              <option value="n" className="bg-[#0f172a]">Prefiere no decirlo</option>
+            </select>
+          </label>
+
+          <label className="block space-y-2 text-sm text-slate-200">
+            Teléfono
+            <input name="phone" value={form.phone} type="tel" placeholder="+34 600 000 000" onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+          </label>
+
+          {editingId && (
+            <label className="block space-y-2 text-sm text-slate-200">
+              Cuenta
+              <select name="status_cuenta" value={form.status_cuenta} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
+                <option value="1" className="bg-[#0f172a]">Activa</option>
+                <option value="0" className="bg-[#0f172a]">Inactiva</option>
+              </select>
+            </label>
+          )}
+        </div>
+
+        {/* Botones - span 2 columnas en desktop */}
+        <div className="lg:col-span-2 grid gap-3 pt-2">
+          <button type="submit" disabled={isSubmitting} className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-60">
+            {isSubmitting ? (editingId ? 'Guardando...' : 'Creando...') : (editingId ? 'Guardar cambios' : 'Crear cliente')}
           </button>
-        )}
-      </div>
-    </form>
+          {editingId && (
+            <button type="button" onClick={onCancel} disabled={isSubmitting} className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60">
+              Cancelar edición
+            </button>
+          )}
+        </div>
+      </form>
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={() => setPreviewImage(null)}
+        >
+          <img
+            src={previewImage}
+            className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl"
+          />
+        </div>
+      )}
+    </>
   );
 };
 
@@ -153,8 +168,9 @@ const initialTrainerForm = {
   genre: '',
   phone: '',
   picture: '/images/avatar.png',
-  status: 'Activo',
+  status: 0,
   deleted: 0,
+  status_cuenta: 1
 };
 
 const TrainerForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel, onOpenLibrary, isSubmitting }) => {
@@ -197,6 +213,14 @@ const TrainerForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel
         <label className="block space-y-2 text-sm text-slate-200">
           Teléfono
           <input name="phone" value={form.phone} type="tel" placeholder="+34 600 000 000" onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]" />
+        </label>
+
+        <label className="block space-y-2 text-sm text-slate-200">
+          Cuenta
+          <select name="status_cuenta" value={form.status_cuenta} onChange={handleChange} className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]">
+            <option value="1" className="bg-[#0f172a]">Activa</option>
+            <option value="0" className="bg-[#0f172a]">Inactiva</option>
+          </select>
         </label>
 
         <label className="hidden space-y-2 text-sm text-slate-200">
@@ -272,6 +296,7 @@ const Clients = () => {
 
   /* ── Crear Entrenador (solo Administrador) ── */
   const [showNewTrainerModal, setShowNewTrainerModal] = useState(false);
+  const [showEditTrainerModal, setShowEditTrainerModal] = useState(false);
   const [trainerForm, setTrainerForm] = useState(initialTrainerForm);
   const [isSubmittingTrainer, setIsSubmittingTrainer] = useState(false);
   const [showTrainerLibraryModal, setShowTrainerLibraryModal] = useState(false);
@@ -566,7 +591,7 @@ const Clients = () => {
             id: item.user_id ?? item.id,
             name: item.name,
             email: item.email,
-            password: item.password || '',
+            password: '',
             genre: item.genre || '',
             phone: item.phone || '',
             picture: item.picture || '/images/avatar.png',
@@ -604,15 +629,32 @@ const Clients = () => {
     setForm({
       name: client.name,
       email: client.email,
-      password: client.password || '',
+      password: '',
+      role: 'client',
       genre: client.genre || '',
       phone: client.phone || '',
       picture: client.picture || '/images/avatar.png',
       status: normalizeStatusCode(client.status),
-      status_cuenta: Number(client.deleted ?? client.status_cuenta ?? 0) === 0 ? 1 : 0,
+      status_cuenta: Number(client.status_cuenta ?? 1) === 0 ? 0 : 1,
     });
     setEditingId(client.id);
     setShowEditModal(true);
+  };
+
+  const handleEditTrainer = (client) => {
+    setTrainerForm({
+      name: client.name,
+      email: client.email,
+      password: '',
+      role: 'Trainer',
+      genre: client.genre || '',
+      phone: client.phone || '',
+      picture: client.picture || '/images/avatar.png',
+      status: normalizeStatusCode(client.status),
+      status_cuenta: Number(client.status_cuenta ?? 1) === 0 ? 0 : 1,
+    });
+    setEditingId(client.id);
+    setShowEditTrainerModal(true);
   };
 
   const handleNewClient = () => { setForm(initialForm); setEditingId(null); setShowNewModal(true); };
@@ -622,6 +664,7 @@ const Clients = () => {
   /* ── Crear Entrenador (solo Administrador) ── */
   const handleNewTrainer = () => { setTrainerForm(initialTrainerForm); setShowNewTrainerModal(true); };
   const cancelNewTrainer = () => { setTrainerForm(initialTrainerForm); setShowNewTrainerModal(false); };
+  const cancelEditTrainer = () => { setTrainerForm(initialTrainerForm); setEditingId(null); setShowEditTrainerModal(false); };
 
   const openTrainerLibraryPicker = (callback) => {
     setTrainerLibraryCallback(() => callback);
@@ -662,20 +705,31 @@ const Clients = () => {
       genre: trainerForm.genre.trim(),
       phone: trainerForm.phone.trim(),
       picture: trainerForm.picture.trim(),
-      status: trainerForm.status,
+      status: Number(trainerForm.status) || 0,
+      status_cuenta: Number(trainerForm.status_cuenta) === 0 ? 0 : 1,
     };
     const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
 
     setIsSubmittingTrainer(true);
-    try {
-      await axios.post(`${apiUrl}/auth/register`, payload, config);
-      toast.success('Entrenador creado correctamente.');
-      cancelNewTrainer();
-    } catch (err) {
-      console.error(err);
-      toast.error('No se pudo crear el entrenador. Verifique los datos.');
-    } finally {
-      setIsSubmittingTrainer(false);
+    if (editingId) {
+      setClients((p) => p.map((c) => c.id === editingId ? normalizeClientRow({ ...c, ...payload }) : c));
+      cancelEditTrainer();
+      try {
+        await axios.put(`${apiUrl}/admin/user/${editingId}`, payload, config);
+        toast.success('Entrenador actualizado correctamente.');
+      } catch { toast.error('No se pudo actualizar el entrenador.'); }
+      finally { setIsSubmittingTrainer(false); }
+    } else {
+      try {
+        await axios.post(`${apiUrl}/auth/register`, payload, config);
+        toast.success('Entrenador creado correctamente.');
+        cancelNewTrainer();
+      } catch (err) {
+        console.error(err);
+        toast.error('No se pudo crear el entrenador. Verifique los datos.');
+      } finally {
+        setIsSubmittingTrainer(false);
+      }
     }
   };
 
@@ -871,9 +925,9 @@ const Clients = () => {
               </thead>
               <tbody className="divide-y divide-slate-800/50">
                 {loading ? (
-                  <tr><td colSpan="7" className="py-12 text-center text-slate-400">Cargando usuarios…</td></tr>
+                  <tr><td colSpan="8" className="py-12 text-center text-slate-400">Cargando usuarios…</td></tr>
                 ) : clients.length === 0 ? (
-                  <tr><td colSpan="7" className="py-12 text-center text-slate-400">No hay usuarios aún.</td></tr>
+                  <tr><td colSpan="8" className="py-12 text-center text-slate-400">No hay usuarios aún.</td></tr>
                 ) : clients.map((client) => (
 
                   <tr key={client.id} className={`group transition ${client.deleted ? 'bg-red-950/30' : 'hover:bg-slate-800/40'}`}>
@@ -897,7 +951,7 @@ const Clients = () => {
                       <div className="flex gap-2 opacity-70 group-hover:opacity-100">
                         {client.deleted == 1 ? (
                           <button
-                            onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.user_id))}
+                            onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.id))}
                             disabled={client.role === 'admin'}
                             className="rounded-full bg-slate-600 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
@@ -906,7 +960,7 @@ const Clients = () => {
                         ) : (
                           <>
                             <button
-                              onClick={() => handleEdit(client)}
+                              onClick={() => client.role == 'client' ? handleEdit(client) : handleEditTrainer(client)}
                               disabled={client.role === 'admin'}
                               hidden={client.role === 'admin'}
                               className="rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -928,7 +982,7 @@ const Clients = () => {
                               Progreso y Rutinas
                             </button>}
                             <button
-                              onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.user_id))}
+                              onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))}
                               disabled={client.role === 'admin'}
                               hidden={client.role === 'admin'}
                               className="rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -954,7 +1008,7 @@ const Clients = () => {
             ) : (
               <div className="divide-y divide-slate-800/50">
                 {clients.map((client) => (
-                  <div key={client.user_id} className={`flex flex-col gap-3 p-5 ${client.deleted ? 'bg-red-950/20' : ''}`}>
+                  <div key={client.id} className={`flex flex-col gap-3 p-5 ${client.deleted ? 'bg-red-950/20' : ''}`}>
                     <div className="flex items-center gap-4">
                       <img src={client.picture || '/images/avatar.png'} alt={client.name} className="h-12 w-12 rounded-full object-cover ring-2 ring-slate-700" />
                       <div>
@@ -974,7 +1028,7 @@ const Clients = () => {
                     <div className="flex gap-2">
                       {client.deleted ? (
                         <button
-                          onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.user_id))}
+                          onClick={() => yesNo('¿Restaurar este cliente?', () => handleRestore(client.id))}
                           disabled={client.role === 'admin'}
                           className="flex-1 rounded-full bg-slate-600 py-2.5 text-xs font-semibold text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -996,7 +1050,7 @@ const Clients = () => {
                             Asignar rutina
                           </button>
                           <button
-                            onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.user_id))}
+                            onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))}
                             disabled={client.role === 'admin'}
                             className="flex-1 rounded-full bg-red-600 py-2.5 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
@@ -1345,7 +1399,7 @@ const Clients = () => {
         </div>
       </ModalOverlay>
 
-      {/* Edit Modal */}
+      {/* Edit Client Modal */}
       <ModalOverlay isOpen={showEditModal} onClose={cancelEdit} title="Editar cliente">
         <ClientForm form={form} setForm={setForm} editingId={editingId} initialForm={initialForm} onSubmit={handleSubmit} onCancel={cancelEdit} onOpenLibrary={openLibraryPicker} isSubmitting={isSubmitting} />
       </ModalOverlay>
@@ -1353,6 +1407,11 @@ const Clients = () => {
       {/* New Client Modal */}
       <ModalOverlay isOpen={showNewModal} onClose={cancelNew} title="Nuevo cliente">
         <ClientForm form={form} setForm={setForm} editingId={null} initialForm={initialForm} onSubmit={handleSubmit} onCancel={cancelNew} onOpenLibrary={openLibraryPicker} isSubmitting={isSubmitting} />
+      </ModalOverlay>
+
+      {/* Edit Trainer Modal (solo Administrador) */}
+      <ModalOverlay isOpen={showEditTrainerModal} onClose={cancelEditTrainer} title="Editar Entrenador">
+        <TrainerForm form={trainerForm} setForm={setTrainerForm} editingId={editingId} initialForm={initialTrainerForm} onSubmit={handleTrainerSubmit} onCancel={cancelEditTrainer} onOpenLibrary={openTrainerLibraryPicker} isSubmitting={isSubmittingTrainer} />
       </ModalOverlay>
 
       {/* New Trainer Modal (solo Administrador) */}

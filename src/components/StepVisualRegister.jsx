@@ -21,7 +21,7 @@ const StepVisualRegister = ({ formData, updateData, next, prev }) => {
   const genre = localStorage.getItem('genre') || '';
   return (
     <div className="space-y-4 animate-fade-in">
-      <h2 className="text-xl font-bold text-center text-white mb-1">Registro Visual Inicial {genre}</h2>
+      <h2 className="text-xl font-bold text-center text-white mb-1">Registro Visual Inicial</h2>
 
       <BodySilhouette genre={genre} cadera={cadera} cintura={cintura} piernas={piernas} brazos={brazos} />
 

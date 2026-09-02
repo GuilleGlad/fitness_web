@@ -27,21 +27,24 @@ export const normalizeStatusCode = (value) => {
 export const getClientStatusLabel = (client) => normalizeStatusValue(client?.client_profiles_status,client?.status_cuenta, client?.role);
 
 export const getCuentaLabel = (client) => {
-  const deletedValue = client?.deleted ?? client?.status_cuenta ?? 0;
-  const numericDeleted = Number(deletedValue);
-  return numericDeleted === 0 ? 'Activa' : 'Inactiva';
+  const isDeleted = Number(client?.deleted ?? 0) === 1;
+  const isDisabled = Number(client?.status_cuenta ?? 1) === 0;
+  return (isDeleted || isDisabled) ? 'Inactiva' : 'Activa';
 };
 
 export const normalizeClientRow = (item = {}) => {
-  const deletedValue = item.deleted ?? item.status_cuenta ?? 0;
-  const numericDeleted = Number(deletedValue);
-  const normalizedDeleted = Number.isNaN(numericDeleted) ? 0 : numericDeleted;
+  const numericDeleted = Number(item.deleted ?? 0);
+  const normalizedDeleted = Number.isNaN(numericDeleted) ? 0 : (numericDeleted === 1 ? 1 : 0);
+
+  // status_cuenta es independiente de deleted: si no viene definido, se asume cuenta activa (1).
+  const numericCuenta = Number(item.status_cuenta ?? 1);
+  const normalizedCuenta = Number.isNaN(numericCuenta) ? 1 : (numericCuenta === 0 ? 0 : 1);
 
   return {
     ...item,
     id: item.user_id ?? item.id,
     status: normalizeStatusCode(item.status ?? 0),
-    deleted: normalizedDeleted === 1 ? 1 : 0,
-    status_cuenta: normalizedDeleted === 0 ? 1 : 0,
+    deleted: normalizedDeleted,
+    status_cuenta: normalizedCuenta,
   };
 };
