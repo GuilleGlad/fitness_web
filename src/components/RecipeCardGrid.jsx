@@ -166,7 +166,7 @@ const RecipeCardGrid = ({ recipes, title = 'Recetas', loading = false }) => {
           image_url={recipes[selectedIndex].image_url}
           onNavigate={handleNavigate}
           index={selectedIndex}
-          total={recipes.length}
+          total={recipes.filter((e) => e.image_url).length}
           onClose={handleClose}
         />
       ,document.body)}

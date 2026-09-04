@@ -818,7 +818,20 @@ const Clients = () => {
       finally { setIsSubmittingTrainer(false); }
     } else {
       try {
-        await axios.post(`${apiUrl}/auth/register`, payload, config);
+        const res = await axios.post(`${apiUrl}/auth/register`, payload, config);
+        const saved = res.data?.entrenador || res.data?.trainer || res.data?.usuario || res.data || {};
+        const savedUser = saved.user || saved;
+        const newTrainer = normalizeClientRow({
+          ...savedUser,
+          ...payload,
+          id: savedUser?.user_id ?? savedUser?.id ?? Date.now(),
+          role: String(savedUser?.role || payload.role).toLowerCase(),
+          password: '',
+          deleted: savedUser?.deleted ?? 0,
+          status: savedUser?.status ?? payload.status,
+          status_cuenta: savedUser?.status_cuenta ?? payload.status_cuenta,
+        });
+        setClients((prev) => [...prev, newTrainer]);
         toast.success('Entrenador creado correctamente.');
         cancelNewTrainer();
       } catch (err) {
@@ -1107,7 +1120,7 @@ const Clients = () => {
                     <span className="text-slate-500">—</span>
                   )}
                 </span>
-                <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1.5 text-white">
                   <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
                   {item.log_date ? new Date(item.log_date).toLocaleDateString() : '—'}
                 </span>
@@ -1118,7 +1131,7 @@ const Clients = () => {
                 }
               </div>
 
-              {activeWorkoutTab === 'completed' && (
+              {/* {activeWorkoutTab === 'completed' && (
                 <details className="group rounded-xl border border-slate-700/80 bg-slate-900/60">
                   <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 lg:text-xs [&::-webkit-details-marker]:hidden">
                     <span>Datos Biométricos para la Fecha</span>
@@ -1163,7 +1176,7 @@ const Clients = () => {
                     )}
                   </div>
                 </details>
-              )}
+              )} */}
 
               {/* Indicaciones del entrenador */}
               <p className="line-clamp-2 rounded-xl bg-slate-900/60 px-3 py-2 text-xs text-slate-300 lg:text-sm" title={item.trainer_notes || ''}>

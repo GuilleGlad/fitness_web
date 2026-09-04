@@ -175,7 +175,9 @@ const ExerciseCardGrid = ({ exercises, title = 'Ejercicios', loading = false }) 
           video_url={exercises[selectedIndex].video_url}
           onNavigate={handleNavigate}
           index={selectedIndex}
-          total={exercises.length}
+          total={exercises.filter((e) => 
+            e.video_url || e.photo_url
+          ).length}
           onClose={handleClose}
         />
       ,document.body)}
