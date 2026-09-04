@@ -366,7 +366,7 @@ const Progress = () => {
           </aside>
 
           {/* ====== CONTENIDO PRINCIPAL ====== */}
-          <main className="flex-1 bg-[#0d1117] p-6 lg:p-8">
+          <main className="flex-1 bg-[#0d1117] p-3 sm:p-6 lg:p-8">
 
             {/* ✅ Botón hamburguesa — solo visible en móvil */}
             <div className="mb-4 lg:hidden  top-4 sticky text-right">
@@ -379,50 +379,50 @@ const Progress = () => {
               </button>
             </div>
 
-            <div className="mb-6 flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
+            <div className="mb-4 flex flex-col justify-between gap-3 sm:mb-6 sm:gap-4 xl:flex-row xl:items-center">
               <div>
                 <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Panel</p>
-                <h2 className="mt-3 text-3xl font-bold text-white">Progreso</h2>
+                <h2 className="mt-2 text-2xl font-bold text-white sm:mt-3 sm:text-3xl">Progreso</h2>
               </div>
 
               <button
                 type="button"
                 onClick={openNotificationsModal}
-                className={`inline-flex items-baseline gap-4 rounded-3xl bg-[#141820] border border-slate-600 p-4 shadow-lg transition hover:bg-slate-800 ${notifications.length > 0 ? "shadow-yellow-400 animate-pulse hover:border-yellow-400" : "animate-none shadow-none"}`}
+                className={`inline-flex items-baseline gap-2 rounded-2xl bg-[#141820] border border-slate-600 p-2.5 shadow-lg transition hover:bg-slate-800 sm:gap-4 sm:rounded-3xl sm:p-4 ${notifications.length > 0 ? "shadow-yellow-400 animate-pulse hover:border-yellow-400" : "animate-none shadow-none"}`}
               >
                 <div className="rounded-2xl bg-slate-900/80 text-[#f1b80c]">
                   <FontAwesomeIcon icon={faBell} className='text-lg rounded-[50%]'></FontAwesomeIcon>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-white">{notifications.length}</p>
+                  <p className="text-lg font-bold text-white sm:text-2xl">{notifications.length}</p>
                 </div>
               </button>
             </div>
 
-            <div className="rounded-[40px] border border-slate-800 bg-[#141820] shadow-2xl p-6 lg:p-8">
+            <div className="rounded-2xl border border-slate-800 bg-[#141820] shadow-2xl p-3 sm:rounded-[40px] sm:p-6 lg:p-8">
               <div className="flex flex-col gap-4 ">
 
                 {/* ===== Progreso corporal ===== */}
-                <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-                  <div className="flex items-start justify-between mb-5 lg:flex-row flex-col">
+                <section className="rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
+                  <div className="flex items-start justify-between mb-4 lg:flex-row flex-col sm:mb-5">
                     <div>
-                      <h2 className="text-xl font-semibold text-white">Progreso corporal</h2>
-                      <p className="text-sm text-slate-400">Última actualización hace 3 días</p>
+                      <h2 className="text-lg font-semibold text-white sm:text-xl">Progreso corporal</h2>
+                      <p className="text-xs text-slate-400 sm:text-sm">Última actualización hace 3 días</p>
                     </div>
                   </div>
                   <div>
-                    <div className="mb-4 flex items-center gap-3">
+                    <div className="mb-3 flex items-center gap-2 sm:mb-4 sm:gap-3">
                       <button
                         type="button"
                         onClick={() => setProgressTab('silhouette')}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'silhouette' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm ${progressTab === 'silhouette' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
                       >
                         Silueta
                       </button>
                       <button
                         type="button"
                         onClick={() => setProgressTab('chart')}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'chart' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm ${progressTab === 'chart' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
                       >
                         Gráfico
                       </button>
@@ -435,7 +435,7 @@ const Progress = () => {
                             <BodySilhouette genre={genre} cadera={Number(progreso[0]?.hips || progreso[0]?.cadera)} cintura={Number(progreso[0]?.waist || progreso[0]?.cintura)} piernas={Number(progreso[0]?.legs || progreso[0]?.piernas)} brazos={Number(progreso[0]?.arms || progreso[0]?.brazos)} />
                           </div>
                           <div className="w-full sm:w-1/2">
-                            <h2 className="items-center text-xl font-semibold text-white mb-4">Datos Iniciales</h2>
+                            <h2 className="items-center text-lg font-semibold text-white mb-3 sm:text-xl sm:mb-4">Datos Iniciales</h2>
                             {[
                               { label: "Edad", value: profile?.age },
                               { label: "Altura", value: profile?.height+ " cm" },
@@ -451,7 +451,7 @@ const Progress = () => {
                                 <span className="font-semibold text-center">{item.value}</span>
                               </div>
                             ))}
-                            <h2 className="items-center text-xl font-semibold text-white mt-4">Medidas Recientes</h2>
+                            <h2 className="items-center text-lg font-semibold text-white mt-3 sm:text-xl sm:mt-4">Medidas Recientes</h2>
                             <div className='rounded-lg p-2 bg-slate-900/60 border border-slate-800 text-white justify-between items-center grid grid-cols-2'>
                               <span className="text-slate-400" >Cintura:</span><span className="font-semibold text-center"> {progreso[0]?.hips} cm</span>
                             </div>
@@ -471,7 +471,7 @@ const Progress = () => {
                           </div>
                       ) : (
                         <div className="w-full chart-div mt-10">
-                          <div className="rounded-3xl bg-slate-950/90 border border-slate-800 p-4">
+                          <div className="rounded-2xl bg-slate-950/90 border border-slate-800 p-3 sm:rounded-3xl sm:p-4">
                             <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                               <div>
                                 <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Evolución biométrica</p>
@@ -509,9 +509,9 @@ const Progress = () => {
                 </section>
 
                 {/* ===== Datos Iniciales ===== */}
-                <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-                  <div className="flex flex-wrap gap-3 items-center">
-                    <h2 className="text-left text-xl font-semibold text-white mb-4 mt-1">Datos Biometricos</h2>
+                <section className="rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
+                  <div className="flex flex-wrap gap-2 items-center sm:gap-3">
+                    <h2 className="text-left text-lg font-semibold text-white mb-3 mt-1 sm:text-xl sm:mb-4">Datos Biometricos</h2>
                     <div className="justify-end flex-grow flex">
                       <button
                         onClick={() => setShowProgressModal(true)}
@@ -525,7 +525,7 @@ const Progress = () => {
                     {progreso.map((item, index) => (
                       <div
                         key={item.id}
-                        className={`rounded-xl p-3 border ${index === 0
+                        className={`rounded-lg p-2.5 border sm:rounded-xl sm:p-3 ${index === 0
                           ? 'bg-yellow-400 text-black border-black'
                           : 'bg-slate-800 border-yellow-400 text-white'
                           }`}
@@ -617,17 +617,17 @@ const Progress = () => {
       {/* Notifications Modal */}
       {showNotificationsModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-2 backdrop-blur-sm sm:p-4"
           onClick={closeNotificationsModal}
         >
           <div
-            className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-[32px] border border-slate-700 bg-[#141820] p-6 shadow-2xl shadow-black/40"
+            className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-2xl border border-slate-700 bg-[#141820] p-4 shadow-2xl shadow-black/40 sm:rounded-[32px] sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-6 flex items-start justify-between gap-4">
+            <div className="mb-4 flex items-start justify-between gap-3 sm:mb-6 sm:gap-4">
               <div>
                 <p className="text-sm text-slate-400 uppercase tracking-[0.3em]">Notificaciones</p>
-                <h2 className="mt-2 text-xl font-semibold text-white">{notifications.length} sin leer</h2>
+                <h2 className="mt-2 text-lg font-semibold text-white sm:text-xl">{notifications.length} sin leer</h2>
               </div>
               <div className="flex items-center gap-2">
                 {notifications.length > 0 && (

@@ -290,7 +290,7 @@ const Payments = () => {
           </aside>
 
           {/* ====== CONTENIDO PRINCIPAL ====== */}
-          <main className="flex-1 bg-[#0d1117] p-6 lg:p-8">
+          <main className="flex-1 bg-[#0d1117] p-3 sm:p-6 lg:p-8">
 
             {/* ✅ Botón hamburguesa — solo visible en móvil */}
             <div className="mb-4 lg:hidden  top-4 sticky text-right">
@@ -303,44 +303,44 @@ const Payments = () => {
               </button>
             </div>
 
-            <div className="mb-6 flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
+            <div className="mb-4 flex flex-col justify-between gap-3 sm:mb-6 sm:gap-4 xl:flex-row xl:items-center">
               <div>
                 <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Panel</p>
-                <h2 className="mt-3 text-3xl font-bold text-white">Pagos</h2>
+                <h2 className="mt-2 text-2xl font-bold text-white sm:mt-3 sm:text-3xl">Pagos</h2>
               </div>
 
               <button
                 type="button"
                 onClick={openNotificationsModal}
-                className={`inline-flex items-baseline gap-4 rounded-3xl bg-[#141820] border border-slate-600 p-4 shadow-lg transition hover:bg-slate-800 ${notifications.length > 0 ? "shadow-yellow-400 animate-pulse hover:border-yellow-400" : "animate-none shadow-none"}`}
+                className={`inline-flex items-baseline gap-2 rounded-2xl bg-[#141820] border border-slate-600 p-2.5 shadow-lg transition hover:bg-slate-800 sm:gap-4 sm:rounded-3xl sm:p-4 ${notifications.length > 0 ? "shadow-yellow-400 animate-pulse hover:border-yellow-400" : "animate-none shadow-none"}`}
               >
                 <div className="rounded-2xl bg-slate-900/80 text-[#f1b80c]">
                   <FontAwesomeIcon icon={faBell} className='text-lg rounded-[50%]'></FontAwesomeIcon>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-white">{notifications.length}</p>
+                  <p className="text-lg font-bold text-white sm:text-2xl">{notifications.length}</p>
                 </div>
               </button>
             </div>
 
-            <div className="rounded-[40px] border border-slate-800 bg-[#141820] shadow-2xl p-6 lg:p-8">
+            <div className="rounded-2xl border border-slate-800 bg-[#141820] shadow-2xl p-3 sm:rounded-[40px] sm:p-6 lg:p-8">
               <div className="grid gap-4 xl:grid-cols-1">
 
                 {/* ===== Pagos ===== */}
                 {profile.trainer_phone &&
-                <p className="text-center mt-4 lg:text-3xl text-lg font-bold text-white">Contacto Whatsapp <Link to={`https://wa.me/${profile?.trainer_phone}`} target='_blank' className="text-sm text-green-400 mt-1"><FontAwesomeIcon icon={faWhatsapp} className='text-lg lg:text-3xl'></FontAwesomeIcon></Link></p>
+                <p className="text-center mt-3 sm:mt-4 lg:text-3xl text-base sm:text-lg font-bold text-white">Contacto Whatsapp <Link to={`https://wa.me/${profile?.trainer_phone}`} target='_blank' className="text-sm text-green-400 mt-1"><FontAwesomeIcon icon={faWhatsapp} className='text-lg lg:text-3xl'></FontAwesomeIcon></Link></p>
                 }
-                <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-                  <h2 className="text-xl font-semibold text-white mb-4">Pagos</h2>
+                <section className="rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
+                  <h2 className="text-lg font-semibold text-white mb-3 sm:text-xl sm:mb-4">Pagos</h2>
                   <div className="space-y-3 text-slate-300">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex flex-col gap-2 mb-2 sm:flex-row sm:items-center sm:gap-3">
                       <button
                         onClick={() => setShowPaymentModal(true)}
-                        className='bg-yellow-400 hover:bg-yellow-200 text-black rounded-2xl p-2 font-semibold'
+                        className='bg-yellow-400 hover:bg-yellow-200 text-black rounded-xl px-3 py-1.5 text-sm font-semibold sm:rounded-2xl sm:p-2 sm:text-base'
                       >
                         Registrar Comprobante <FontAwesomeIcon icon={faPlus}></FontAwesomeIcon>
                       </button>
-                      <span className="ml-2 text-sm text-slate-400">Sube tu comprobante de pago para que tu entrenador pueda revisarlo.</span>
+                      <span className="text-xs text-slate-400 sm:ml-2 sm:text-sm">Sube tu comprobante de pago para que tu entrenador pueda revisarlo.</span>
                     </div>
                     <div>
                       {loadingPayments ? (
@@ -360,7 +360,7 @@ const Payments = () => {
                             return (
                               <div
                                 key={p.id || `${p.client_id || p.clientId}-${idx}`}
-                                className='rounded-xl p-3 border bg-slate-800 border-yellow-400 text-white'
+                                className='rounded-lg p-2.5 border bg-slate-800 border-yellow-400 text-white sm:rounded-xl sm:p-3'
                               >
                                 <div className="grid grid-cols-2 gap-2 text-xs">
                                   <p><span className="font-semibold">Fecha:</span> {dateText}</p>
@@ -451,17 +451,17 @@ const Payments = () => {
       {/* Notifications Modal */}
       {showNotificationsModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-2 backdrop-blur-sm sm:p-4"
           onClick={closeNotificationsModal}
         >
           <div
-            className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-[32px] border border-slate-700 bg-[#141820] p-6 shadow-2xl shadow-black/40"
+            className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-2xl border border-slate-700 bg-[#141820] p-4 shadow-2xl shadow-black/40 sm:rounded-[32px] sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-6 flex items-start justify-between gap-4">
+            <div className="mb-4 flex items-start justify-between gap-3 sm:mb-6 sm:gap-4">
               <div>
                 <p className="text-sm text-slate-400 uppercase tracking-[0.3em]">Notificaciones</p>
-                <h2 className="mt-2 text-xl font-semibold text-white">{notifications.length} sin leer</h2>
+                <h2 className="mt-2 text-lg font-semibold text-white sm:text-xl">{notifications.length} sin leer</h2>
               </div>
               <div className="flex items-center gap-2">
                 {notifications.length > 0 && (
