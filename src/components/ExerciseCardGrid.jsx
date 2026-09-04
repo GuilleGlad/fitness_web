@@ -78,6 +78,7 @@ const ExerciseCardGrid = ({ exercises, title = 'Ejercicios', loading = false }) 
       {/* Exercise Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {exercises.map((exercise, index) => (
+          (exercise.video_url || exercise.photo_url) && (
           <Reveal key={exercise.id || index} delay={Math.min(index, 8) * 80}>
           <article
             onClick={() => handleCardClick(index)}
@@ -161,6 +162,7 @@ const ExerciseCardGrid = ({ exercises, title = 'Ejercicios', loading = false }) 
             </div>
           </article>
           </Reveal>
+          )
         ))}
       </div>
 

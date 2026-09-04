@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import TrainerLibrary from './TrainerLibrary';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faNoteSticky, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faNoteSticky, faTrash, faCalendarDays, faClock, faDumbbell, faCommentDots, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { verifyToken } from '../utils/tokenUtils';
 import { getClientStatusLabel, getCuentaLabel, normalizeClientRow, normalizeStatusCode } from '../utils/clientUtils';
 import moment from 'moment';
@@ -270,15 +270,21 @@ const Clients = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNewModal, setShowNewModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const personalDataRef = useRef(null);
+  const biometricHistoryRef = useRef(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [trainerWorkouts, setTrainerWorkouts] = useState([]);
   const [assignedWorkouts, setAssignedWorkouts] = useState([]);
+  const [completedWorkouts, setCompletedWorkouts] = useState([]);
+  const [activeWorkoutTab, setActiveWorkoutTab] = useState('assigned');
+  const [completedDateFilter, setCompletedDateFilter] = useState('');
   const [selectedWorkoutId, setSelectedWorkoutId] = useState('');
   const [selectedDays, setSelectedDays] = useState({ L: false, M: false, X: false, J: false, V: false, S: false, D: false });
   const [trainerNotes, setTrainerNotes] = useState('');
   const [loadingAssign, setLoadingAssign] = useState(false);
   const [loadingAssignedWorkouts, setLoadingAssignedWorkouts] = useState(false);
+  const [loadingCompletedWorkouts, setLoadingCompletedWorkouts] = useState(false);
   const [loadingTrainerWorkouts, setLoadingTrainerWorkouts] = useState(false);
   const [trainerId, setTrainerId] = useState(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
@@ -305,6 +311,20 @@ const Clients = () => {
   /* ── Eliminación permanente de usuarios ya eliminados lógicamente (solo Administrador) ── */
   const [isPurging, setIsPurging] = useState(false);
 
+  useEffect(() => {
+    if (!showAssignModal) return undefined;
+
+    personalDataRef.current?.setAttribute('open', '');
+    biometricHistoryRef.current?.setAttribute('open', '');
+
+    const closeAccordionsTimer = setTimeout(() => {
+      personalDataRef.current?.removeAttribute('open');
+      biometricHistoryRef.current?.removeAttribute('open');
+    }, 3000);
+
+    return () => clearTimeout(closeAccordionsTimer);
+  }, [showAssignModal]);
+
   const dayOptions = [
     { key: 'L', label: 'Lunes' },
     { key: 'M', label: 'Martes' },
@@ -314,6 +334,46 @@ const Clients = () => {
     { key: 'S', label: 'Sábado' },
     { key: 'D', label: 'Domingo' },
   ];
+
+  const dayColorMap = {
+    L: 'bg-blue-500/25 text-blue-300 ring-1 ring-inset ring-blue-500/50',
+    M: 'bg-violet-500/25 text-violet-300 ring-1 ring-inset ring-violet-500/50',
+    X: 'bg-fuchsia-500/25 text-fuchsia-300 ring-1 ring-inset ring-fuchsia-500/50',
+    J: 'bg-orange-500/25 text-orange-300 ring-1 ring-inset ring-orange-500/50',
+    V: 'bg-cyan-500/25 text-cyan-300 ring-1 ring-inset ring-cyan-500/50',
+    S: 'bg-red-500/25 text-red-300 ring-1 ring-inset ring-red-500/50',
+    D: 'bg-lime-500/25 text-lime-300 ring-1 ring-inset ring-lime-500/50',
+  };
+
+  const dayIdleMap = {
+    L: 'border-blue-500/40 bg-blue-500/5 text-blue-200/80 hover:bg-blue-500/10',
+    M: 'border-violet-500/40 bg-violet-500/5 text-violet-200/80 hover:bg-violet-500/10',
+    X: 'border-fuchsia-500/40 bg-fuchsia-500/5 text-fuchsia-200/80 hover:bg-fuchsia-500/10',
+    J: 'border-orange-500/40 bg-orange-500/5 text-orange-200/80 hover:bg-orange-500/10',
+    V: 'border-cyan-500/40 bg-cyan-500/5 text-cyan-200/80 hover:bg-cyan-500/10',
+    S: 'border-red-500/40 bg-red-500/5 text-red-200/80 hover:bg-red-500/10',
+    D: 'border-lime-500/40 bg-lime-500/5 text-lime-200/80 hover:bg-lime-500/10',
+  };
+
+  const dayBorderMap = {
+    L: 'border-blue-500',
+    M: 'border-violet-500',
+    X: 'border-fuchsia-500',
+    J: 'border-orange-500',
+    V: 'border-cyan-500',
+    S: 'border-red-500',
+    D: 'border-lime-500',
+  };
+
+  const dayAccentMap = {
+    L: 'accent-blue-500',
+    M: 'accent-violet-500',
+    X: 'accent-fuchsia-500',
+    J: 'accent-orange-500',
+    V: 'accent-cyan-500',
+    S: 'accent-red-500',
+    D: 'accent-lime-500',
+  };
 
   const translateDay = (key) => {
     if (key.indexOf(',') != -1) {
@@ -344,6 +404,22 @@ const Clients = () => {
       toast.error('No se pudieron cargar las rutinas asignadas.');
     } finally {
       setLoadingAssignedWorkouts(false);
+    }
+  };
+
+  const fetchCompletedWorkouts = async (clientId) => {
+    setLoadingCompletedWorkouts(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return toast.error('Token no disponible. Inicia sesión.');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const res = await axios.get(`${apiUrl}/workouts/list-completed/${clientId}`, config);
+      setCompletedWorkouts(res.data?.filas || res.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('No se pudieron cargar las rutinas completadas.');
+    } finally {
+      setLoadingCompletedWorkouts(false);
     }
   };
 
@@ -386,6 +462,8 @@ const Clients = () => {
   const handleOpenAssignModal = async (client) => {
     setShowAssignModal(true);
     setSelectedClient(client);
+    setActiveWorkoutTab('assigned');
+    setCompletedDateFilter('');
     resetAssignForm();
 
     try {
@@ -401,6 +479,7 @@ const Clients = () => {
       setTrainerId(currentTrainerId);
       await fetchTrainerWorkouts(currentTrainerId);
       await fetchAssignedWorkouts(client.id);
+      await fetchCompletedWorkouts(client.id);
       await fetchClientBioData(client.id);
     } catch (err) {
       console.error(err);
@@ -413,6 +492,9 @@ const Clients = () => {
     setSelectedClient(null);
     setTrainerWorkouts([]);
     setAssignedWorkouts([]);
+    setCompletedWorkouts([]);
+    setActiveWorkoutTab('assigned');
+    setCompletedDateFilter('');
     setClientProfileData(null);
     setClientProgressHistory([]);
     resetAssignForm();
@@ -438,7 +520,7 @@ const Clients = () => {
     setNoteFeedback('');
 
     const existingNote = assignedWorkouts.find(
-      (item) => item.workout_note_id === workoutNoteId || item.id === workoutNoteId
+      (item) => item.workout_note_id === workoutNoteId
     );
 
     if (existingNote) {
@@ -495,12 +577,14 @@ const Clients = () => {
       };
 
       const response = await axios.put(`${apiUrl}/workouts/update-feedback/${noteId}`, payload, config);
-      const updated = response.data?.note || response.data || { feedback: payload.feedback };
+      const updated = response.data?.note || response.data || {};
+      const updatedFeedback = updated.feedback ?? payload.feedback;
+      const updatedStatus = updated.status ?? 1;
 
       setAssignedWorkouts((prev) =>
         prev.map((item) =>
-          item.workout_note_id === noteId || item.id === noteId
-            ? { ...item, feedback: updated.feedback || payload.feedback }
+          item.workout_note_id === noteId
+            ? { ...item, feedback: updatedFeedback, status: updatedStatus }
             : item
         )
       );
@@ -530,11 +614,14 @@ const Clients = () => {
       const token = localStorage.getItem('token');
       if (!token) return toast.error('Token no disponible. Inicia sesión.');
       const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
+      const progress_history_id = clientProgressHistory.length > 0 ? clientProgressHistory[0].id : null;
+
       const payload = {
         client_id: selectedClient.id,
         workout_id: Number(selectedWorkoutId),
         day_of_week: dayString,
         trainer_notes: trainerNotes.trim(),
+        progress_history_id: progress_history_id,
       };
       await axios.post(`${apiUrl}/workouts/add`, payload, config);
       toast.success('Rutina asignada correctamente.');
@@ -557,6 +644,7 @@ const Clients = () => {
         const config = { headers: { Authorization: `Bearer ${token}` } };
         await axios.delete(`${apiUrl}/workouts/delete/${assignmentId}`, config);
         setAssignedWorkouts((prev) => prev.filter((item) => item.id !== assignmentId));
+        setCompletedWorkouts((prev) => prev.filter((item) => item.id !== assignmentId));
         toast.success('Rutina asignada eliminada correctamente.');
       } catch (err) {
         console.error(err);
@@ -850,6 +938,11 @@ const Clients = () => {
 
   const totalActive = clients.filter((c) => !c.deleted).length;
   const totalDeleted = clients.filter((c) => c.deleted).length;
+  const filteredCompletedWorkouts = completedDateFilter
+    ? completedWorkouts.filter((item) => item.log_date && moment(item.log_date).format('YYYY-MM-DD') === completedDateFilter)
+    : completedWorkouts;
+  const visibleWorkouts = activeWorkoutTab === 'completed' ? filteredCompletedWorkouts : assignedWorkouts;
+  const loadingVisibleWorkouts = activeWorkoutTab === 'completed' ? loadingCompletedWorkouts : loadingAssignedWorkouts;
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white">
@@ -1045,9 +1138,9 @@ const Clients = () => {
                           <button
                             onClick={() => handleRutina(client)}
                             disabled={client.role === 'admin'}
-                            className="flex-1 rounded-full bg-green-400 py-2.5 text-xs font-semibold text-slate-950 hover:bg-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 rounded-full bg-blue-300 py-2.5 text-xs font-semibold text-slate-950 hover:bg-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Asignar rutina
+                            Progreso y Rutinas
                           </button>
                           <button
                             onClick={() => yesNo('¿Eliminar este cliente?', () => handleDelete(client.id))}
@@ -1079,10 +1172,11 @@ const Clients = () => {
               ) : (
                 <>
                   {/* Datos personales */}
-                  <div className="overflow-hidden rounded-3xl border border-slate-700 bg-[#0f172a]">
-                    <h4 className="border-b border-slate-700 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c]">
-                      Datos personales
-                    </h4>
+                  <details ref={personalDataRef} open className="group overflow-hidden rounded-3xl border border-slate-700 bg-[#0f172a]">
+                    <summary className="flex cursor-pointer list-none items-center justify-between border-b border-slate-700 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c] [&::-webkit-details-marker]:hidden">
+                      <span>Datos personales</span>
+                      <FontAwesomeIcon icon={faChevronDown} className="transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+                    </summary>
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[560px] text-left text-sm">
                         <thead>
@@ -1107,13 +1201,14 @@ const Clients = () => {
                         </tbody>
                       </table>
                     </div>
-                  </div>
+                  </details>
 
                   {/* Historial biométrico */}
-                  <div className="overflow-hidden rounded-3xl border border-slate-700 bg-[#0f172a]">
-                    <h4 className="border-b border-slate-700 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c]">
-                      Historial biométrico
-                    </h4>
+                  <details ref={biometricHistoryRef} open className="group overflow-hidden rounded-3xl border border-slate-700 bg-[#0f172a]">
+                    <summary className="flex cursor-pointer list-none items-center justify-between border-b border-slate-700 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c] [&::-webkit-details-marker]:hidden">
+                      <span>Historial biométrico</span>
+                      <FontAwesomeIcon icon={faChevronDown} className="transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+                    </summary>
                     <div className="max-h-[320px] overflow-y-auto overflow-x-auto">
                       <table className="w-full min-w-[720px] text-left text-sm">
                         <thead>
@@ -1176,12 +1271,17 @@ const Clients = () => {
                         </tbody>
                       </table>
                     </div>
-                  </div>
+                  </details>
                 </>
               )}
             </section>
-            <form onSubmit={handleAssignSubmit} className="space-y-5">
-              <label className="block space-y-2 text-sm text-slate-200">
+            <details open className="group mb-6 overflow-hidden rounded-3xl border border-slate-700 bg-[#0f172a]">
+              <summary className="flex cursor-pointer list-none items-center justify-between border-b border-slate-700 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c] [&::-webkit-details-marker]:hidden">
+                <span>Agregar nueva rutina</span>
+                <FontAwesomeIcon icon={faChevronDown} className="transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <form onSubmit={handleAssignSubmit} className="space-y-5 p-4">
+                <label className="block space-y-2 text-sm text-slate-200">
                 Rutina
                 <select
                   value={selectedWorkoutId}
@@ -1201,26 +1301,33 @@ const Clients = () => {
                     ))
                   )}
                 </select>
-              </label>
+                </label>
 
-              <div className="space-y-3">
+                <div className="space-y-3">
                 <p className="text-sm font-semibold text-slate-200">Días de la semana</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {dayOptions.map((day) => (
-                    <label key={day.key} className="inline-flex items-center gap-2 rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-sm text-slate-200 transition hover:border-[#f1b80c]">
+                    <label
+                      key={day.key}
+                      className={`inline-flex items-center gap-2 rounded-3xl border px-4 py-3 text-sm font-medium transition ${
+                        selectedDays[day.key]
+                          ? `border-transparent ${dayColorMap[day.key]}`
+                          : dayIdleMap[day.key]
+                      }`}
+                    >
                       <input
                         type="checkbox"
                         checked={selectedDays[day.key]}
                         onChange={() => handleToggleDay(day.key)}
-                        className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-[#f1b80c] focus:ring-[#f1b80c]"
+                        className={`h-4 w-4 rounded border-2 bg-slate-900 focus:ring-2 focus:ring-offset-0 ${dayBorderMap[day.key]} ${dayAccentMap[day.key]}`}
                       />
                       {day.label}
                     </label>
                   ))}
                 </div>
-              </div>
+                </div>
 
-              <label className="block space-y-2 text-sm text-slate-200">
+                <label className="block space-y-2 text-sm text-slate-200">
                 Notas del entrenador
                 <textarea
                   value={trainerNotes}
@@ -1228,89 +1335,228 @@ const Clients = () => {
                   placeholder="Escribe información extra sobre la rutina..."
                   className="min-h-[120px] w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
                 />
-              </label>
+                </label>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2">
                 <button type="submit" disabled={loadingAssign} className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-70">
                   {loadingAssign ? 'Asignando...' : 'Asignar rutina'}
                 </button>
                 <button type="button" onClick={closeAssignModal} className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700">
                   Cerrar
                 </button>
-              </div>
-            </form>
+                </div>
+              </form>
+            </details>
           </div>
 
-          <div className="rounded-3xl border border-slate-700 bg-[#0f172a] p-4 lg:max-h-[65vh] lg:overflow-hidden">
+          <div className="flex min-h-0 flex-col rounded-3xl border border-slate-700 bg-[#0f172a] p-4 lg:h-[65vh] lg:max-h-[65vh]">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Rutinas asignadas</h3>
-              {/* <span className="text-sm text-slate-400">Cliente: {selectedClient?.name || '—'}</span> */}
-              <span className="text-sm text-slate-400">Total: {assignedWorkouts.length}</span>
+              <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300">
+                Total: {visibleWorkouts.length}
+              </span>
             </div>
-            {loadingAssignedWorkouts ? (
-              <p className="text-slate-400">Cargando rutinas asignadas…</p>
-            ) : assignedWorkouts.length === 0 ? (
-              <p className="text-slate-400">Este cliente no tiene rutinas asignadas aún.</p>
+            <div className="mb-4 grid grid-cols-2 gap-2 rounded-2xl bg-slate-900/80 p-1" role="tablist" aria-label="Rutinas del cliente">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeWorkoutTab === 'assigned'}
+                onClick={() => setActiveWorkoutTab('assigned')}
+                className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${activeWorkoutTab === 'assigned' ? 'bg-[#f1b80c] text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+              >
+                Asignadas
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeWorkoutTab === 'completed'}
+                onClick={() => setActiveWorkoutTab('completed')}
+                className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${activeWorkoutTab === 'completed' ? 'bg-[#f1b80c] text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+              >
+                Completadas
+              </button>
+            </div>
+            {activeWorkoutTab === 'completed' && (
+              <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <label className="block w-full space-y-1.5 text-xs font-medium text-slate-400 sm:max-w-[220px]">
+                  <span className="pl-1">Filtrar por fecha</span>
+                  <span className="relative block">
+                    <FontAwesomeIcon
+                      icon={faCalendarDays}
+                      className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-500"
+                      aria-hidden="true"
+                    />
+                    <input
+                      type="date"
+                      value={completedDateFilter}
+                      onChange={(e) => setCompletedDateFilter(e.target.value)}
+                      onClick={(e) => e.currentTarget.showPicker?.()}
+                      aria-label="Filtrar rutinas completadas por fecha"
+                      className="w-full rounded-xl border border-slate-700/80 bg-slate-900/70 py-2 pl-9 pr-3 text-sm text-slate-200 outline-none transition hover:border-slate-600 focus:border-[#f1b80c]/70 focus:ring-1 focus:ring-[#f1b80c]/30"
+                      style={{ colorScheme: 'dark' }}
+                    />
+                  </span>
+                </label>
+                {completedDateFilter && (
+                  <button
+                    type="button"
+                    onClick={() => setCompletedDateFilter('')}
+                    className="self-start rounded-xl px-2 py-2 text-xs font-semibold text-slate-400 transition hover:bg-slate-800 hover:text-white sm:self-end"
+                  >
+                    Limpiar
+                  </button>
+                )}
+              </div>
+            )}
+            {loadingVisibleWorkouts ? (
+              <p className="text-slate-400">
+                {activeWorkoutTab === 'completed' ? 'Cargando rutinas completadas…' : 'Cargando rutinas asignadas…'}
+              </p>
+            ) : visibleWorkouts.length === 0 ? (
+              <p className="text-slate-400">
+                {activeWorkoutTab === 'completed'
+                  ? 'Este cliente no tiene rutinas completadas aún.'
+                  : 'Este cliente no tiene rutinas asignadas aún.'}
+              </p>
             ) : (
-              <div className="grid gap-4 overflow-y-auto pr-1 lg:max-h-[56vh]">
-                {assignedWorkouts.map((item) => (
-                  <div key={item.id || `${item.client_id}-${item.workout_id}-${item.log_date}`} className="rounded-3xl border border-yellow-400 bg-slate-800 p-4 shadow-xl">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="space-y-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-yellow-600 px-2.5 py-0.5 text-[11px] font-semibold text-white">Rutina</span>
-                          <h4 className="text-base font-semibold text-white">{item.title || item.name || item.workout_name || `#${item.workout_id}`}</h4>
-                        </div>
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          <div className="rounded-2xl border border-slate-800 bg-slate-600 p-3 text-sm text-slate-300">
-                            <p className="font-semibold text-white">Días</p>
-                            <p>{translateDay(item.day_of_week) || '—'}</p>
-                          </div>
-                          <div className="rounded-2xl border border-slate-800 bg-slate-600 p-3 text-sm text-slate-300">
-                            <p className="font-semibold text-white">Creado</p>
-                            <p>{item.log_date ? new Date(item.log_date).toLocaleDateString() : '—'}</p>
-                          </div>
-                        </div>
-                        <div className="rounded-2xl border border-slate-800 bg-slate-600 p-3 text-sm text-slate-300">
-                          <p className="font-semibold text-white">Indicaciones del entrenador</p>
-                          <p>{item.trainer_notes || '—'}</p>
-                        </div>
-                        {item.note &&
-                          <div className="rounded-2xl border border-yellow-400 bg-slate-600 p-3 text-sm text-slate-300">
-                            <p className="font-semibold text-white">Notas del Cliente</p>
-                            <p>{item.note || '—'}</p>
-                          </div>
-                        }
-                        {item.status === 1 &&
-                          <div className="text-right rounded-2xl border border-yellow-400 bg-slate-800 p-3 text-sm text-white">
-                            <p className="font-semibold text-yellow-400">Notas del Entrenador</p>
-                            <p>{item.feedback || '—'}</p>
-                          </div>
-                        }
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-4 pb-2">
+                {visibleWorkouts.map((item) => (
+                  <div
+                    key={item.id || `${item.client_id}-${item.workout_id}-${item.log_date}`}
+                    className="group relative flex flex-col gap-2.5 rounded-2xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-3.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800"
+                  >
+                    {/* Header: icon + title + actions */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
+                          <FontAwesomeIcon icon={faDumbbell} size="sm" />
+                        </span>
+                        <h4 className="truncate text-sm font-semibold text-white lg:text-base" title={item.title || item.name || item.workout_name}>
+                          {item.title || item.name || item.workout_name || `#${item.workout_id}`}
+                        </h4>
                       </div>
-                      <div className="flex items-start justify-end gap-2">
+                      {activeWorkoutTab !== 'completed' && 
+                      <div className="flex shrink-0 items-center gap-1.5">
                         {item.workout_note_id &&
                           <button
                             type='button'
-                            className={`inline-flex items-center justify-center rounded-full bg-green-800 px-3 py-2 text-xs font-semibold text-white transition hover:bg-green-400 hover:text-slate-600 ${item.note && !item.status && 'animate-pulseBorder'}`}
+                            className={`inline-flex h-7 w-7 items-center justify-center rounded-full bg-green-800 text-white transition hover:bg-green-400 hover:text-slate-600 ${item.note && !item.status && 'animate-pulseBorder'}`}
                             aria-label="Notas del Cliente"
                             title='Notas del Cliente'
                             onClick={() => handleNoteReview(item.workout_note_id)}
                           >
-                            <FontAwesomeIcon icon={faNoteSticky} size='2x'></FontAwesomeIcon>
+                            <FontAwesomeIcon icon={faNoteSticky} size='xs' />
                           </button>
                         }
                         <button
                           type="button"
                           onClick={() => handleDeleteAssignedWorkout(item.id)}
-                          className="inline-flex items-center justify-center rounded-full bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-500"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white transition hover:bg-red-500"
                           aria-label="Eliminar rutina asignada"
                           title='Eliminar rutina asignada'
                         >
-                          <FontAwesomeIcon icon={faTrash} size='2x'></FontAwesomeIcon>'
+                          <FontAwesomeIcon icon={faTrash} size='xs' />
                         </button>
                       </div>
+                      }
                     </div>
+
+                    {/* Meta: día / fecha as inline chips */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 lg:text-sm">
+                      <span className="inline-flex flex-wrap items-center gap-1">
+                        <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
+                        {item.day_of_week ? (
+                          item.day_of_week.split(',').filter(Boolean).map((d) => (
+                            <span
+                              key={d}
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold lg:text-xs ${dayColorMap[d.trim()] || 'bg-slate-600/40 text-slate-300 ring-1 ring-inset ring-slate-500/30'}`}
+                            >
+                              {translateDay(d.trim())}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-slate-500">—</span>
+                        )}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
+                        {item.log_date ? new Date(item.log_date).toLocaleDateString() : '—'}
+                      </span>
+                      {item.status === 1 &&
+                        <span className="ml-auto rounded-full bg-emerald-600/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400 lg:text-xs">
+                          Revisada
+                        </span>
+                      }
+                    </div>
+
+                    {activeWorkoutTab === 'completed' && (
+                      <details className="group rounded-xl border border-slate-700/80 bg-slate-900/60">
+                        <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 lg:text-xs [&::-webkit-details-marker]:hidden">
+                          <span>Datos Biométricos para la Fecha</span>
+                          <FontAwesomeIcon icon={faChevronDown} className="text-slate-500 transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+                        </summary>
+                        <div className="border-t border-slate-700/80 p-3">
+                          <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-5 lg:text-sm">
+                            {[
+                              { label: 'Peso', value: item.weight },
+                              { label: 'Cadera', value: item.hips },
+                              { label: 'Cintura', value: item.waist },
+                              { label: 'Piernas', value: item.legs },
+                              { label: 'Brazos', value: item.arms },
+                            ].map((metric) => (
+                              <div key={metric.label} className="rounded-lg bg-slate-800/70 px-2 py-1.5">
+                                <p className="text-[10px] text-slate-500 lg:text-xs">{metric.label}</p>
+                                <p className="font-semibold text-slate-200">{metric.value ?? '—'}</p>
+                              </div>
+                            ))}
+                          </div>
+                          {(item.photo_front_url || item.photo_back_url) && (
+                            <div className="mt-3 flex gap-2">
+                              {item.photo_front_url && (
+                                <img
+                                  src={item.photo_front_url}
+                                  alt="Foto frontal del progreso"
+                                  title="Foto frontal"
+                                  className="h-14 w-14 cursor-pointer rounded-lg object-cover ring-1 ring-slate-600 transition hover:opacity-80"
+                                  onClick={() => setBioPhotoPreview(item.photo_front_url)}
+                                />
+                              )}
+                              {item.photo_back_url && (
+                                <img
+                                  src={item.photo_back_url}
+                                  alt="Foto trasera del progreso"
+                                  title="Foto trasera"
+                                  className="h-14 w-14 cursor-pointer rounded-lg object-cover ring-1 ring-slate-600 transition hover:opacity-80"
+                                  onClick={() => setBioPhotoPreview(item.photo_back_url)}
+                                />
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </details>
+                    )}
+
+                    {/* Indicaciones del entrenador */}
+                    <p className="line-clamp-2 rounded-xl bg-slate-900/60 px-3 py-2 text-xs text-slate-300 lg:text-sm" title={item.trainer_notes || ''}>
+                      <span className="mr-1 font-semibold text-slate-200">Indicaciones:</span>
+                      {item.trainer_notes || '—'}
+                    </p>
+
+                    {/* Nota del cliente */}
+                    {item.note &&
+                      <p className="line-clamp-2 flex items-start gap-1.5 rounded-xl border border-yellow-400/40 bg-yellow-400/5 px-3 py-2 text-xs text-slate-200 lg:text-sm" title={item.note}>
+                        <FontAwesomeIcon icon={faCommentDots} className="mt-0.5 shrink-0 text-[#f1b80c]" />
+                        <span><span className="mr-1 font-semibold text-white">Cliente:</span>{item.note}</span>
+                      </p>
+                    }
+
+                    {/* Feedback del entrenador */}
+                    {item.status === 1 &&
+                      <p className="line-clamp-2 rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-3 py-2 text-xs text-slate-200 lg:text-sm" title={item.feedback || ''}>
+                        <span className="mr-1 font-semibold text-emerald-400">Respuesta:</span>
+                        {item.feedback || '—'}
+                      </p>
+                    }
                   </div>
                 ))}
               </div>
@@ -1321,56 +1567,65 @@ const Clients = () => {
 
       {/* Note Review Modal */}
       <ModalOverlay isOpen={showNoteModal} onClose={closeNoteModal} title="Revisar nota">
-        <div className="space-y-5">
+        <div className="space-y-4">
           {loadingNoteModal ? (
             <p className="text-slate-400">Cargando nota…</p>
           ) : noteModalData ? (
             <>
-              <div className="grid gap-4 lg:grid-cols-2">
-                <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
-                  <p className="font-semibold text-white">ID de nota</p>
-                  <p>{noteModalData.workout_note_id || noteModalData.id || '—'}</p>
+              {/* Contexto de la rutina */}
+              <div className="rounded-2xl border border-slate-700 bg-slate-900 p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
+                    <FontAwesomeIcon icon={faDumbbell} size="sm" />
+                  </span>
+                  <h4 className="truncate text-sm font-semibold text-white">
+                    {noteModalData.title || noteModalData.name || noteModalData.workout_name || `#${noteModalData.workout_id || '—'}`}
+                  </h4>
                 </div>
-                <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
-                  <p className="font-semibold text-white">ID cliente</p>
-                  <p>{noteModalData.client_id || '—'}</p>
-                </div>
-                <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
-                  <p className="font-semibold text-white">Rutina</p>
-                  <p>{noteModalData.title || noteModalData.name || noteModalData.workout_name || `#${noteModalData.workout_id || '—'}`}</p>
-                </div>
-                <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
-                  <p className="font-semibold text-white">Fecha</p>
-                  <p>{noteModalData.log_date ? new Date(noteModalData.log_date).toLocaleString() : '—'}</p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-400">
+                  <span className="inline-flex flex-wrap items-center gap-1">
+                    <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
+                    {(noteModalData.day_of_week || noteModalData.days || noteModalData.day) ? (
+                      (noteModalData.day_of_week || noteModalData.days || noteModalData.day)
+                        .split(',')
+                        .filter(Boolean)
+                        .map((d) => (
+                          <span
+                            key={d}
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${dayColorMap[d.trim()] || 'bg-slate-600/40 text-slate-300 ring-1 ring-inset ring-slate-500/30'}`}
+                          >
+                            {translateDay(d.trim())}
+                          </span>
+                        ))
+                    ) : (
+                      <span className="text-slate-500">—</span>
+                    )}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
+                    {noteModalData.log_date ? new Date(noteModalData.log_date).toLocaleDateString() : '—'}
+                  </span>
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
-                <p className="font-semibold text-white">Días</p>
-                <p>{translateDay(noteModalData.day_of_week || noteModalData.days || noteModalData.day || '') || '—'}</p>
+              {/* Nota del cliente (solo lectura) */}
+              <div className="rounded-2xl border border-yellow-400/40 bg-yellow-400/5 p-4">
+                <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
+                  <FontAwesomeIcon icon={faCommentDots} className="text-[#f1b80c]" />
+                  Nota del cliente
+                </p>
+                <p className="whitespace-pre-wrap text-sm text-slate-200">
+                  {noteModalData.note || noteModalData.notes || 'El cliente no dejó ninguna nota.'}
+                </p>
               </div>
 
-              <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4 text-sm text-slate-200">
-                <p className="font-semibold text-white">Instrucciones del entrenador</p>
-                <p>{noteModalData.trainer_notes || noteModalData.trainer_notes_text || '—'}</p>
-              </div>
-
+              {/* Respuesta del entrenador */}
               <label className="block space-y-2 text-sm text-slate-200">
-                Nota
-                <textarea
-                  value={noteModalData.note || noteModalData.notes || ''}
-                  readOnly
-                  placeholder="No hay nota disponible"
-                  className="min-h-[120px] w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-slate-300 outline-none transition focus:border-[#f1b80c]"
-                />
-              </label>
-
-              <label className="block space-y-2 text-sm text-slate-200">
-                Feedback
+                <span className="font-semibold text-white">Tu respuesta</span>
                 <textarea
                   value={noteFeedback}
                   onChange={(e) => setNoteFeedback(e.target.value)}
-                  placeholder="Escribe el feedback del cliente..."
+                  placeholder="Escribe tu respuesta para el cliente..."
                   className="min-h-[140px] w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
                 />
               </label>
@@ -1382,7 +1637,7 @@ const Clients = () => {
                   disabled={savingNoteFeedback}
                   className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {savingNoteFeedback ? 'Guardando...' : 'Guardar feedback'}
+                  {savingNoteFeedback ? 'Guardando...' : 'Guardar respuesta'}
                 </button>
                 <button
                   type="button"

@@ -6,7 +6,7 @@ import { getClientStatusLabel } from '../utils/clientUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { faAdd, faHome, faPencil, faPlus, faVideo, faBars, faTimes, faBell } from '@fortawesome/free-solid-svg-icons';
+import { faAdd, faHome, faPencil, faPlus, faVideo, faBars, faTimes, faBell, faDumbbell, faCalendarDays, faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import BodySilhouette from '../components/BodySilhouette';
 import moment from 'moment';
 import 'moment/locale/es';
@@ -161,6 +161,46 @@ const Dashboard = () => {
   const closeMenu = () => setMenuOpen(false);
 
   const DAY_LETTER_BY_INDEX = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+  const DAY_FULL_NAME_BY_LETTER = {
+    L: 'Lunes',
+    M: 'Martes',
+    X: 'Miércoles',
+    J: 'Jueves',
+    V: 'Viernes',
+    S: 'Sábado',
+    D: 'Domingo',
+  };
+
+  const dayColorMap = {
+    L: 'bg-blue-500/25 text-blue-300 ring-1 ring-inset ring-blue-500/50',
+    M: 'bg-violet-500/25 text-violet-300 ring-1 ring-inset ring-violet-500/50',
+    X: 'bg-fuchsia-500/25 text-fuchsia-300 ring-1 ring-inset ring-fuchsia-500/50',
+    J: 'bg-orange-500/25 text-orange-300 ring-1 ring-inset ring-orange-500/50',
+    V: 'bg-cyan-500/25 text-cyan-300 ring-1 ring-inset ring-cyan-500/50',
+    S: 'bg-red-500/25 text-red-300 ring-1 ring-inset ring-red-500/50',
+    D: 'bg-lime-500/25 text-lime-300 ring-1 ring-inset ring-lime-500/50',
+  };
+
+  const dayButtonMap = {
+    L: 'border-blue-500/50 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20',
+    M: 'border-violet-500/50 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20',
+    X: 'border-fuchsia-500/50 bg-fuchsia-500/10 text-fuchsia-200 hover:bg-fuchsia-500/20',
+    J: 'border-orange-500/50 bg-orange-500/10 text-orange-200 hover:bg-orange-500/20',
+    V: 'border-cyan-500/50 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20',
+    S: 'border-red-500/50 bg-red-500/10 text-red-200 hover:bg-red-500/20',
+    D: 'border-lime-500/50 bg-lime-500/10 text-lime-200 hover:bg-lime-500/20',
+  };
+
+  const selectedDayButtonMap = {
+    L: 'border-blue-300 bg-blue-500 text-white shadow-lg shadow-blue-500/20',
+    M: 'border-violet-300 bg-violet-500 text-white shadow-lg shadow-violet-500/20',
+    X: 'border-fuchsia-300 bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/20',
+    J: 'border-orange-300 bg-orange-500 text-white shadow-lg shadow-orange-500/20',
+    V: 'border-cyan-300 bg-cyan-500 text-white shadow-lg shadow-cyan-500/20',
+    S: 'border-red-300 bg-red-500 text-white shadow-lg shadow-red-500/20',
+    D: 'border-lime-300 bg-lime-500 text-slate-950 shadow-lg shadow-lime-500/20',
+  };
 
   const getWorkoutDayLetters = (item) => {
     const raw = (item.day_of_week || item.days || item.day || item.week_day || item.dayOfWeek || '')
@@ -1179,16 +1219,17 @@ const Dashboard = () => {
                     <div className="grid grid-cols-7 gap-2 rounded-2xl bg-slate-900/80 p-2">
                       {weekDays.map((day) => {
                         const isSelected = day.isSame(selectedDate, 'day');
+                        const dayLetter = getSelectedDayLetter(day);
                         return (
                           <button
                             key={day.format('YYYY-MM-DD')}
                             type="button"
                             onClick={() => selectWeekDay(day)}
-                            className={`rounded-2xl border p-2 text-center transition ${isSelected ? 'border-[#f1b80c] bg-[#f1b80c] text-slate-950 shadow-lg' : 'border-slate-800 bg-[#111827] text-slate-300 hover:border-slate-500 hover:bg-slate-800'}`}
+                            className={`rounded-2xl border p-2 text-center transition ${isSelected ? selectedDayButtonMap[dayLetter] : dayButtonMap[dayLetter]}`}
                           >
-                            <div className="text-[10px] uppercase tracking-[0.25em] text-slate-400">{weekDayLabels[day.isoWeekday() - 1]}</div>
+                            <div className={`text-[10px] uppercase tracking-[0.25em] ${isSelected ? 'text-white/80' : 'text-current/70'}`}>{weekDayLabels[day.isoWeekday() - 1]}</div>
                             <div className="mt-1 text-base font-semibold">{day.format('D')}</div>
-                            <div className="mt-1 text-[10px] text-slate-500">{day.format('ddd')}</div>
+                            <div className={`mt-1 text-[10px] ${isSelected ? 'text-white/80' : 'text-current/70'}`}>{day.format('ddd')}</div>
                           </button>
                         );
                       })}
@@ -1226,15 +1267,16 @@ const Dashboard = () => {
                         {monthGrid.map((day) => {
                           const isCurrentMonth = day.month() === monthStart.month();
                           const isSelected = day.isSame(selectedDate, 'day');
+                          const dayLetter = getSelectedDayLetter(day);
                           return (
                             <button
                               key={day.format('YYYY-MM-DD')}
                               type="button"
                               onClick={() => selectMonthDay(day)}
-                              className={`rounded-2xl border p-2 text-left transition ${isSelected ? 'border-[#f1b80c] bg-[#f1b80c] text-slate-950 shadow-lg' : isCurrentMonth ? 'border-slate-800 bg-[#111827] text-slate-200 hover:border-slate-500 hover:bg-slate-800' : 'border-transparent bg-slate-950/40 text-slate-600'}`}
+                              className={`rounded-2xl border p-2 text-left transition ${isSelected ? selectedDayButtonMap[dayLetter] : isCurrentMonth ? dayButtonMap[dayLetter] : 'border-transparent bg-slate-950/40 text-slate-600'}`}
                             >
                               <div className="text-sm font-semibold">{day.format('D')}</div>
-                              {day.isSame(moment(), 'day') && <div className="mt-1 text-[10px] uppercase text-slate-400">Hoy</div>}
+                              {day.isSame(moment(), 'day') && <div className={`mt-1 text-[10px] uppercase ${isSelected ? 'text-white/80' : 'text-current/70'}`}>Hoy</div>}
                             </button>
                           );
                         })}
@@ -1252,25 +1294,93 @@ const Dashboard = () => {
                     {filteredWorkouts.length === 0 ? (
                       <p className="text-sm text-slate-400">No hay rutinas asignadas para este día.</p>
                     ) : (
-                      <div className="grid gap-3">
-                        {filteredWorkouts.map((item) => (
-                          <div key={item.id || `${item.workout_id}-${item.day_of_week}-${item.title || item.name || item.workout_name}`}
-                            className="rounded-[32px] border border-[#f1b80c] bg-gradient-to-br from-slate-950 via-slate-900 to-[#111827] p-4 shadow-[0_16px_48px_rgba(241,184,12,0.18)] "
-                          >
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                              <div className="flex flex-col gap-1 workout-title">
-                                <h4 className="text-lg font-bold text-white">{item.title || item.name || item.workout_name || `Rutina ${item.workout_id || item.id}`}</h4>
-                                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#f1b80c]">Sets: {item.sets || '—'} Reps: {item.reps_text} {item.client_effort_notes}</p>
-                                {item.note && <span className='font-bold text-white'>Notas: <span className='font-normal text-slate-200'>{item.note}</span></span>}
+                      <div className="grid gap-3 md:grid-cols-1">
+                        {filteredWorkouts.map((item) => {
+                          const dayLetters = getWorkoutDayLetters(item).split('').filter(Boolean);
+                          const workoutTitle = item.title || item.name || item.workout_name || `Rutina ${item.workout_id || item.id}`;
+                          return (
+                            <div
+                              key={item.id || `${item.workout_id}-${item.day_of_week}-${workoutTitle}`}
+                              className="group relative flex flex-col gap-2.5 rounded-2xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-3.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800"
+                            >
+                              {/* Header: icon + title + acciones */}
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex min-w-0 items-center gap-2">
+                                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
+                                    <FontAwesomeIcon icon={faDumbbell} size="sm" />
+                                  </span>
+                                  <h4 className="truncate text-sm font-semibold text-white" title={workoutTitle}>
+                                    {workoutTitle}
+                                  </h4>
+                                </div>
+                                <div className="flex shrink-0 items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-black transition hover:bg-yellow-200"
+                                    title="Video"
+                                    onClick={() => handleExercisePreview(item.exercise_id)}
+                                  >
+                                    <FontAwesomeIcon icon={faVideo} size="xs" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-black transition hover:bg-yellow-200"
+                                    title="Nota"
+                                    onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), workoutTitle, item.note)}
+                                  >
+                                    <FontAwesomeIcon icon={faPencil} size="xs" />
+                                  </button>
+                                </div>
                               </div>
-                              <div className="rounded-2xl bg-slate-950/70 px-3 py-2 text-right text-sm font-semibold text-slate-300 flex">
-                                <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Video' onClick={() => handleExercisePreview(item.exercise_id)}><FontAwesomeIcon icon={faVideo} className="text-black"></FontAwesomeIcon></button>
-                                <button className="rounded-2xl border p-2 text-left bg-yellow-400 border-black hover:bg-yellow-200" title='Nota' onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), item.title || item.name || item.workout_name, item.note)}><FontAwesomeIcon icon={faPencil} className='text-black'></FontAwesomeIcon></button>
+
+                              {/* Meta: días + sets/reps */}
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
+                                <span className="inline-flex flex-wrap items-center gap-1">
+                                  <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
+                                  {dayLetters.length > 0 ? (
+                                    dayLetters.map((d) => (
+                                      <span
+                                        key={d}
+                                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${dayColorMap[d] || 'bg-slate-600/40 text-slate-300 ring-1 ring-inset ring-slate-500/30'}`}
+                                      >
+                                        {DAY_FULL_NAME_BY_LETTER[d] || d}
+                                      </span>
+                                    ))
+                                  ) : (
+                                    <span className="text-slate-500">—</span>
+                                  )}
+                                </span>
+                                <span className="rounded-full bg-slate-900/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#f1b80c]">
+                                  Sets: {item.sets || '—'} · Reps: {item.reps_text || '—'}
+                                </span>
                               </div>
+
+                              {item.client_effort_notes && (
+                                <p className="text-xs text-slate-400">{item.client_effort_notes}</p>
+                              )}
+
+                              {/* Nota del cliente */}
+                              {item.note &&
+                                <p className="line-clamp-2 flex items-start gap-1.5 rounded-xl border border-yellow-400/40 bg-yellow-400/5 px-3 py-2 text-xs text-slate-200" title={item.note}>
+                                  <FontAwesomeIcon icon={faCommentDots} className="mt-0.5 shrink-0 text-[#f1b80c]" />
+                                  <span><span className="mr-1 font-semibold text-white">Notas:</span>{item.note}</span>
+                                </p>
+                              }
+
+                              {/* Feedback del entrenador */}
+                              {item.feedback &&
+                                <p className="line-clamp-2 rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-3 py-2 text-xs text-slate-200" title={item.feedback}>
+                                  <span className="mr-1 font-semibold text-emerald-400">{profile?.trainer_name || 'Feedback'}:</span>
+                                  {item.feedback}
+                                </p>
+                              }
+
+                              {item.description && (
+                                <p className="text-xs leading-5 text-slate-300">{item.description}</p>
+                              )}
                             </div>
-                            {item.description && <p className="mt-4 text-sm leading-6 text-slate-300">{item.description}</p>}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>

@@ -452,7 +452,8 @@ const TrainerLibrary = ({ isModal = false, onSelectMedia, onClose, selectionMode
                                                     className={`rounded-2xl bg-[#f1b80c] px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] ${itemStatus !== 'uploaded' && itemStatus !== 'error' ? "hidden" : ""}`}
                                                     disabled={itemStatus !== 'uploaded' && itemStatus !== 'error'}
                                                 >
-                                                    Usar {item.file_type === 'video' ? 'video' : 'foto'}
+                                                    {/* Usar {item.file_type === 'video' ? 'video' : 'foto'} */}
+                                                    Usar
                                                 </button>
                                             )}
                                         </div>

@@ -124,6 +124,9 @@ const LoginForm = () => {
 
         try {
             const response = await axios.post(apiUrl + "/auth/login", loginData);
+            if(response.data.inactivo) {
+                toast.error("Usuario no autorizado. " + response.data.message);
+            }            
             const { token, user } = response.data;
             localStorage.setItem('client_id', user.id);
             localStorage.setItem('token', token);

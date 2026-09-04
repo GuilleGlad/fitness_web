@@ -78,6 +78,7 @@ const RecipeCardGrid = ({ recipes, title = 'Recetas', loading = false }) => {
       {/* Recipe Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {recipes.map((recipe, index) => (
+          recipe.image_url && (
           <Reveal key={recipe.id || index} delay={Math.min(index, 8) * 80}>
           <article
             onClick={() => handleCardClick(index)}
@@ -110,7 +111,7 @@ const RecipeCardGrid = ({ recipes, title = 'Recetas', loading = false }) => {
               )}
               
               {/* Status Badge */}
-              <div className="absolute top-3 right-3">
+              {/* <div className="absolute top-3 right-3">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
                   recipe.status 
                     ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
@@ -118,7 +119,7 @@ const RecipeCardGrid = ({ recipes, title = 'Recetas', loading = false }) => {
                 }`}>
                   {recipe.status ? 'Activa' : 'Inactiva'}
                 </span>
-              </div>
+              </div> */}
 
               {/* Quick View Indicator */}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
@@ -152,6 +153,7 @@ const RecipeCardGrid = ({ recipes, title = 'Recetas', loading = false }) => {
             </div>
           </article>
           </Reveal>
+          )
         ))}
       </div>
 

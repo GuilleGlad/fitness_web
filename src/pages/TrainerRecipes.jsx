@@ -11,8 +11,8 @@ const initialForm = {
   ingredients: '',
   instructions: '',
   image_url: '',
-  status: false,
-  is_public: 0,
+  status: true,
+  is_public: 1,
 };
 
 /* ───────── Reusable Modal Wrapper ───────── */
@@ -107,11 +107,11 @@ const RecipeForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel,
         </div>
       </label>
 
-      <label className="block space-y-2 text-sm text-slate-200">
+      <label className="block space-y-2 text-sm text-slate-200 hidden">
         <span>Pública</span>
         <select
           name="is_public"
-          value={form.is_public}
+          value="1"
           onChange={handleChange}
           className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
         >
@@ -189,7 +189,8 @@ const TrainerRecipes = () => {
             instructions: r.instructions,
             image_url: r.image_url,
             status: !!r.status,
-            is_public: Number(r.is_public)
+            // is_public: Number(r.is_public)
+            is_public: 1
           }))
         );
       } catch (err) {
@@ -403,7 +404,7 @@ const TrainerRecipes = () => {
                   <th className="px-6 py-4 font-medium text-slate-400">Título</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Ingredientes</th>
                   <th className="px-6 py-4 font-medium text-slate-400">Estado</th>
-                  <th className="px-6 py-4 font-medium text-slate-400">Pública</th>
+                  {/* <th className="px-6 py-4 font-medium text-slate-400">Pública</th> */}
                   <th className="px-6 py-4 font-medium text-slate-400">Acciones</th>
                 </tr>
               </thead>
@@ -428,10 +429,10 @@ const TrainerRecipes = () => {
                         {r.status ? 'Activa' : 'Inactiva'}
                       </span>
                     </td>
-                    <td>
+                    {/* <td>
                     {r.is_public === 1 && <span className="rounded-full bg-slate-800 text-xs text-green-400">Página Principal</span>}
                     {r.is_public === 0 && <span className="rounded-full bg-slate-800 text-xs text-yellow-400">Para Clientes</span>}
-                    </td>                    
+                    </td>                     */}
                     <td className="px-6 py-4">
                       <div className="flex gap-2 opacity-70 group-hover:opacity-100">
                         <button onClick={() => handleEdit(r)} className="rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#d69e2e]">Editar</button>
