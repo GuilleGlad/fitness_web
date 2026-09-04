@@ -4,7 +4,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import TrainerLibrary from './TrainerLibrary';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faNoteSticky, faTrash, faCalendarDays, faClock, faDumbbell, faCommentDots, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faNoteSticky, faTrash, faCalendarDays, faClock, faDumbbell, faCommentDots, faChevronDown, faExpand, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { verifyToken } from '../utils/tokenUtils';
 import { getClientStatusLabel, getCuentaLabel, normalizeClientRow, normalizeStatusCode } from '../utils/clientUtils';
 import moment from 'moment';
@@ -24,12 +24,15 @@ const initialForm = {
 };
 
 /* ───────── Reusable Modal Wrapper ───────── */
-const ModalOverlay = ({ isOpen, onClose, title, children }) => {
+const ModalOverlay = ({ isOpen, onClose, title, children, size = 'default' }) => {
   if (!isOpen) return null;
+  const sizeClass = size === 'full'
+    ? 'w-[96vw] max-w-[1600px] max-h-[95vh]'
+    : 'w-full max-w-5xl max-h-[92vh]';
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
       <div
-        className="relative w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-[32px] border border-slate-700 bg-[#141820] shadow-2xl"
+        className={`relative ${sizeClass} overflow-y-auto rounded-[32px] border border-slate-700 bg-[#141820] shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-[#141820] px-6 py-4">
@@ -278,6 +281,7 @@ const Clients = () => {
   const [assignedWorkouts, setAssignedWorkouts] = useState([]);
   const [completedWorkouts, setCompletedWorkouts] = useState([]);
   const [activeWorkoutTab, setActiveWorkoutTab] = useState('assigned');
+  const [showWorkoutsFullModal, setShowWorkoutsFullModal] = useState(false);
   const [completedDateFilter, setCompletedDateFilter] = useState('');
   const [selectedWorkoutId, setSelectedWorkoutId] = useState('');
   const [selectedDays, setSelectedDays] = useState({ L: false, M: false, X: false, J: false, V: false, S: false, D: false });
@@ -944,6 +948,216 @@ const Clients = () => {
   const visibleWorkouts = activeWorkoutTab === 'completed' ? filteredCompletedWorkouts : assignedWorkouts;
   const loadingVisibleWorkouts = activeWorkoutTab === 'completed' ? loadingCompletedWorkouts : loadingAssignedWorkouts;
 
+  const renderWorkoutsList = ({ cardsWrapperClass = 'min-h-0 flex-1 space-y-3 overflow-y-auto pr-4 pb-2' } = {}) => (
+    <>
+      <div className="mb-4 grid grid-cols-2 gap-2 rounded-2xl bg-slate-900/80 p-1" role="tablist" aria-label="Rutinas del cliente">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeWorkoutTab === 'assigned'}
+          onClick={() => setActiveWorkoutTab('assigned')}
+          className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${activeWorkoutTab === 'assigned' ? 'bg-[#f1b80c] text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+        >
+          Asignadas
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeWorkoutTab === 'completed'}
+          onClick={() => setActiveWorkoutTab('completed')}
+          className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${activeWorkoutTab === 'completed' ? 'bg-[#f1b80c] text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+        >
+          Completadas
+        </button>
+      </div>
+      {activeWorkoutTab === 'completed' && (
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <label className="block w-full space-y-1.5 text-xs font-medium text-slate-400 sm:max-w-[220px]">
+            <span className="pl-1">Filtrar por fecha</span>
+            <span className="relative block">
+              <FontAwesomeIcon
+                icon={faCalendarDays}
+                className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-500"
+                aria-hidden="true"
+              />
+              <input
+                type="date"
+                value={completedDateFilter}
+                onChange={(e) => setCompletedDateFilter(e.target.value)}
+                onClick={(e) => e.currentTarget.showPicker?.()}
+                aria-label="Filtrar rutinas completadas por fecha"
+                className="w-full rounded-xl border border-slate-700/80 bg-slate-900/70 py-2 pl-9 pr-3 text-sm text-slate-200 outline-none transition hover:border-slate-600 focus:border-[#f1b80c]/70 focus:ring-1 focus:ring-[#f1b80c]/30"
+                style={{ colorScheme: 'dark' }}
+              />
+            </span>
+          </label>
+          {completedDateFilter && (
+            <button
+              type="button"
+              onClick={() => setCompletedDateFilter('')}
+              className="self-start rounded-xl px-2 py-2 text-xs font-semibold text-slate-400 transition hover:bg-slate-800 hover:text-white sm:self-end"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
+      )}
+      {loadingVisibleWorkouts ? (
+        <p className="text-slate-400">
+          {activeWorkoutTab === 'completed' ? 'Cargando rutinas completadas…' : 'Cargando rutinas asignadas…'}
+        </p>
+      ) : visibleWorkouts.length === 0 ? (
+        <p className="text-slate-400">
+          {activeWorkoutTab === 'completed'
+            ? 'Este cliente no tiene rutinas completadas aún.'
+            : 'Este cliente no tiene rutinas asignadas aún.'}
+        </p>
+      ) : (
+        <div className={cardsWrapperClass}>
+          {visibleWorkouts.map((item) => (
+            <div
+              key={item.id || `${item.client_id}-${item.workout_id}-${item.log_date}`}
+              className="group relative flex flex-col gap-2.5 rounded-2xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-3.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800"
+            >
+              {/* Header: icon + title + actions */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
+                    <FontAwesomeIcon icon={faDumbbell} size="sm" />
+                  </span>
+                  <h4 className="truncate text-sm font-semibold text-white lg:text-base" title={item.title || item.name || item.workout_name}>
+                    {item.title || item.name || item.workout_name || `#${item.workout_id}`}
+                  </h4>
+                </div>
+                {activeWorkoutTab !== 'completed' &&
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {item.workout_note_id &&
+                    <button
+                      type='button'
+                      className={`inline-flex h-7 w-7 items-center justify-center rounded-full bg-green-800 text-white transition hover:bg-green-400 hover:text-slate-600 ${item.note && !item.status && 'animate-pulseBorder'}`}
+                      aria-label="Notas del Cliente"
+                      title='Notas del Cliente'
+                      onClick={() => handleNoteReview(item.workout_note_id)}
+                    >
+                      <FontAwesomeIcon icon={faNoteSticky} size='xs' />
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteAssignedWorkout(item.id)}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white transition hover:bg-red-500"
+                    aria-label="Eliminar rutina asignada"
+                    title='Eliminar rutina asignada'
+                  >
+                    <FontAwesomeIcon icon={faTrash} size='xs' />
+                  </button>
+                </div>
+                }
+              </div>
+
+              {/* Meta: día / fecha as inline chips */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 lg:text-sm">
+                <span className="inline-flex flex-wrap items-center gap-1">
+                  <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
+                  {item.day_of_week ? (
+                    item.day_of_week.split(',').filter(Boolean).map((d) => (
+                      <span
+                        key={d}
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold lg:text-xs ${dayColorMap[d.trim()] || 'bg-slate-600/40 text-slate-300 ring-1 ring-inset ring-slate-500/30'}`}
+                      >
+                        {translateDay(d.trim())}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-slate-500">—</span>
+                  )}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
+                  {item.log_date ? new Date(item.log_date).toLocaleDateString() : '—'}
+                </span>
+                {item.status === 1 &&
+                  <span className="ml-auto rounded-full bg-emerald-600/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400 lg:text-xs">
+                    Revisada
+                  </span>
+                }
+              </div>
+
+              {activeWorkoutTab === 'completed' && (
+                <details className="group rounded-xl border border-slate-700/80 bg-slate-900/60">
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 lg:text-xs [&::-webkit-details-marker]:hidden">
+                    <span>Datos Biométricos para la Fecha</span>
+                    <FontAwesomeIcon icon={faChevronDown} className="text-slate-500 transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+                  </summary>
+                  <div className="border-t border-slate-700/80 p-3">
+                    <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-5 lg:text-sm">
+                      {[
+                        { label: 'Peso', value: item.weight },
+                        { label: 'Cadera', value: item.hips },
+                        { label: 'Cintura', value: item.waist },
+                        { label: 'Piernas', value: item.legs },
+                        { label: 'Brazos', value: item.arms },
+                      ].map((metric) => (
+                        <div key={metric.label} className="rounded-lg bg-slate-800/70 px-2 py-1.5">
+                          <p className="text-[10px] text-slate-500 lg:text-xs">{metric.label}</p>
+                          <p className="font-semibold text-slate-200">{metric.value ?? '—'}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {(item.photo_front_url || item.photo_back_url) && (
+                      <div className="mt-3 flex gap-2">
+                        {item.photo_front_url && (
+                          <img
+                            src={item.photo_front_url}
+                            alt="Foto frontal del progreso"
+                            title="Foto frontal"
+                            className="h-14 w-14 cursor-pointer rounded-lg object-cover ring-1 ring-slate-600 transition hover:opacity-80"
+                            onClick={() => setBioPhotoPreview(item.photo_front_url)}
+                          />
+                        )}
+                        {item.photo_back_url && (
+                          <img
+                            src={item.photo_back_url}
+                            alt="Foto trasera del progreso"
+                            title="Foto trasera"
+                            className="h-14 w-14 cursor-pointer rounded-lg object-cover ring-1 ring-slate-600 transition hover:opacity-80"
+                            onClick={() => setBioPhotoPreview(item.photo_back_url)}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </details>
+              )}
+
+              {/* Indicaciones del entrenador */}
+              <p className="line-clamp-2 rounded-xl bg-slate-900/60 px-3 py-2 text-xs text-slate-300 lg:text-sm" title={item.trainer_notes || ''}>
+                <span className="mr-1 font-semibold text-slate-200">Indicaciones:</span>
+                {item.trainer_notes || '—'}
+              </p>
+
+              {/* Nota del cliente */}
+              {item.note &&
+                <p className="line-clamp-2 flex items-start gap-1.5 rounded-xl border border-yellow-400/40 bg-yellow-400/5 px-3 py-2 text-xs text-slate-200 lg:text-sm" title={item.note}>
+                  <FontAwesomeIcon icon={faCommentDots} className="mt-0.5 shrink-0 text-[#f1b80c]" />
+                  <span><span className="mr-1 font-semibold text-white">Cliente:</span>{item.note}</span>
+                </p>
+              }
+
+              {/* Feedback del entrenador */}
+              {item.status === 1 &&
+                <p className="line-clamp-2 rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-3 py-2 text-xs text-slate-200 lg:text-sm" title={item.feedback || ''}>
+                  <span className="mr-1 font-semibold text-emerald-400">Respuesta:</span>
+                  {item.feedback || '—'}
+                </p>
+              }
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-[#0d1117] text-white">
       {/* Header */}
@@ -1351,217 +1565,38 @@ const Clients = () => {
 
           <div className="flex min-h-0 flex-col rounded-3xl border border-slate-700 bg-[#0f172a] p-4 lg:h-[65vh] lg:max-h-[65vh]">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Rutinas asignadas</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-white">Rutinas asignadas</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowWorkoutsFullModal(true)}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-slate-700 hover:text-white"
+                  aria-label="Ver rutinas en pantalla completa"
+                  title="Ver en pantalla completa"
+                >
+                  <FontAwesomeIcon icon={faExpand} size="xs" /> 
+                </button><span className='text-[0.6em]'>Abrir en pantalla completa</span>
+              </div>
               <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300">
                 Total: {visibleWorkouts.length}
               </span>
             </div>
-            <div className="mb-4 grid grid-cols-2 gap-2 rounded-2xl bg-slate-900/80 p-1" role="tablist" aria-label="Rutinas del cliente">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeWorkoutTab === 'assigned'}
-                onClick={() => setActiveWorkoutTab('assigned')}
-                className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${activeWorkoutTab === 'assigned' ? 'bg-[#f1b80c] text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
-              >
-                Asignadas
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeWorkoutTab === 'completed'}
-                onClick={() => setActiveWorkoutTab('completed')}
-                className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${activeWorkoutTab === 'completed' ? 'bg-[#f1b80c] text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
-              >
-                Completadas
-              </button>
-            </div>
-            {activeWorkoutTab === 'completed' && (
-              <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <label className="block w-full space-y-1.5 text-xs font-medium text-slate-400 sm:max-w-[220px]">
-                  <span className="pl-1">Filtrar por fecha</span>
-                  <span className="relative block">
-                    <FontAwesomeIcon
-                      icon={faCalendarDays}
-                      className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-500"
-                      aria-hidden="true"
-                    />
-                    <input
-                      type="date"
-                      value={completedDateFilter}
-                      onChange={(e) => setCompletedDateFilter(e.target.value)}
-                      onClick={(e) => e.currentTarget.showPicker?.()}
-                      aria-label="Filtrar rutinas completadas por fecha"
-                      className="w-full rounded-xl border border-slate-700/80 bg-slate-900/70 py-2 pl-9 pr-3 text-sm text-slate-200 outline-none transition hover:border-slate-600 focus:border-[#f1b80c]/70 focus:ring-1 focus:ring-[#f1b80c]/30"
-                      style={{ colorScheme: 'dark' }}
-                    />
-                  </span>
-                </label>
-                {completedDateFilter && (
-                  <button
-                    type="button"
-                    onClick={() => setCompletedDateFilter('')}
-                    className="self-start rounded-xl px-2 py-2 text-xs font-semibold text-slate-400 transition hover:bg-slate-800 hover:text-white sm:self-end"
-                  >
-                    Limpiar
-                  </button>
-                )}
-              </div>
-            )}
-            {loadingVisibleWorkouts ? (
-              <p className="text-slate-400">
-                {activeWorkoutTab === 'completed' ? 'Cargando rutinas completadas…' : 'Cargando rutinas asignadas…'}
-              </p>
-            ) : visibleWorkouts.length === 0 ? (
-              <p className="text-slate-400">
-                {activeWorkoutTab === 'completed'
-                  ? 'Este cliente no tiene rutinas completadas aún.'
-                  : 'Este cliente no tiene rutinas asignadas aún.'}
-              </p>
-            ) : (
-              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-4 pb-2">
-                {visibleWorkouts.map((item) => (
-                  <div
-                    key={item.id || `${item.client_id}-${item.workout_id}-${item.log_date}`}
-                    className="group relative flex flex-col gap-2.5 rounded-2xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-3.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800"
-                  >
-                    {/* Header: icon + title + actions */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
-                          <FontAwesomeIcon icon={faDumbbell} size="sm" />
-                        </span>
-                        <h4 className="truncate text-sm font-semibold text-white lg:text-base" title={item.title || item.name || item.workout_name}>
-                          {item.title || item.name || item.workout_name || `#${item.workout_id}`}
-                        </h4>
-                      </div>
-                      {activeWorkoutTab !== 'completed' && 
-                      <div className="flex shrink-0 items-center gap-1.5">
-                        {item.workout_note_id &&
-                          <button
-                            type='button'
-                            className={`inline-flex h-7 w-7 items-center justify-center rounded-full bg-green-800 text-white transition hover:bg-green-400 hover:text-slate-600 ${item.note && !item.status && 'animate-pulseBorder'}`}
-                            aria-label="Notas del Cliente"
-                            title='Notas del Cliente'
-                            onClick={() => handleNoteReview(item.workout_note_id)}
-                          >
-                            <FontAwesomeIcon icon={faNoteSticky} size='xs' />
-                          </button>
-                        }
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteAssignedWorkout(item.id)}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white transition hover:bg-red-500"
-                          aria-label="Eliminar rutina asignada"
-                          title='Eliminar rutina asignada'
-                        >
-                          <FontAwesomeIcon icon={faTrash} size='xs' />
-                        </button>
-                      </div>
-                      }
-                    </div>
-
-                    {/* Meta: día / fecha as inline chips */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 lg:text-sm">
-                      <span className="inline-flex flex-wrap items-center gap-1">
-                        <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
-                        {item.day_of_week ? (
-                          item.day_of_week.split(',').filter(Boolean).map((d) => (
-                            <span
-                              key={d}
-                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold lg:text-xs ${dayColorMap[d.trim()] || 'bg-slate-600/40 text-slate-300 ring-1 ring-inset ring-slate-500/30'}`}
-                            >
-                              {translateDay(d.trim())}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-slate-500">—</span>
-                        )}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
-                        {item.log_date ? new Date(item.log_date).toLocaleDateString() : '—'}
-                      </span>
-                      {item.status === 1 &&
-                        <span className="ml-auto rounded-full bg-emerald-600/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400 lg:text-xs">
-                          Revisada
-                        </span>
-                      }
-                    </div>
-
-                    {activeWorkoutTab === 'completed' && (
-                      <details className="group rounded-xl border border-slate-700/80 bg-slate-900/60">
-                        <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 lg:text-xs [&::-webkit-details-marker]:hidden">
-                          <span>Datos Biométricos para la Fecha</span>
-                          <FontAwesomeIcon icon={faChevronDown} className="text-slate-500 transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
-                        </summary>
-                        <div className="border-t border-slate-700/80 p-3">
-                          <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-5 lg:text-sm">
-                            {[
-                              { label: 'Peso', value: item.weight },
-                              { label: 'Cadera', value: item.hips },
-                              { label: 'Cintura', value: item.waist },
-                              { label: 'Piernas', value: item.legs },
-                              { label: 'Brazos', value: item.arms },
-                            ].map((metric) => (
-                              <div key={metric.label} className="rounded-lg bg-slate-800/70 px-2 py-1.5">
-                                <p className="text-[10px] text-slate-500 lg:text-xs">{metric.label}</p>
-                                <p className="font-semibold text-slate-200">{metric.value ?? '—'}</p>
-                              </div>
-                            ))}
-                          </div>
-                          {(item.photo_front_url || item.photo_back_url) && (
-                            <div className="mt-3 flex gap-2">
-                              {item.photo_front_url && (
-                                <img
-                                  src={item.photo_front_url}
-                                  alt="Foto frontal del progreso"
-                                  title="Foto frontal"
-                                  className="h-14 w-14 cursor-pointer rounded-lg object-cover ring-1 ring-slate-600 transition hover:opacity-80"
-                                  onClick={() => setBioPhotoPreview(item.photo_front_url)}
-                                />
-                              )}
-                              {item.photo_back_url && (
-                                <img
-                                  src={item.photo_back_url}
-                                  alt="Foto trasera del progreso"
-                                  title="Foto trasera"
-                                  className="h-14 w-14 cursor-pointer rounded-lg object-cover ring-1 ring-slate-600 transition hover:opacity-80"
-                                  onClick={() => setBioPhotoPreview(item.photo_back_url)}
-                                />
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </details>
-                    )}
-
-                    {/* Indicaciones del entrenador */}
-                    <p className="line-clamp-2 rounded-xl bg-slate-900/60 px-3 py-2 text-xs text-slate-300 lg:text-sm" title={item.trainer_notes || ''}>
-                      <span className="mr-1 font-semibold text-slate-200">Indicaciones:</span>
-                      {item.trainer_notes || '—'}
-                    </p>
-
-                    {/* Nota del cliente */}
-                    {item.note &&
-                      <p className="line-clamp-2 flex items-start gap-1.5 rounded-xl border border-yellow-400/40 bg-yellow-400/5 px-3 py-2 text-xs text-slate-200 lg:text-sm" title={item.note}>
-                        <FontAwesomeIcon icon={faCommentDots} className="mt-0.5 shrink-0 text-[#f1b80c]" />
-                        <span><span className="mr-1 font-semibold text-white">Cliente:</span>{item.note}</span>
-                      </p>
-                    }
-
-                    {/* Feedback del entrenador */}
-                    {item.status === 1 &&
-                      <p className="line-clamp-2 rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-3 py-2 text-xs text-slate-200 lg:text-sm" title={item.feedback || ''}>
-                        <span className="mr-1 font-semibold text-emerald-400">Respuesta:</span>
-                        {item.feedback || '—'}
-                      </p>
-                    }
-                  </div>
-                ))}
-              </div>
-            )}
+            {renderWorkoutsList()}
           </div>
+        </div>
+      </ModalOverlay>
+
+      {/* Full-screen Workouts List Modal */}
+      <ModalOverlay
+        isOpen={showWorkoutsFullModal}
+        onClose={() => setShowWorkoutsFullModal(false)}
+        title={selectedClient ? `Rutinas de ${selectedClient.name}` : 'Rutinas asignadas'}
+        size="full"
+      >
+        <div className="flex min-h-0 flex-col lg:h-[80vh] lg:max-h-[80vh]">
+          {renderWorkoutsList({
+            cardsWrapperClass: 'min-h-0 flex-1 grid gap-3 overflow-y-auto pr-2 pb-2 sm:grid-cols-2 xl:grid-cols-3',
+          })}
         </div>
       </ModalOverlay>
 
