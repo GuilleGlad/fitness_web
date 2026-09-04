@@ -1,14 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js';
+import { Line } from 'react-chartjs-2';
 import toast from 'react-hot-toast';
 import TrainerLibrary from './TrainerLibrary';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faNoteSticky, faTrash, faCalendarDays, faClock, faDumbbell, faCommentDots, faChevronDown, faExpand, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faNoteSticky, faTrash, faCalendarDays, faClock, faDumbbell, faCommentDots, faChevronDown, faExpand, faArrowLeft, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import { verifyToken } from '../utils/tokenUtils';
 import { getClientStatusLabel, getCuentaLabel, normalizeClientRow, normalizeStatusCode } from '../utils/clientUtils';
 import moment from 'moment';
 import 'moment/locale/es';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 
 
 const initialForm = {
@@ -303,6 +307,7 @@ const Clients = () => {
   const [clientProgressHistory, setClientProgressHistory] = useState([]);
   const [loadingBioData, setLoadingBioData] = useState(false);
   const [bioPhotoPreview, setBioPhotoPreview] = useState(null);
+  const [showProgressChartModal, setShowProgressChartModal] = useState(false);
 
   /* ── Crear Entrenador (solo Administrador) ── */
   const [showNewTrainerModal, setShowNewTrainerModal] = useState(false);
@@ -942,6 +947,36 @@ const Clients = () => {
 
   const totalActive = clients.filter((c) => !c.deleted).length;
   const totalDeleted = clients.filter((c) => c.deleted).length;
+  const progressChartData = useMemo(() => {
+    const sorted = [...clientProgressHistory].sort((a, b) => moment(a?.log_date).valueOf() - moment(b?.log_date).valueOf());
+    const getNumeric = (item, keys) => {
+      const value = keys.reduce((current, key) => current ?? item?.[key], undefined);
+      return Number(value || 0);
+    };
+
+    return {
+      labels: sorted.map((item, index) => moment(item?.log_date).isValid() ? moment(item.log_date).format('DD-MM-YY') : `Registro ${index + 1}`),
+      datasets: [
+        { label: 'Cintura (cm)', data: sorted.map((item) => getNumeric(item, ['waist', 'cintura'])), borderColor: '#f1b80c', backgroundColor: 'rgba(241, 184, 12, 0.15)', tension: 0.35, pointRadius: 2, borderWidth: 1, fill: true },
+        { label: 'Cadera (cm)', data: sorted.map((item) => getNumeric(item, ['hips', 'cadera'])), borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.15)', tension: 0.35, pointRadius: 2, borderWidth: 1, fill: true },
+        { label: 'Piernas (cm)', data: sorted.map((item) => getNumeric(item, ['legs', 'piernas'])), borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.15)', tension: 0.35, pointRadius: 2, borderWidth: 1, fill: true },
+        { label: 'Brazos (cm)', data: sorted.map((item) => getNumeric(item, ['arms', 'brazos'])), borderColor: '#f472b6', backgroundColor: 'rgba(244, 114, 182, 0.15)', tension: 0.35, pointRadius: 2, borderWidth: 1, fill: true },
+        { label: 'Peso (Kg)', data: sorted.map((item) => getNumeric(item, ['weight', 'peso'])), borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.15)', tension: 0.35, pointRadius: 2, borderWidth: 1, fill: true },
+      ],
+    };
+  }, [clientProgressHistory]);
+  const progressChartOptions = useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { boxWidth: 10, boxHeight: 10, color: '#e2e8f0', font: { size: 12 } } },
+      tooltip: { enabled: true, backgroundColor: '#0f172a', titleColor: '#f8fafc', bodyColor: '#f8fafc' },
+    },
+    scales: {
+      x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148,163,184,0.15)' } },
+      y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148,163,184,0.15)' } },
+    },
+  }), []);
   const filteredCompletedWorkouts = completedDateFilter
     ? completedWorkouts.filter((item) => item.log_date && moment(item.log_date).format('YYYY-MM-DD') === completedDateFilter)
     : completedWorkouts;
@@ -1483,6 +1518,20 @@ const Clients = () => {
                             ))
                           )}
                         </tbody>
+                        <tfoot>
+                          <tr className="border-t border-slate-700/60">
+                            <td colSpan="8" className="text-right px-4 py-3 text-xs text-yellow-400 hover:text-yellow-200 transition">
+                              <button
+                                type="button"
+                                onClick={() => setShowProgressChartModal(true)}
+                                aria-label="Ver evolución biométrica"
+                                title="Ver evolución biométrica"
+                              >
+                                <FontAwesomeIcon icon={faChartLine}> </FontAwesomeIcon>
+                              </button>
+                            </td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
                   </details>
@@ -1597,6 +1646,22 @@ const Clients = () => {
         <div className="flex min-h-0 flex-col lg:h-[80vh] lg:max-h-[80vh]">
           {renderWorkoutsList()}
         </div>
+      </ModalOverlay>
+
+      {/* Progress chart modal */}
+      <ModalOverlay
+        isOpen={showProgressChartModal}
+        onClose={() => setShowProgressChartModal(false)}
+        title={selectedClient ? `Evolución biométrica de ${selectedClient.name}` : 'Evolución biométrica'}
+        size="full"
+      >
+        {clientProgressHistory.length === 0 ? (
+          <p className="py-12 text-center text-slate-400">No hay datos biométricos para mostrar.</p>
+        ) : (
+          <div className="h-[60vh] min-h-[360px] w-full">
+            <Line data={progressChartData} options={progressChartOptions} />
+          </div>
+        )}
       </ModalOverlay>
 
       {/* Note Review Modal */}

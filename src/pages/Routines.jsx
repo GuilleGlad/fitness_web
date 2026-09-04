@@ -543,15 +543,15 @@ const Routines = () => {
                             return (
                               <div
                                 key={item.id || `${item.workout_id}-${item.day_of_week}-${workoutTitle}`}
-                                className="group relative flex flex-col gap-2 rounded-xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-2.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800 sm:gap-2.5 sm:rounded-2xl sm:p-3.5"
+                                className="group relative flex min-w-0 flex-col gap-2 rounded-xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-2.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800 sm:gap-2.5 sm:rounded-2xl sm:p-3.5"
                               >
                                 {/* Header: icon + título + acciones */}
                                 <div className="flex items-start justify-between gap-2">
-                                  <div className="flex min-w-0 items-center gap-2">
+                                  <div className="flex min-w-0 flex-1 items-center gap-2">
                                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c] sm:h-8 sm:w-8">
                                       <FontAwesomeIcon icon={faDumbbell} size="sm" />
                                     </span>
-                                    <h4 className="truncate text-sm font-semibold text-white" title={workoutTitle}>
+                                    <h4 className="min-w-0 flex-1 truncate text-sm font-semibold text-white" title={workoutTitle}>
                                       {workoutTitle}
                                     </h4>
                                   </div>
