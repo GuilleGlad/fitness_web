@@ -30,16 +30,16 @@ const ModalOverlay = ({ isOpen, onClose, title, children, size = 'default' }) =>
     ? 'w-[96vw] max-w-[1600px] max-h-[95vh]'
     : 'w-full max-w-5xl max-h-[92vh]';
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 sm:p-4" onClick={onClose}>
       <div
-        className={`relative ${sizeClass} overflow-y-auto rounded-[32px] border border-slate-700 bg-[#141820] shadow-2xl`}
+        className={`relative ${sizeClass} overflow-y-auto rounded-2xl border border-slate-700 bg-[#141820] shadow-2xl sm:rounded-[32px]`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-[#141820] px-6 py-4">
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-[#141820] px-4 py-3 sm:px-6 sm:py-4">
+          <h3 className="text-base font-semibold text-white sm:text-lg">{title}</h3>
           <button onClick={onClose} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white" aria-label="Cerrar modal">✕</button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-3 sm:p-6">{children}</div>
       </div>
     </div>
   );
@@ -948,15 +948,15 @@ const Clients = () => {
   const visibleWorkouts = activeWorkoutTab === 'completed' ? filteredCompletedWorkouts : assignedWorkouts;
   const loadingVisibleWorkouts = activeWorkoutTab === 'completed' ? loadingCompletedWorkouts : loadingAssignedWorkouts;
 
-  const renderWorkoutsList = ({ cardsWrapperClass = 'min-h-0 flex-1 space-y-3 overflow-y-auto pr-4 pb-2' } = {}) => (
+  const renderWorkoutsList = ({ cardsWrapperClass = 'min-h-0 flex-1 space-y-2 overflow-y-auto pr-2 pb-2 sm:space-y-3 sm:pr-4' } = {}) => (
     <>
-      <div className="mb-4 grid grid-cols-2 gap-2 rounded-2xl bg-slate-900/80 p-1" role="tablist" aria-label="Rutinas del cliente">
+      <div className="mb-3 grid grid-cols-2 gap-1.5 rounded-2xl bg-slate-900/80 p-1 sm:mb-4 sm:gap-2" role="tablist" aria-label="Rutinas del cliente">
         <button
           type="button"
           role="tab"
           aria-selected={activeWorkoutTab === 'assigned'}
           onClick={() => setActiveWorkoutTab('assigned')}
-          className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${activeWorkoutTab === 'assigned' ? 'bg-[#f1b80c] text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          className={`rounded-xl px-2 py-1.5 text-xs font-semibold transition sm:px-3 sm:py-2 sm:text-sm ${activeWorkoutTab === 'assigned' ? 'bg-[#f1b80c] text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
         >
           Asignadas
         </button>
@@ -965,14 +965,14 @@ const Clients = () => {
           role="tab"
           aria-selected={activeWorkoutTab === 'completed'}
           onClick={() => setActiveWorkoutTab('completed')}
-          className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${activeWorkoutTab === 'completed' ? 'bg-[#f1b80c] text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+          className={`rounded-xl px-2 py-1.5 text-xs font-semibold transition sm:px-3 sm:py-2 sm:text-sm ${activeWorkoutTab === 'completed' ? 'bg-[#f1b80c] text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
         >
           Completadas
         </button>
       </div>
       {activeWorkoutTab === 'completed' && (
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <label className="block w-full space-y-1.5 text-xs font-medium text-slate-400 sm:max-w-[220px]">
+        <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-end sm:justify-between">
+          <label className="block w-full space-y-1 text-xs font-medium text-slate-400 sm:max-w-[220px] sm:space-y-1.5">
             <span className="pl-1">Filtrar por fecha</span>
             <span className="relative block">
               <FontAwesomeIcon
@@ -986,7 +986,7 @@ const Clients = () => {
                 onChange={(e) => setCompletedDateFilter(e.target.value)}
                 onClick={(e) => e.currentTarget.showPicker?.()}
                 aria-label="Filtrar rutinas completadas por fecha"
-                className="w-full rounded-xl border border-slate-700/80 bg-slate-900/70 py-2 pl-9 pr-3 text-sm text-slate-200 outline-none transition hover:border-slate-600 focus:border-[#f1b80c]/70 focus:ring-1 focus:ring-[#f1b80c]/30"
+                className="w-full rounded-xl border border-slate-700/80 bg-slate-900/70 py-1.5 pl-9 pr-3 text-sm text-slate-200 outline-none transition hover:border-slate-600 focus:border-[#f1b80c]/70 focus:ring-1 focus:ring-[#f1b80c]/30 sm:py-2"
                 style={{ colorScheme: 'dark' }}
               />
             </span>
@@ -995,7 +995,7 @@ const Clients = () => {
             <button
               type="button"
               onClick={() => setCompletedDateFilter('')}
-              className="self-start rounded-xl px-2 py-2 text-xs font-semibold text-slate-400 transition hover:bg-slate-800 hover:text-white sm:self-end"
+              className="self-start rounded-xl px-2 py-1.5 text-xs font-semibold text-slate-400 transition hover:bg-slate-800 hover:text-white sm:self-end sm:py-2"
             >
               Limpiar
             </button>
@@ -1017,12 +1017,12 @@ const Clients = () => {
           {visibleWorkouts.map((item) => (
             <div
               key={item.id || `${item.client_id}-${item.workout_id}-${item.log_date}`}
-              className="group relative flex flex-col gap-2.5 rounded-2xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-3.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800"
+              className="group relative flex flex-col gap-2 rounded-xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-2.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800 sm:gap-2.5 sm:rounded-2xl sm:p-3.5"
             >
               {/* Header: icon + title + actions */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c] sm:h-8 sm:w-8">
                     <FontAwesomeIcon icon={faDumbbell} size="sm" />
                   </span>
                   <h4 className="truncate text-sm font-semibold text-white lg:text-base" title={item.title || item.name || item.workout_name}>
@@ -1056,7 +1056,7 @@ const Clients = () => {
               </div>
 
               {/* Meta: día / fecha as inline chips */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 lg:text-sm">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 sm:gap-x-4 lg:text-sm">
                 <span className="inline-flex flex-wrap items-center gap-1">
                   <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
                   {item.day_of_week ? (
@@ -1378,7 +1378,7 @@ const Clients = () => {
       <ModalOverlay isOpen={showAssignModal} onClose={closeAssignModal} title={selectedClient ? `Asignar rutina a ${selectedClient.name}` : 'Asignar rutina'}>
         <div className="flex flex-col">
           <div>
-            <section id='datos_biometricos' className="mb-6 space-y-5">
+            <section id='datos_biometricos' className="mb-4 space-y-4 sm:mb-6 sm:space-y-5">
               {loadingBioData ? (
                 <p className="rounded-3xl border border-slate-700 bg-[#0f172a] p-4 text-center text-sm text-slate-400">
                   Cargando datos biométricos…
@@ -1489,12 +1489,12 @@ const Clients = () => {
                 </>
               )}
             </section>
-            <details open className="group mb-6 overflow-hidden rounded-3xl border border-slate-700 bg-[#0f172a]">
+            <details open className="group mb-4 overflow-hidden rounded-2xl border border-slate-700 bg-[#0f172a] sm:mb-6 sm:rounded-3xl">
               <summary className="flex cursor-pointer list-none items-center justify-between border-b border-slate-700 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c] [&::-webkit-details-marker]:hidden">
                 <span>Agregar nueva rutina</span>
                 <FontAwesomeIcon icon={faChevronDown} className="transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
               </summary>
-              <form onSubmit={handleAssignSubmit} className="space-y-5 p-4">
+              <form onSubmit={handleAssignSubmit} className="space-y-4 p-3 sm:space-y-5 sm:p-4">
                 <label className="block space-y-2 text-sm text-slate-200">
                 Rutina
                 <select
@@ -1563,21 +1563,22 @@ const Clients = () => {
             </details>
           </div>
 
-          <div className="flex min-h-0 flex-col rounded-3xl border border-slate-700 bg-[#0f172a] p-4 lg:h-[65vh] lg:max-h-[65vh]">
-            <div className="mb-4 flex items-center justify-between">
+          <div className="flex min-h-0 flex-col rounded-2xl border border-slate-700 bg-[#0f172a] p-3 sm:rounded-3xl sm:p-4 lg:h-[65vh] lg:max-h-[65vh]">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold text-white">Rutinas asignadas</h3>
+                <h3 className="text-base font-semibold text-white sm:text-lg">Rutinas asignadas</h3>
                 <button
                   type="button"
                   onClick={() => setShowWorkoutsFullModal(true)}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-slate-700 hover:text-white"
+                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-slate-700 hover:text-white"
                   aria-label="Ver rutinas en pantalla completa"
                   title="Ver en pantalla completa"
                 >
-                  <FontAwesomeIcon icon={faExpand} size="xs" /> 
-                </button><span className='text-[0.6em]'>Abrir en pantalla completa</span>
+                  <FontAwesomeIcon icon={faExpand} size="xs" />
+                </button>
+                <span className="hidden text-[11px] text-slate-500 sm:inline">Pantalla completa</span>
               </div>
-              <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300">
+              <span className="rounded-full bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-300">
                 Total: {visibleWorkouts.length}
               </span>
             </div>
@@ -1594,9 +1595,7 @@ const Clients = () => {
         size="full"
       >
         <div className="flex min-h-0 flex-col lg:h-[80vh] lg:max-h-[80vh]">
-          {renderWorkoutsList({
-            cardsWrapperClass: 'min-h-0 flex-1 grid gap-3 overflow-y-auto pr-2 pb-2 sm:grid-cols-2 xl:grid-cols-3',
-          })}
+          {renderWorkoutsList()}
         </div>
       </ModalOverlay>
 

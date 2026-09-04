@@ -832,7 +832,7 @@ const Dashboard = () => {
           <div className="grid gap-4 xl:grid-cols-1">
 
             {/* Dashboard Admin Section - Users Table */}
-            <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+            <section className="rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
               <div className="flex items-center justify-between px-6 py-5">
                 <Link to="/clients" className="items-center text-xl font-semibold text-white mb-4 hover:text-customYellow">Usuarios</Link>
               </div>
@@ -881,7 +881,7 @@ const Dashboard = () => {
             </section>
 
             {/* Dashboard Admin Section - Trainers Table */}
-            <div className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+            <div className="rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
               <div className="flex items-center justify-between px-6 py-5">
                 <Link to="/trainer-exercises" className="items-center text-xl font-semibold text-white mb-4 hover:text-customYellow">Entrenadores</Link>
               </div>
@@ -923,7 +923,7 @@ const Dashboard = () => {
             {/* End Trainers Table */}
           </div>
           {/* Desktop Workouts Table */}
-          <div className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+          <div className="rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
             <div className="flex items-center justify-between px-6 py-5">
               <Link to="/trainer-exercises" className="items-center text-xl font-semibold text-white mb-4 hover:text-customYellow">Ejercicios</Link>
             </div>
@@ -1034,7 +1034,7 @@ const Dashboard = () => {
 
           <div className="grid gap-4 xl:grid-cols-2 mb-6">
             {hasApprovedPayment ? (
-              <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+              <section className="rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
                 <div className="flex items-start justify-between mb-5 lg:flex-row flex-col">
                   <div>
                     <h2 className="text-xl font-semibold text-white">Progreso corporal</h2>
@@ -1106,7 +1106,7 @@ const Dashboard = () => {
               <PaymentGateMessage />
             )}
             {hasApprovedPayment ? (
-              <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
+              <section className="rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
                 <h2 className="items-center text-xl font-semibold text-white mb-4">Datos Iniciales</h2>
                 <div className=" grid grid-cols-3 text-slate-300 mb-4">
                   {[
@@ -1194,29 +1194,29 @@ const Dashboard = () => {
 
           <div className="grid gap-4 xl:grid-cols-2">
             {hasApprovedPayment ? (
-              <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-                <h2 className="text-xl font-semibold text-white mb-4">Workout Diario</h2>
+              <section className="rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
+                <h2 className="text-lg font-semibold text-white mb-3 sm:text-xl sm:mb-4">Workout Diario</h2>
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         onClick={() => setCalendarView('week')}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${calendarView === 'week' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm ${calendarView === 'week' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
                       >
                         Semana
                       </button>
                       <button
                         onClick={() => setCalendarView('month')}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${calendarView === 'month' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm ${calendarView === 'month' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
                       >
                         Mes
                       </button>
                     </div>
-                    <p className="text-sm text-slate-400">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faPencil}></FontAwesomeIcon>.</p>
+                    <p className="text-xs text-slate-400 sm:text-sm">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faPencil}></FontAwesomeIcon>.</p>
                   </div>
 
                   {calendarView === 'week' ? (
-                    <div className="grid grid-cols-7 gap-2 rounded-2xl bg-slate-900/80 p-2">
+                    <div className="grid grid-cols-7 gap-1 rounded-2xl bg-slate-900/80 p-1.5 sm:gap-2 sm:p-2">
                       {weekDays.map((day) => {
                         const isSelected = day.isSame(selectedDate, 'day');
                         const dayLetter = getSelectedDayLetter(day);
@@ -1225,7 +1225,7 @@ const Dashboard = () => {
                             key={day.format('YYYY-MM-DD')}
                             type="button"
                             onClick={() => selectWeekDay(day)}
-                            className={`rounded-2xl border p-2 text-center transition ${isSelected ? selectedDayButtonMap[dayLetter] : dayButtonMap[dayLetter]}`}
+                            className={`rounded-xl border p-1 text-center transition sm:rounded-2xl sm:p-2 ${isSelected ? selectedDayButtonMap[dayLetter] : dayButtonMap[dayLetter]}`}
                           >
                             <div className={`text-[10px] uppercase tracking-[0.25em] ${isSelected ? 'text-white/80' : 'text-current/70'}`}>{weekDayLabels[day.isoWeekday() - 1]}</div>
                             <div className="mt-1 text-base font-semibold">{day.format('D')}</div>
@@ -1284,11 +1284,11 @@ const Dashboard = () => {
                     </div>
                   )}
 
-                  <div className="rounded-3xl bg-slate-900/70 p-4 text-slate-300">
-                    <div className="mb-3 flex items-center justify-between">
+                  <div className="rounded-2xl bg-slate-900/70 p-3 text-slate-300 sm:rounded-3xl sm:p-4">
+                    <div className="mb-2 flex items-center justify-between sm:mb-3">
                       <div>
-                        <p className="text-sm text-slate-400">Rutinas para el día</p>
-                        <h3 className="text-lg font-semibold text-white">{selectedDate.format('dddd, D [de] MMMM')}</h3>
+                        <p className="text-xs text-slate-400 sm:text-sm">Rutinas para el día</p>
+                        <h3 className="text-base font-semibold text-white sm:text-lg">{selectedDate.format('dddd, D [de] MMMM')}</h3>
                       </div>
                     </div>
                     {filteredWorkouts.length === 0 ? (
@@ -1301,12 +1301,12 @@ const Dashboard = () => {
                           return (
                             <div
                               key={item.id || `${item.workout_id}-${item.day_of_week}-${workoutTitle}`}
-                              className="group relative flex flex-col gap-2.5 rounded-2xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-3.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800"
+                              className="group relative flex flex-col gap-2 rounded-xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-2.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800 sm:gap-2.5 sm:rounded-2xl sm:p-3.5"
                             >
                               {/* Header: icon + title + acciones */}
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex min-w-0 items-center gap-2">
-                                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
+                                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c] sm:h-8 sm:w-8">
                                     <FontAwesomeIcon icon={faDumbbell} size="sm" />
                                   </span>
                                   <h4 className="truncate text-sm font-semibold text-white" title={workoutTitle}>
@@ -1334,7 +1334,7 @@ const Dashboard = () => {
                               </div>
 
                               {/* Meta: días + sets/reps */}
-                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 sm:gap-x-4">
                                 <span className="inline-flex flex-wrap items-center gap-1">
                                   <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
                                   {dayLetters.length > 0 ? (
@@ -1389,17 +1389,17 @@ const Dashboard = () => {
             ) : (
               <PaymentGateMessage />
             )}
-            <section className="rounded-3xl bg-[#141820] border border-slate-800 p-6 shadow-xl w-full overflow-hidden">
-              <h2 className="text-xl font-semibold text-white mb-4">Pagos</h2>
+            <section className="rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
+              <h2 className="text-lg font-semibold text-white mb-3 sm:text-xl sm:mb-4">Pagos</h2>
               <div className="space-y-3 text-slate-300">
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex flex-col gap-2 mb-2 sm:flex-row sm:items-center sm:gap-3">
                   <button
                     onClick={() => setShowPaymentModal(true)}
-                    className='bg-yellow-400 hover:bg-yellow-200 text-black rounded-2xl p-2 font-semibold'
+                    className='bg-yellow-400 hover:bg-yellow-200 text-black rounded-xl px-3 py-1.5 text-sm font-semibold sm:rounded-2xl sm:p-2 sm:text-base'
                   >
                     Registrar Comprobante <FontAwesomeIcon icon={faPlus}></FontAwesomeIcon>
                   </button>
-                  <span className="ml-2 text-sm text-slate-400">Sube tu comprobante de pago para que tu entrenador pueda revisarlo.</span>
+                  <span className="text-xs text-slate-400 sm:ml-2 sm:text-sm">Sube tu comprobante de pago para que tu entrenador pueda revisarlo.</span>
                 </div>
                 <div>
                   {loadingPayments ? (
@@ -1419,7 +1419,7 @@ const Dashboard = () => {
                         return (
                           <div
                             key={p.id || `${p.client_id || p.clientId}-${idx}`}
-                            className='rounded-xl p-3 border bg-slate-800 border-yellow-400 text-white'
+                            className='rounded-lg p-2.5 border bg-slate-800 border-yellow-400 text-white sm:rounded-xl sm:p-3'
                           >
                             <div className="grid grid-cols-2 gap-2 text-xs">
                               <p><span className="font-semibold">Fecha:</span> {dateText}</p>
