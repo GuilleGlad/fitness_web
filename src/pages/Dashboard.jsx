@@ -73,6 +73,9 @@ const Dashboard = () => {
   const [progreso, setProgreso] = useState([{ cadera: 100, cintura: 100, piernas: 60, brazos: 30 }]);
   const [profile, setProfile] = useState({});
   const [previewImage, setPreviewImage] = useState(null);
+  const [showProfilePhotoModal, setShowProfilePhotoModal] = useState(false);
+  const [selectedProfilePhoto, setSelectedProfilePhoto] = useState(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [payments, setPayments] = useState([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [receiptPreviewImage, setReceiptPreviewImage] = useState(null);
@@ -89,6 +92,7 @@ const Dashboard = () => {
   const [payDayMessage, setPayDayMessage] = useState("");
   const [exercises, setExercises] = useState([]);
   const [loadingExercises, setLoadingExercises] = useState(true);
+  const [fullSizeProfileImage, setFullSizeProfileImage] = useState(null);
   const {
     notifications,
     showNotificationsModal,
@@ -520,12 +524,36 @@ const Dashboard = () => {
           }
         })
       } catch (error) {
-        console.error('Error fetchin data: ', error);
+        console.error('Error fetching data: ', error);
       }
     }
 
     if (roleString.toLowerCase() === 'client') {
       fetchProfile();
+    }
+
+    const fetchProfileForTrainer = async () => {
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        };
+        await axios.get(`${apiUrl}/progress/get-trainer-by-id/${clientId}`, config).then((response) => {
+          if (response.status === 200) {
+            setProfile(response.data.trainer[0]);
+            if (response.data.trainer[0]?.picture) {
+              localStorage.setItem('picture', response.data.trainer[0]?.picture);
+              // setProfile((prev) => ({ ...prev, picture: response.data.trainer[0]?.picture }));
+            }
+          }
+        })
+      } catch (error) {
+        console.error('Error fetching data: ', error);
+      }
+    }
+    if (roleString.toLowerCase() === 'trainer') {
+      fetchProfileForTrainer();
     }
 
     const fetchProgress = async () => {
@@ -715,7 +743,7 @@ const Dashboard = () => {
   }, [roleValue, apiUrl]);
 
   const handleLogout = () => {
-    const keysToClear = ['token', 'role', 'name', 'client_id', 'status', 'genre'];
+    const keysToClear = ['token', 'role', 'name', 'client_id', 'status', 'genre', 'picture'];
     keysToClear.forEach(key => {
       localStorage.removeItem(key);
     });
@@ -736,6 +764,74 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error fetching exercise preview:', error);
       setPreviewExercise(null);
+    }
+  };
+
+  const handlePhotoChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedProfilePhoto(e.target.files[0]);
+    }
+  };
+
+  const handleSaveOrReplacePhoto = async () => {
+    if (!selectedProfilePhoto) {
+      toast.error('Por favor, selecciona una imagen primero.');
+      return;
+    }
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('picture', selectedProfilePhoto);
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      };
+
+      const res = await axios.post(`${apiUrl}/admin/users/update-picture`, formData, config);
+
+      // Actualizar estado local y localStorage según respuesta
+      const newPictureUrl = res.data?.picture || res.data?.picture_url;
+      if (newPictureUrl) {
+        setProfile((prev) => ({ ...prev, picture: newPictureUrl }));
+        localStorage.setItem('picture', newPictureUrl);
+      }
+
+      toast.success('Fotografía actualizada con éxito');
+      setShowProfilePhotoModal(false);
+      setSelectedProfilePhoto(null);
+    } catch (error) {
+      console.error('Error al subir la fotografía:', error);
+      toast.error('Ocurrió un error al guardar la foto de perfil');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    setUploadingPhoto(true);
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+
+      await axios.delete(`${apiUrl}/admin/users/delete-picture`, config);
+
+      setProfile((prev) => ({ ...prev, picture: null }));
+      localStorage.removeItem('picture');
+
+      toast.success('Fotografía eliminada');
+      setShowProfilePhotoModal(false);
+      setSelectedProfilePhoto(null);
+    } catch (error) {
+      console.error('Error al eliminar la fotografía:', error);
+      toast.error('Ocurrió un error al eliminar la foto');
+    } finally {
+      setUploadingPhoto(false);
     }
   };
 
@@ -852,7 +948,7 @@ const Dashboard = () => {
                   </thead>
                   <tbody>
                     {clients.map((client) => (
-                      <tr key={client.id}>
+                      <tr key={client.id} className={`group transition ${client.deleted || (client.status == 0 && client.role == 'trainer') ? 'bg-red-950/30' : 'hover:bg-slate-800/40'}`}>
                         {/* <td className="px-6 py-3">{client.id}</td> */}
                         <td className="px-6 py-3">
                           <img src={client.picture || '/images/avatar.png'} alt={client.name} className="h-8 w-8 rounded-full object-cover" />
@@ -1513,7 +1609,7 @@ const Dashboard = () => {
   };
 
   const handleLogoutWithClose = () => {
-    const keysToClear = ['token', 'role', 'name', 'client_id', 'status', 'genre'];
+    const keysToClear = ['token', 'role', 'name', 'client_id', 'status', 'genre', 'picture'];
     keysToClear.forEach(key => localStorage.removeItem(key));
     setMenuOpen(false);
     navigate('/login');
@@ -1523,9 +1619,24 @@ const Dashboard = () => {
   const SidebarPanel = () => (
     <div className="flex h-full flex-col justify-between p-6">
       <div className='sticky top-10'>
-        <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-[#f1b80c] to-[#d97706] text-xl font-bold text-slate-950 shadow-xl shadow-[#f1b80c]/20">
-          {initials}
-        </div>
+        {/* NUEVO CÓDIGO */}
+
+        {(profile?.picture && profile.picture != '/images/avatar.png') || localStorage.getItem('picture') ? (
+          <img
+            src={profile?.picture || localStorage.getItem('picture')}
+            alt={userName}
+            onClick={() => setShowProfilePhotoModal(true)}
+            className="h-16 w-16 cursor-pointer rounded-3xl object-cover ring-2 ring-[#f1b80c] transition hover:opacity-80"
+          />
+        ) : (
+          <div
+            onClick={() => setShowProfilePhotoModal(true)}
+            className="inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-3xl bg-gradient-to-br from-[#f1b80c] to-[#d97706] text-xl font-bold text-slate-950 shadow-xl shadow-[#f1b80c]/20 transition hover:opacity-80"
+            title="Haz click para agregar foto"
+          >
+            {initials}
+          </div>
+        )}
         <div className="mt-5">
           <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Bienvenido</p>
           <h1 className="mt-3 text-2xl font-bold text-white">{userName}</h1>
@@ -1849,6 +1960,112 @@ const Dashboard = () => {
         paymentCount={payments.length}
         onPaymentDayReceived={(paymentDay) => setProfile((currentProfile) => ({ ...currentProfile, payment_day: paymentDay }))}
       />
+
+      {/* Modal Foto de Perfil */}
+      {showProfilePhotoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[32px] border border-slate-700 bg-[#141820] p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Gestionar Foto de Perfil</h3>
+              <button
+                onClick={() => {
+                  setShowProfilePhotoModal(false);
+                  setSelectedProfilePhoto(null);
+                }}
+                className="rounded-full bg-slate-800 p-2 text-slate-400 hover:text-white"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+
+            <div className="my-6 flex flex-col items-center gap-4">
+              {selectedProfilePhoto ? (
+                <img
+                  src={URL.createObjectURL(selectedProfilePhoto)}
+                  alt="Vista previa"
+                  onClick={() => setFullSizeProfileImage(URL.createObjectURL(selectedProfilePhoto))}
+                  className="h-28 w-28 cursor-pointer rounded-full object-cover ring-4 ring-[#f1b80c] transition hover:opacity-80"
+                  title="Haz clic para ver en tamaño completo"
+                />
+              ) : profile?.picture || localStorage.getItem('picture') ? (
+                <img
+                  src={profile?.picture || localStorage.getItem('picture')}
+                  alt={userName}
+                  onClick={() => setFullSizeProfileImage(profile?.picture || localStorage.getItem('picture'))}
+                  className="h-28 w-28 cursor-pointer rounded-full object-cover ring-4 ring-slate-700 transition hover:opacity-80"
+                  title="Haz clic para ver en tamaño completo"
+                />
+              ) : (
+                <div className="flex h-28 w-28 items-center justify-center rounded-full bg-slate-800 text-2xl font-bold text-[#f1b80c]">
+                  {initials}
+                </div>
+              )}
+
+              <label className="cursor-pointer rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800">
+                {profile?.picture || localStorage.getItem('picture') ? 'Seleccionar nueva foto' : 'Elegir imagen'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={uploadingPhoto || !selectedProfilePhoto}
+                onClick={handleSaveOrReplacePhoto}
+                className="w-full rounded-2xl bg-[#f1b80c] py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:opacity-50"
+              >
+                {uploadingPhoto
+                  ? 'Guardando...'
+                  : profile?.picture || localStorage.getItem('picture')
+                    ? 'Reemplazar Fotografía'
+                    : 'Guardar Fotografía'}
+              </button>
+
+              {(profile?.picture || localStorage.getItem('picture')) && (
+                <button
+                  type="button"
+                  disabled={uploadingPhoto}
+                  onClick={handleDeletePhoto}
+                  className="w-full rounded-2xl bg-red-600/20 py-3 text-sm font-semibold text-red-400 transition hover:bg-red-600/30 disabled:opacity-50"
+                >
+                  Eliminar Fotografía
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowProfilePhotoModal(false);
+                  setSelectedProfilePhoto(null);
+                }}
+                className="w-full rounded-2xl bg-slate-900 py-3 text-sm font-semibold text-slate-400 hover:bg-slate-800"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para ver la foto de perfil en tamaño completo */}
+      {fullSizeProfileImage && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 cursor-pointer"
+          onClick={() => setFullSizeProfileImage(null)}
+        >
+          <img
+            src={fullSizeProfileImage}
+            alt="Foto de perfil tamaño completo"
+            className="max-h-[90vh] max-w-[90vw] rounded-2xl object-contain shadow-2xl"
+          />
+        </div>
+      )}
+
     </>
   );
 };

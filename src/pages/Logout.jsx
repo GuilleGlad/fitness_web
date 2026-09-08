@@ -17,7 +17,7 @@ const Logout = () => {
       } finally {
         // Always clear localStorage regardless of API call success/failure
         // Always clear localStorage regardless of API call success/failure
-        const keysToClear = ['token', 'role', 'name', 'client_id', 'status', 'genre'];
+        const keysToClear = ['token', 'role', 'name', 'client_id', 'status', 'genre', 'picture'];
         keysToClear.forEach(key => {
           localStorage.removeItem(key);
         });

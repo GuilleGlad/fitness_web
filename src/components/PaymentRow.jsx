@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import moment from 'moment';
+
 function PaymentRow({ r, status_colors, setPaymentPreviewImage, yesNo, approvePayment, rejectPayment, checkPayment }) {
   useEffect(() => {
     if (r.status === "Aprobado" || r.status === "Pendiente") {
       checkPayment(r);
     }
   }, [r.status]);
-
 
   return (
     <tr className="group transition hover:bg-slate-800/40">
@@ -37,9 +37,19 @@ function PaymentRow({ r, status_colors, setPaymentPreviewImage, yesNo, approvePa
       </td>
       <td className="px-6 py-4">
         <div className={`flex gap-2 opacity-70 group-hover:opacity-100 ${r.status !== "Pendiente" ? "hidden" : ""} `}>
-          <button onClick={() => yesNo('¿Aprobar este comprobante?', () => approvePayment(r.id))} className={`rounded-full bg-green-400 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-green-800 hover:text-white `}>Aprobar</button>
-          <button onClick={() => yesNo('¿Eliminar esta receta?', () => rejectPayment(r.id))} className="rounded-full bg-red-600 hover:bg-red-800 px-4 py-2 text-xs font-semibold text-white">Rechazar</button>
-          {/* Ahora el botón es solo un indicador o un disparador manual opcional */}
+          {/* Llama directamente al modal de aprobación de TrainerPayments sin pasar por toast yesNo */}
+          <button 
+            onClick={() => approvePayment(r.id)} 
+            className="rounded-full bg-green-400 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-green-800 hover:text-white"
+          >
+            Aprobar
+          </button>
+          <button 
+            onClick={() => yesNo('¿Rechazar este comprobante?', () => rejectPayment(r.id))} 
+            className="rounded-full bg-red-600 hover:bg-red-800 px-4 py-2 text-xs font-semibold text-white"
+          >
+            Rechazar
+          </button>
         </div>
       </td>
     </tr>

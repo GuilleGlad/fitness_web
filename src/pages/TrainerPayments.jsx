@@ -61,6 +61,13 @@ const TrainerPayments = () => {
   const [libraryTarget, setLibraryTarget] = useState('image');
   const [paymentPreviewImage, setPaymentPreviewImage] = useState('');
 
+  /* Approval Modal State */
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [paymentToApprove, setPaymentToApprove] = useState(null);
+  const [currentPaymentDay, setCurrentPaymentDay] = useState(null);
+  const [loadingPaymentDay, setLoadingPaymentDay] = useState(false);
+  const [updatePaymentDay, setUpdatePaymentDay] = useState(false);
+
   useEffect(() => {
     var redirectPath = null;
     const checkToken = async () => {
@@ -74,7 +81,6 @@ const TrainerPayments = () => {
   },[]);
 
   useEffect(() => {
-
     const fetchPayments = async () => {
       if (!trainerId) return;
       const token = localStorage.getItem('token');
@@ -91,7 +97,7 @@ const TrainerPayments = () => {
         console.log("PAGOS: ",data);
         setPayments(data);
       } catch (err) {
-        console.error('Error cargando recetas:', err.message);
+        console.error('Error cargando pagos:', err.message);
         toast.error('No se pudieron cargar los pagos.');
       } finally {
         setLoading(false);
@@ -101,7 +107,7 @@ const TrainerPayments = () => {
     fetchPayments();
   }, [apiUrl, trainerId]);
 
-  const updatePaymentStatus = async (id, status) => {
+  const updatePaymentStatus = async (id, status, updatePaymentDayParam = false) => {
     try {
       const config = {
         headers: {
@@ -109,7 +115,8 @@ const TrainerPayments = () => {
         },
       };
       const data = {
-        'status': status
+        'status': status,
+        'update_payment_day': updatePaymentDayParam
       }
       await axios.patch(`${apiUrl}/payments/${id}/status`, data, config);
 
@@ -127,8 +134,33 @@ const TrainerPayments = () => {
     }
   }
 
-  const approvePayment = (id) => {
-    updatePaymentStatus(id, "Aprobado");
+  const approvePayment = async (id) => {
+    const targetPayment = payments.find(p => p.id === id) || { id };
+    setPaymentToApprove(targetPayment);
+    setUpdatePaymentDay(false);
+    setCurrentPaymentDay(null);
+    setShowApproveModal(true);
+
+    // Consultar el paymentDay actual del cliente utilizando el nuevo endpoint
+    if (targetPayment.client_id) {
+      setLoadingPaymentDay(true);
+      try {
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        const res = await axios.get(`${apiUrl}/payments/client/${targetPayment.client_id}/payment-day`, config);
+        setCurrentPaymentDay(res.data?.data?.payment_day || null);
+      } catch (error) {
+        console.log("No se pudo obtener el payment_day del cliente:", error.message);
+      } finally {
+        setLoadingPaymentDay(false);
+      }
+    }
+  }
+
+  const handleConfirmApprove = async () => {
+    if (!paymentToApprove) return;
+    await updatePaymentStatus(paymentToApprove.id, "Aprobado", updatePaymentDay);
+    setShowApproveModal(false);
+    setPaymentToApprove(null);
   }
 
   const rejectPayment = (id) => {
@@ -207,7 +239,6 @@ const TrainerPayments = () => {
           ))}
         </div>
 
-
         {/* Table / Cards Container */}
         <section className="overflow-hidden rounded-[40px] border border-slate-800 bg-[#141820]">
           {/* Desktop Table */}
@@ -280,32 +311,96 @@ const TrainerPayments = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => yesNo('¿Aprobar este comprobante?', () => approvePayment(r.id))}
-                        className="flex-1 rounded-full bg-green-400 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-green-800 hover:text-white"
-                      >
-                        Aprobar
-                      </button>
-                      <button
-                        onClick={() => yesNo('¿Rechazar este comprobante?', () => rejectPayment(r.id))}
-                        className="flex-1 rounded-full bg-red-600 hover:bg-red-800 px-4 py-2 text-xs font-semibold text-white"
-                      >
-                        Rechazar
-                      </button>
-                    </div>
+                    {r.status === "Pendiente" && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => approvePayment(r.id)}
+                          className="flex-1 rounded-full bg-green-400 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-green-800 hover:text-white"
+                        >
+                          Aprobar
+                        </button>
+                        <button
+                          onClick={() => yesNo('¿Rechazar este comprobante?', () => rejectPayment(r.id))}
+                          className="flex-1 rounded-full bg-red-600 hover:bg-red-800 px-4 py-2 text-xs font-semibold text-white"
+                        >
+                          Rechazar
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </div>
         </section>
+
+        {/* Modal de confirmación para aprobación de pago */}
+        <ModalOverlay
+          isOpen={showApproveModal}
+          onClose={() => setShowApproveModal(false)}
+          title="Aprobar Pago"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-slate-300">
+              ¿Deseas continuar y aprobar este comprobante de pago?
+            </p>
+
+            {/* Banner informativo sobre el Día de Pago Actual */}
+            <div className="rounded-xl bg-slate-800/80 p-3.5 border border-slate-700/80 text-xs text-slate-300 flex items-center justify-between">
+              <span>Día de pago habitual configurado:</span>
+              <span className="font-semibold text-white bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-700">
+                {loadingPaymentDay ? (
+                  "Cargando..."
+                ) : currentPaymentDay ? (
+                  `Día ${currentPaymentDay} de cada mes`
+                ) : (
+                  "No configurado"
+                )}
+              </span>
+            </div>
+
+            <label className="flex items-center gap-3 cursor-pointer select-none rounded-xl bg-slate-800/60 p-3 border border-slate-700/50 hover:bg-slate-800 transition">
+              <input
+                type="checkbox"
+                checked={updatePaymentDay}
+                onChange={(e) => setUpdatePaymentDay(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-[#f1b80c] focus:ring-[#f1b80c]"
+              />
+              <span className="text-sm text-slate-200">
+                Actualizar el día de pago habitual con la fecha de este comprobante
+                {paymentToApprove?.payment_date && (
+                  <strong className="text-[#f1b80c] block mt-0.5 font-normal">
+                    (Nuevo día asignado: {moment(paymentToApprove.payment_date).date()})
+                  </strong>
+                )}
+              </span>
+            </label>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowApproveModal(false)}
+                className="rounded-full bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-200 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmApprove}
+                className="rounded-full bg-yellow-500 px-5 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-200 transition"
+              >
+                Aprobar Pago
+              </button>
+            </div>
+          </div>
+        </ModalOverlay>
+
         {paymentPreviewImage && (
           <div
             className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
             onClick={() => setPaymentPreviewImage(null)}
           >
-            <img src={paymentPreviewImage} className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" />
+            <img src={paymentPreviewImage} className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" alt="Preview comprobante" />
           </div>
         )}
       </div>
