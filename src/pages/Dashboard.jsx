@@ -14,6 +14,7 @@ import FloatingButton from '../components/FloatingButton';
 import ExerciseCard from '../components/ExerciseCard';
 import ProgressModal from '../components/ProgressModal';
 import PaymentModal from '../components/PaymentModal';
+import Reveal from '../components/Reveal';
 import { yellow } from '@mui/material/colors';
 import toast from 'react-hot-toast';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
@@ -77,7 +78,10 @@ const Dashboard = () => {
   const [selectedProfilePhoto, setSelectedProfilePhoto] = useState(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [payments, setPayments] = useState([]);
-  const [loadingPayments, setLoadingPayments] = useState(false);
+  const [loadingPayments, setLoadingPayments] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(true);
+  const [loadingWorkouts, setLoadingWorkouts] = useState(true);
   const [receiptPreviewImage, setReceiptPreviewImage] = useState(null);
   const [workouts, setWorkouts] = useState([]);
   const [previewExercise, setPreviewExercise] = useState(null);
@@ -254,7 +258,7 @@ const Dashboard = () => {
   }, [payments, profile?.payment_day]);
 
   const PaymentGateMessage = () => (
-    <section className="rounded-3xl border border-dashed border-slate-700 bg-[#141820] p-6 shadow-xl w-full flex flex-col items-center justify-center text-center gap-2 min-h-[180px]">
+    <Reveal as="section" className="rounded-3xl border border-dashed border-slate-700 bg-[#141820] p-6 shadow-xl w-full flex flex-col items-center justify-center text-center gap-2 min-h-[180px]">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c]">Sección bloqueada</p>
       <p className="max-w-sm text-sm text-slate-400">
         Esta sección se habilita cuando tu entrenador aprueba el pago de tu mensualidad correspondiente al período actual.
@@ -267,7 +271,14 @@ const Dashboard = () => {
       >
         Registrar comprobante
       </button>
-    </section>
+    </Reveal>
+  );
+
+  const dashboardContentLoaded = roleValue !== 3 || (
+    !loadingProfile &&
+    !loadingProgress &&
+    !loadingWorkouts &&
+    !loadingPayments
   );
 
   const monthStart = useMemo(() => selectedDate.clone().startOf('month'), [selectedDate]);
@@ -525,6 +536,8 @@ const Dashboard = () => {
         })
       } catch (error) {
         console.error('Error fetching data: ', error);
+      } finally {
+        setLoadingProfile(false);
       }
     }
 
@@ -570,6 +583,8 @@ const Dashboard = () => {
         })
       } catch (error) {
         console.error('Error fetching data: ', error);
+      } finally {
+        setLoadingProgress(false);
       }
     }
 
@@ -589,6 +604,8 @@ const Dashboard = () => {
         })
       } catch (error) {
         console.error('Error fetching workouts:', error);
+      } finally {
+        setLoadingWorkouts(false);
       }
     }
 
@@ -1732,7 +1749,15 @@ const Dashboard = () => {
               <Helmet>
                 <title>Ajustes</title>
               </Helmet>
-              {renderSectionContent()}
+              {dashboardContentLoaded ? (
+                <Reveal className="w-full">
+                  {renderSectionContent()}
+                </Reveal>
+              ) : (
+                <div className="min-h-[240px] p-8 text-center text-sm text-slate-400">
+                  Cargando contenido...
+                </div>
+              )}
             </div>
           </main>
         </div>
