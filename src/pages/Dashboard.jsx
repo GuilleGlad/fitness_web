@@ -1750,9 +1750,9 @@ const Dashboard = () => {
                 <title>Ajustes</title>
               </Helmet>
               {dashboardContentLoaded ? (
-                <Reveal className="w-full">
+                <div className="w-full">
                   {renderSectionContent()}
-                </Reveal>
+                </div>
               ) : (
                 <div className="min-h-[240px] p-8 text-center text-sm text-slate-400">
                   Cargando contenido...

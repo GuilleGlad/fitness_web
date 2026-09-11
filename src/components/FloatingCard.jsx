@@ -12,7 +12,7 @@ const FloatingCard = ({trainerPic, trainerName, trainerPhone, trainerEmail}) => 
             <div id='nameDiv'>
                 <div className='flex flex-col'>
                     <span className='text-md'>{trainerName}</span>
-                    <span className='text-xs'>Personal Trainer</span>
+                    <span className='text-xs'></span>
                 </div>
             </div>
             <div className='flex gap-2 lg:gap-2 w-16 mr-12 lg:ml-6'>

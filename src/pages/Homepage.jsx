@@ -195,8 +195,8 @@ function Homepage() {
     const videoPath1 = settings.videoUrl || '/videos/videoplayback.mp4';
     const videoPath2 = '/videos/videoplayback2.mp4';
     const logoPath = settings.logoUrl;
-    const trainerPic = settings.aboutUrl || '/images/Image-02.jpg';
-    const trainerName = settings.username || 'Sergio Zane';
+    const trainerPic = settings.aboutUrl || '/images/avatar.png';
+    const trainerName = settings.username;
     const trainerPhone = settings.phone || '';
     const defaultEmail = 'support@musclefit.com';
     const trainerEmail = settings.email || defaultEmail;
