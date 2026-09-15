@@ -7,7 +7,6 @@ import { toast } from 'react-hot-toast';
 const ProgressModal = ({ isOpen, onClose, clientId, age, height, initialWeight, goal, trainingDays, trainerId }) => {
   const apiUrl = process.env.REACT_APP_API_URL;
   const token = localStorage.getItem('token');
-  const genre = localStorage.getItem('genre') || '';
 
   const [formData, setFormData] = useState({
     client_id: clientId,
@@ -23,6 +22,12 @@ const ProgressModal = ({ isOpen, onClose, clientId, age, height, initialWeight, 
     goal: goal || '',
     training_days: trainingDays || '',
     trainerId: trainerId || '',
+    masa_corporal: '',
+    grasa_corporal: '',
+    masa_muscular: '',
+    metabolismo_basal: '',
+    edad_corporal: '',
+    grasa_visceral: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +50,12 @@ const ProgressModal = ({ isOpen, onClose, clientId, age, height, initialWeight, 
         goal: goal || '',
         training_days: trainingDays || '',
         trainerId: trainerId || '',
+        masa_corporal: '',
+        grasa_corporal: '',
+        masa_muscular: '',
+        metabolismo_basal: '',
+        edad_corporal: '',
+        grasa_visceral: '',        
       });
       setErrors({});
     }
@@ -103,6 +114,12 @@ const handleSubmit = async (e) => {
       appendIfValue('goal', formData.goal);
       appendIfValue('training_days', formData.training_days);
       appendIfValue('trainerId', formData.trainerId);
+      appendIfValue('masa_corporal', formData.masa_corporal);
+      appendIfValue('grasa_corporal', formData.grasa_corporal);
+      appendIfValue('masa_muscular', formData.masa_muscular);
+      appendIfValue('metabolismo_basal', formData.metabolismo_basal);
+      appendIfValue('edad_corporal', formData.edad_corporal);
+      appendIfValue('grasa_visceral', formData.grasa_visceral);
       if (formData.photo_front) formDataToSend.append('photo_front', formData.photo_front);
       if (formData.photo_back) formDataToSend.append('photo_back', formData.photo_back);
 
@@ -138,7 +155,7 @@ const handleSubmit = async (e) => {
   if (!isOpen) return null;
 
   const inputStyle = "px-3 py-2 bg-[#cccccc] text-[#1e222b] font-bold rounded-lg text-xs placeholder-[#555555] w-full text-center focus:outline-none focus:ring-2 focus:ring-[#f1b80c] transition-all";
-  const labelStyle = "text-[10px] font-bold text-slate-400 block mb-1 pl-1";
+  const labelStyle = "text-[12px] font-bold text-slate-200 block mb-1 pl-1";
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -154,7 +171,7 @@ const handleSubmit = async (e) => {
         <div className="relative w-full max-w-2xl bg-[#141820] border border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-slate-700 bg-slate-900/50">
-            <h2 className="text-xl font-bold text-white">Agregar Progreso Corporal {genre}</h2>
+            <h2 className="text-xl font-bold text-white">Agregar Progreso Corporal</h2>
             <button
               onClick={onClose}
               className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
@@ -165,12 +182,12 @@ const handleSubmit = async (e) => {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+          <form onSubmit={handleSubmit} className="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
             {/* Medidas Antropométricas */}
             <div className="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
               <span className="text-[11px] font-extrabold text-slate-400 block mb-3 uppercase tracking-wider text-center">Ingresa tus Medidas (cm)</span>
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                <div className="bg-slate-200/10 p-3 rounded-xl flex-col justify-evenly">
                   <label className={labelStyle}>Cintura</label>
                   <input 
                     type="number" 
@@ -182,9 +199,9 @@ const handleSubmit = async (e) => {
                     step="0.1"
                     min="0"
                   />
-                  {errors.waist && <p className="text-red-400 text-[10px] mt-1">{errors.waist}</p>}
+                  {errors.waist && <p className="text-red-400 text-[12px] mt-1">{errors.waist}</p>}
                 </div>
-                <div>
+                <div className="bg-slate-200/10 p-3 rounded-xl">
                   <label className={labelStyle}>Cadera</label>
                   <input 
                     type="number" 
@@ -196,9 +213,9 @@ const handleSubmit = async (e) => {
                     step="0.1"
                     min="0"
                   />
-                  {errors.hips && <p className="text-red-400 text-[10px] mt-1">{errors.hips}</p>}
+                  {errors.hips && <p className="text-red-400 text-[12px] mt-1">{errors.hips}</p>}
                 </div>
-                <div>
+                <div className="bg-slate-200/10 p-3 rounded-xl">
                   <label className={labelStyle}>Brazos</label>
                   <input 
                     type="number" 
@@ -210,9 +227,9 @@ const handleSubmit = async (e) => {
                     step="0.1"
                     min="0"
                   />
-                  {errors.arms && <p className="text-red-400 text-[10px] mt-1">{errors.arms}</p>}
+                  {errors.arms && <p className="text-red-400 text-[12px] mt-1">{errors.arms}</p>}
                 </div>
-                <div>
+                <div className="bg-slate-200/10 p-3 rounded-xl">
                   <label className={labelStyle}>Piernas</label>
                   <input 
                     type="number" 
@@ -224,9 +241,9 @@ const handleSubmit = async (e) => {
                     step="0.1"
                     min="0"
                   />
-                  {errors.legs && <p className="text-red-400 text-[10px] mt-1">{errors.legs}</p>}
+                  {errors.legs && <p className="text-red-400 text-[12px] mt-1">{errors.legs}</p>}
                 </div>
-                <div>
+                <div className="bg-slate-200/10 p-3 rounded-xl">
                   <label className={labelStyle}>Peso (kg)</label>
                   <input 
                     type="number" 
@@ -238,8 +255,92 @@ const handleSubmit = async (e) => {
                     step="0.1"
                     min="0"
                   />
-                  {errors.weight && <p className="text-red-400 text-[10px] mt-1">{errors.weight}</p>}
-                </div>                
+                  {errors.weight && <p className="text-red-400 text-[12px] mt-1">{errors.weight}</p>}
+                </div>   
+                <div className="bg-slate-200/10 p-3 rounded-xl">
+                  <label className={labelStyle}>Masa Corporal</label>
+                  <input 
+                    type="number" 
+                    name="masa_corporal" 
+                    placeholder="Ej: 30.00" 
+                    value={formData.masa_corporal} 
+                    onChange={handleChange} 
+                    className={inputStyle}
+                    step="0.1"
+                    min="0"
+                  />
+                  {errors.masa_corporal && <p className="text-red-400 text-[12px] mt-1">{errors.masa_corporal}</p>}
+                </div>   
+                <div className="bg-slate-200/10 p-3 rounded-xl">
+                  <label className={labelStyle}>Grasa Corporal (%)</label>
+                  <input 
+                    type="number" 
+                    name="grasa_corporal" 
+                    placeholder="Ej: 75" 
+                    value={formData.grasa_corporal} 
+                    onChange={handleChange} 
+                    className={inputStyle}
+                    step="0.1"
+                    min="0"
+                  />
+                  {errors.grasa_corporal && <p className="text-red-400 text-[12px] mt-1">{errors.grasa_corporal}</p>}
+                </div>   
+                <div className="bg-slate-200/10 p-3 rounded-xl">
+                  <label className={labelStyle}>Masa Muscular</label>
+                  <input 
+                    type="number" 
+                    name="masa_muscular" 
+                    placeholder="Ej: 30.00" 
+                    value={formData.masa_muscular} 
+                    onChange={handleChange} 
+                    className={inputStyle}
+                    step="0.1"
+                    min="0"
+                  />
+                  {errors.masa_muscular && <p className="text-red-400 text-[12px] mt-1">{errors.masa_muscular}</p>}
+                </div>                                            
+                <div className="bg-slate-200/10 p-3 rounded-xl">
+                  <label className={labelStyle}>Metabolismo Basal (kcal)</label>
+                  <input 
+                    type="number" 
+                    name="metabolismo_basal" 
+                    placeholder="Ej: 75" 
+                    value={formData.metabolismo_basal} 
+                    onChange={handleChange} 
+                    className={inputStyle}
+                    step="0.1"
+                    min="0"
+                  />
+                  {errors.metabolismo_basal && <p className="text-red-400 text-[12px] mt-1">{errors.metabolismo_basal}</p>}
+                </div>   
+                <div className="bg-slate-200/10 p-3 rounded-xl">
+                  <label className={labelStyle}>Edad Corporal</label>
+                  <input 
+                    type="number" 
+                    name="edad_corporal" 
+                    placeholder="Ej: 30.00" 
+                    value={formData.edad_corporal} 
+                    onChange={handleChange} 
+                    className={inputStyle}
+                    step="0.1"
+                    min="0"
+                  />
+                  {errors.edad_corporal && <p className="text-red-400 text-[12px] mt-1">{errors.edad_corporal}</p>}
+                </div>                   
+                <div className="bg-slate-200/10 p-3 rounded-xl">
+                  <label className={labelStyle}>Grasa Visceral</label>
+                  <input 
+                    type="number" 
+                    name="grasa_visceral" 
+                    placeholder="Ej: 75" 
+                    value={formData.grasa_visceral} 
+                    onChange={handleChange} 
+                    className={inputStyle}
+                    step="0.1"
+                    min="0"
+                  />
+                  {errors.grasa_visceral && <p className="text-red-400 text-[12px] mt-1">{errors.grasa_visceral}</p>}
+                </div>                   
               </div>
             </div>
 
@@ -256,8 +357,8 @@ const handleSubmit = async (e) => {
                     className="hidden" 
                     onChange={handleChange} 
                   />
-                  {formData.photo_front && <span className="text-[10px] text-[#f1b80c] mt-1 truncate max-w-[140px]">{formData.photo_front.name}</span>}
-                  {errors.photo_front && <p className="text-red-400 text-[10px] mt-1 text-center">{errors.photo_front}</p>}
+                  {formData.photo_front && <span className="text-[12px] text-[#f1b80c] mt-1 truncate max-w-[140px]">{formData.photo_front.name}</span>}
+                  {errors.photo_front && <p className="text-red-400 text-[12px] mt-1 text-center">{errors.photo_front}</p>}
                 </label>
 
                 <label className="flex flex-col items-center justify-center p-3 bg-slate-800/60 border-2 border-dashed border-slate-600 rounded-xl cursor-pointer hover:border-[#f1b80c] transition-all min-h-[70px]">
@@ -269,8 +370,8 @@ const handleSubmit = async (e) => {
                     className="hidden" 
                     onChange={handleChange} 
                   />
-                  {formData.photo_back && <span className="text-[10px] text-[#f1b80c] mt-1 truncate max-w-[140px]">{formData.photo_back.name}</span>}
-                  {errors.photo_back && <p className="text-red-400 text-[10px] mt-1 text-center">{errors.photo_back}</p>}
+                  {formData.photo_back && <span className="text-[12px] text-[#f1b80c] mt-1 truncate max-w-[140px]">{formData.photo_back.name}</span>}
+                  {errors.photo_back && <p className="text-red-400 text-[12px] mt-1 text-center">{errors.photo_back}</p>}
                 </label>
               </div>
             </div>

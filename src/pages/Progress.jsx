@@ -296,6 +296,30 @@ const Progress = () => {
     },
   }), []);
 
+  const getValidMetricValue = (item, ...keys) => {
+    for (const key of keys) {
+      const rawValue = item?.[key] ?? item?.[key.toLowerCase()] ?? item?.[key.toUpperCase()];
+
+      if (rawValue === null || rawValue === undefined || rawValue === '') {
+        continue;
+      }
+
+      const parsed = Number(rawValue);
+      if (!Number.isNaN(parsed)) return parsed;
+      if (rawValue !== 'null' && rawValue !== 'undefined') return rawValue;
+    }
+    return null;
+  };
+
+  const formatMetricValue = (value, suffix = '') => {
+    if (value === null || value === undefined || value === '') return null;
+    const normalized = Number(value);
+    if (!Number.isNaN(normalized)) {
+      return `${normalized % 1 === 0 ? normalized.toFixed(0) : normalized.toFixed(1)}${suffix}`;
+    }
+    return `${value}${suffix}`;
+  };
+
   const handleMenuNavigation = (item) => {
     if (item.indexOf('Clientes') !== -1 || item.indexOf('Usuarios') !== -1) {
       navigate('/clients'); setMenuOpen(false); return;
@@ -546,44 +570,101 @@ const Progress = () => {
                   </div>
                 </div>
                 <div className="max-h-[395px] overflow-y-auto space-y-3 pr-1">
-                  {progreso.map((item, index) => (
-                    <div
-                      key={item.id || index}
-                      className={`rounded-xl p-3 border ${index === 0
-                        ? 'bg-yellow-400 text-black border-black'
-                        : 'bg-slate-800 border-yellow-400 text-white'
-                        }`}
-                    >
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <p><span className="font-semibold">Cintura:</span> {item.hips}</p>
-                        <p><span className="font-semibold">Cadera:</span> {item.waist}</p>
-                        <p><span className="font-semibold">Brazos:</span> {item.arms}</p>
-                        <p><span className="font-semibold">Piernas:</span> {item.legs}</p>
-                        <p className="col-span-2">
-                          <span className="font-semibold">Fecha:</span> {moment(item.log_date).format('DD-MM-YYYY')}
+                  {progreso.map((item, index) => {
+                    const metricEntries = [
+                      { label: 'Peso', value: getValidMetricValue(item, 'peso', 'weight'), suffix: ' kg' },
+                      { label: 'Cintura', value: getValidMetricValue(item, 'cintura', 'waist'), suffix: ' cm' },
+                      { label: 'Cadera', value: getValidMetricValue(item, 'cadera', 'hips'), suffix: ' cm' },
+                      { label: 'Brazos', value: getValidMetricValue(item, 'brazos', 'arms'), suffix: ' cm' },
+                      { label: 'Piernas', value: getValidMetricValue(item, 'piernas', 'legs'), suffix: ' cm' },
+                      { label: 'Masa corporal', value: getValidMetricValue(item, 'masa_corporal'), suffix: ' kg' },
+                      { label: 'Grasa corporal', value: getValidMetricValue(item, 'grasa_corporal'), suffix: '%' },
+                      { label: 'Masa muscular', value: getValidMetricValue(item, 'masa_muscular'), suffix: ' kg' },
+                      { label: 'Metab. basal', value: getValidMetricValue(item, 'metabolismo_basal'), suffix: ' kcal' },
+                      { label: 'Edad corporal', value: getValidMetricValue(item, 'edad_corporal'), suffix: ' años' },
+                      { label: 'Grasa visceral', value: getValidMetricValue(item, 'grasa_visceral'), suffix: '%' },
+                    ];
+
+                    return (
+                      <div
+                        key={item.id || index}
+                        className={`rounded-xl p-3 border ${index === 0
+                          ? 'bg-yellow-200 text-black border-black'
+                          : 'bg-slate-800 border-yellow-400 text-white'
+                          }`}
+                      >
+                        <div className="grid grid-cols-2 gap-2 text-[16px] sm:grid-cols-3">
+                          {metricEntries.map((metric) => {
+                            const displayValue = formatMetricValue(metric.value, metric.suffix) ?? '—';
+
+                            return (
+                              <div
+                                key={metric.label}
+                                className={`rounded-lg border px-2 py-1.5 shadow-sm ${index === 0
+                                  ? 'border-black/20 bg-[#1e222b]/10'
+                                  : 'border-slate-700 bg-slate-900/70'
+                                  }`}
+                              >
+                                <p className={`text-[12px] uppercase tracking-[0.12em] ${index === 0 ? 'text-black/75' : 'text-slate-400'}`}>
+                                  {metric.label}
+                                </p>
+                                <p className={`mt-1 font-bold ${index === 0 ? 'text-slate-950' : 'text-white'}`}>
+                                  {displayValue}
+                                </p>
+                              </div>
+                            );
+                          })}
+                          <div className={`flex w-full flex-col gap-2 rounded-lg border px-2 py-2 shadow-sm ${index === 0
+                                  ? 'border-black/20 bg-[#1e222b]/10'
+                                  : 'border-slate-700 bg-slate-900/70'
+                                  }`}>
+                            <p className={`text-[12px] uppercase tracking-[0.12em] ${index === 0 ? 'text-black/75' : 'text-slate-400'}`}>
+                              Fotos
+                            </p>
+                            <div className="flex items-center justify-center gap-2">
+                              {item.photo_front_url && (
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewImage(item.photo_front_url)}
+                                  className="group relative h-16 w-16 overflow-hidden rounded-md border border-slate-600 bg-slate-950/50 p-0 transition hover:scale-[1.02] hover:border-[#f1b80c]"
+                                  aria-label="Ver foto frontal"
+                                >
+                                  <img
+                                    src={item.photo_front_url}
+                                    className="h-full w-full object-cover cursor-pointer"
+                                    alt="Frontal"
+                                  />
+                                </button>
+                              )}
+                              {item.photo_back_url && (
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewImage(item.photo_back_url)}
+                                  className="group relative h-16 w-16 overflow-hidden rounded-md border border-slate-600 bg-slate-950/50 p-0 transition hover:scale-[1.02] hover:border-[#f1b80c]"
+                                  aria-label="Ver foto trasera"
+                                >
+                                  <img
+                                    src={item.photo_back_url}
+                                    className="h-full w-full object-cover cursor-pointer"
+                                    alt="Posterior"
+                                  />
+                                </button>
+                              )}
+                              {!item.photo_front_url && !item.photo_back_url && (
+                                <span className={`text-[10px] ${index === 0 ? 'text-black/70' : 'text-slate-500'}`}>
+                                  Sin fotos
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className={`mt-3 text-[11px] font-semibold ${index === 0 ? 'text-black/80' : 'text-slate-300'}`}>
+                          <span>Fecha:</span> {moment(item.log_date).format('DD-MM-YYYY')}
                         </p>
                       </div>
-
-                      <div className="flex gap-2 mt-2">
-                        {item.photo_front_url && (
-                          <img
-                            src={item.photo_front_url}
-                            className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
-                            onClick={() => setPreviewImage(item.photo_front_url)}
-                            alt="Frontal"
-                          />
-                        )}
-                        {item.photo_back_url && (
-                          <img
-                            src={item.photo_back_url}
-                            className="h-10 rounded-md cursor-pointer hover:opacity-80 transition"
-                            onClick={() => setPreviewImage(item.photo_back_url)}
-                            alt="Posterior"
-                          />
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {previewImage && (
