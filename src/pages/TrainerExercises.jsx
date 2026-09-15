@@ -191,8 +191,10 @@ const WorkoutModal = ({
   onUpdateWorkout
 }) => {
   const [formData, setFormData] = useState({
+    sets_or_time: false,
     sets: '',
     reps: '',
+    time: '',
     client_effort_notes: '',
   });
   const [editingWorkoutId, setEditingWorkoutId] = useState(null);
@@ -205,8 +207,10 @@ const WorkoutModal = ({
   useEffect(() => {
     if (isOpen && exercise) {
       setFormData({
+        sets_or_time: false,
         sets: '',
         reps: '',
+        time: '',
         client_effort_notes: '',
       });
       setEditingWorkoutId(null);
@@ -220,8 +224,10 @@ const WorkoutModal = ({
       const workout = existingWorkouts.find(w => w.workout_id === editingWorkoutId);
       if (workout) {
         setFormData({
+          sets_or_time: workout.sets_or_time === undefined ? false : Boolean(Number(workout.sets_or_time)),
           sets: workout.sets || '',
           reps: workout.reps || '',
+          time: workout.time || '',
           client_effort_notes: workout.client_effort_notes || '',
         });
       }
@@ -246,8 +252,13 @@ const WorkoutModal = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.sets || !formData.reps) {
+    if (!formData.sets_or_time && (!formData.sets || !formData.reps)) {
       toast.error('Sets y Repeticiones son obligatorios.');
+      return;
+    }
+
+    if (formData.sets_or_time && !formData.time) {
+      toast.error('El tiempo es obligatorio.');
       return;
     }
 
@@ -257,8 +268,10 @@ const WorkoutModal = ({
       const payload = {
         trainer_id: trainerId,
         exercise_id: exercise.id,
-        sets: parseInt(formData.sets),
-        reps: parseInt(formData.reps),
+        sets_or_time: formData.sets_or_time,
+        sets: formData.sets_or_time ? null : parseInt(formData.sets, 10),
+        reps: formData.sets_or_time ? null : parseInt(formData.reps, 10),
+        time: formData.sets_or_time ? parseInt(formData.time, 10) : null,
         client_effort_notes: formData.client_effort_notes || '',
       };
 
@@ -275,14 +288,17 @@ const WorkoutModal = ({
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
         });
         const newWorkout = response.data?.workout || response.data || {};
+        const workoutId = newWorkout.workout_id || newWorkout.insert_id || newWorkout.id;
         toast.success('Rutina guardada correctamente.');
-        onSaveWorkout({ ...payload, id: newWorkout.insert_id || newWorkout.id || Date.now() });
+        onSaveWorkout({ ...payload, workout_id: workoutId || Date.now() });
       }
 
       // Reset form
       setFormData({
+        sets_or_time: false,
         sets: '',
         reps: '',
+        time: '',
         client_effort_notes: '',
       });
       setEditingWorkoutId(null);
@@ -317,8 +333,10 @@ const WorkoutModal = ({
   const cancelEdit = () => {
     setEditingWorkoutId(null);
     setFormData({
+      sets_or_time: false,
       sets: '',
       reps: '',
+      time: '',
       client_effort_notes: '',
     });
   };
@@ -342,34 +360,65 @@ const WorkoutModal = ({
               {editingWorkoutId ? 'Editar Rutina' : 'Nueva Rutina'}
             </h4>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="block space-y-2 text-sm text-slate-200">
-                  <span>Sets</span>
-                  <input
-                    type="number"
-                    name="sets"
-                    value={formData.sets}
-                    onChange={handleChange}
-                    min="1"
-                    className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                    placeholder="Ej. 3"
-                  />
-                </label>
-
-                <label className="block space-y-2 text-sm text-slate-200">
-                  <span>Repeticiones</span>
-                  <input
-                    type="number"
-                    name="reps"
-                    value={formData.reps}
-                    onChange={handleChange}
-                    min="1"
-                    className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                    placeholder="Ej. 12"
-                  />
-                </label>
-
+              <div className="flex items-center justify-end gap-2 px-1 py-1">
+                <span className="text-xs text-slate-400">Por tiempo</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={formData.sets_or_time}
+                  onClick={() => setFormData((prev) => ({ ...prev, sets_or_time: !prev.sets_or_time }))}
+                  className={`relative h-5 w-9 rounded-full transition ${formData.sets_or_time ? 'bg-[#f1b80c]' : 'bg-slate-700'}`}
+                  aria-label="Alternar entre sets y tiempo"
+                >
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${formData.sets_or_time ? 'left-4' : 'left-0.5'}`} />
+                </button>
               </div>
+
+              {!formData.sets_or_time ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="block space-y-2 text-sm text-slate-200">
+                    <span>Sets</span>
+                    <input
+                      type="number"
+                      name="sets"
+                      value={formData.sets}
+                      onChange={handleChange}
+                      min="1"
+                      required
+                      className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                      placeholder="Ej. 3"
+                    />
+                  </label>
+
+                  <label className="block space-y-2 text-sm text-slate-200">
+                    <span>Repeticiones</span>
+                    <input
+                      type="number"
+                      name="reps"
+                      value={formData.reps}
+                      onChange={handleChange}
+                      min="1"
+                      required
+                      className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                      placeholder="Ej. 12"
+                    />
+                  </label>
+                </div>
+              ) : (
+                <label className="block space-y-2 text-sm text-slate-200">
+                  <span>Tiempo (minutos)</span>
+                  <input
+                    type="number"
+                    name="time"
+                    value={formData.time}
+                    onChange={handleChange}
+                    min="1"
+                    required
+                    className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                    placeholder="Ej. 45"
+                  />
+                </label>
+              )}
 
               <div className="grid gap-3 pt-2">
                 <label className="block space-y-2 mb-10 text-sm text-slate-200">
@@ -409,8 +458,8 @@ const WorkoutModal = ({
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-slate-700/60">
-                      <th className="px-4 py-3 font-medium text-slate-400">Sets</th>
-                      <th className="px-4 py-3 font-medium text-slate-400">Reps</th>
+                      <th className="px-4 py-3 font-medium text-slate-400">Modo</th>
+                      <th className="px-4 py-3 font-medium text-slate-400">Valor</th>
                       <th className="px-4 py-3 font-medium text-slate-400">Recomendaciones</th>
                       <th className="px-4 py-3 font-medium text-slate-400">Acciones</th>
                     </tr>
@@ -418,8 +467,8 @@ const WorkoutModal = ({
                   <tbody className="divide-y divide-slate-800/50">
                     {existingWorkouts.map((workout) => (
                       <tr key={workout.workout_id} className="hover:bg-slate-800/40">
-                        <td className="px-4 py-3 text-white">{workout.sets}</td>
-                        <td className="px-4 py-3 text-slate-300">{workout.reps}</td>
+                        <td className="px-4 py-3 text-white">{workout.sets_or_time ? 'Tiempo' : 'Sets / reps'}</td>
+                        <td className="px-4 py-3 text-slate-300">{workout.sets_or_time ? `${workout.time} m` : `${workout.sets} / ${workout.reps}`}</td>
                         <td className="px-4 py-3 text-slate-300">{workout.client_effort_notes || '-'}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2">
@@ -572,8 +621,10 @@ const TrainerExercises = () => {
         exerciseWorkouts.map((item) => ({
           workout_id: item.workout_id,
           exerciseId: item.exercise_id || item.exerciseId,
+          sets_or_time: item.sets_or_time === undefined ? false : Boolean(Number(item.sets_or_time)),
           sets: item.sets,
           reps: item.reps_text,
+          time: item.time,
           client_effort_notes: item.client_effort_notes || '',
         }))
       );

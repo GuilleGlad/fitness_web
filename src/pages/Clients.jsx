@@ -307,6 +307,7 @@ const Clients = () => {
   const [clientProgressHistory, setClientProgressHistory] = useState([]);
   const [loadingBioData, setLoadingBioData] = useState(false);
   const [bioPhotoPreview, setBioPhotoPreview] = useState(null);
+  const [trainerNotePreview, setTrainerNotePreview] = useState('');
   const [showProgressChartModal, setShowProgressChartModal] = useState(false);
 
   /* ── Crear Entrenador (solo Administrador) ── */
@@ -610,6 +611,10 @@ const Clients = () => {
   const handleToggleDay = (key) => {
     setSelectedDays((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  const sortedTrainerWorkouts = [...trainerWorkouts].sort((firstWorkout, secondWorkout) =>
+    (firstWorkout.title || '').localeCompare(secondWorkout.title || '', 'es', { sensitivity: 'base' })
+  );
 
   const handleAssignSubmit = async (e) => {
     e.preventDefault();
@@ -1472,7 +1477,7 @@ const Clients = () => {
                       <FontAwesomeIcon icon={faChevronDown} className="transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
                     </summary>
                     <div className="max-h-[320px] overflow-y-auto overflow-x-auto">
-                      <table className="w-full min-w-[720px] text-left text-sm">
+                      <table className="w-full min-w-[1200px] text-left text-sm">
                         <thead>
                           <tr className="sticky top-0 z-10 border-b border-slate-700/60 bg-[#0f172a]">
                             <th className="px-4 py-3 font-medium text-slate-400">Fecha</th>
@@ -1481,6 +1486,12 @@ const Clients = () => {
                             <th className="px-4 py-3 font-medium text-slate-400">Cadera</th>
                             <th className="px-4 py-3 font-medium text-slate-400">Brazos</th>
                             <th className="px-4 py-3 font-medium text-slate-400">Piernas</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Masa corporal</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Grasa corporal</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Masa muscular</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Metabolismo basal</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Edad corporal</th>
+                            <th className="px-4 py-3 font-medium text-slate-400">Grasa visceral</th>
                             <th className="px-4 py-3 font-medium text-slate-400">Fotos</th>
                             <th className="px-4 py-3 font-medium text-slate-400">Notas del entrenador</th>
                           </tr>
@@ -1488,7 +1499,7 @@ const Clients = () => {
                         <tbody className="divide-y divide-slate-800/50">
                           {clientProgressHistory.length === 0 ? (
                             <tr>
-                              <td colSpan="8" className="px-4 py-6 text-center text-slate-400">
+                              <td colSpan="14" className="px-4 py-6 text-center text-slate-400">
                                 Este cliente todavía no tiene registros de progreso.
                               </td>
                             </tr>
@@ -1503,13 +1514,19 @@ const Clients = () => {
                                 <td className="px-4 py-3 text-slate-300">{entry.hips ?? '—'}</td>
                                 <td className="px-4 py-3 text-slate-300">{entry.arms ?? '—'}</td>
                                 <td className="px-4 py-3 text-slate-300">{entry.legs ?? '—'}</td>
-                                <td className="px-4 py-3">
-                                  <div className="flex gap-2">
+                                <td className="px-4 py-3 text-slate-300">{entry.masa_corporal ?? '—'}</td>
+                                <td className="px-4 py-3 text-slate-300">{entry.grasa_corporal ?? '—'}</td>
+                                <td className="px-4 py-3 text-slate-300">{entry.masa_muscular ?? '—'}</td>
+                                <td className="px-4 py-3 text-slate-300">{entry.metabolismo_basal ?? '—'}</td>
+                                <td className="px-4 py-3 text-slate-300">{entry.edad_corporal ?? '—'}</td>
+                                <td className="px-4 py-3 text-slate-300">{entry.grasa_visceral ?? '—'}</td>
+                                <td className="w-32 min-w-32 px-4 py-3">
+                                  <div className="grid w-28 grid-cols-2 gap-2">
                                     {entry.photo_front_url ? (
                                       <img
                                         src={entry.photo_front_url}
                                         alt="Foto frontal"
-                                        className="h-12 w-12 cursor-pointer rounded-lg object-cover ring-2 ring-slate-700 hover:opacity-80"
+                                        className="h-16 w-12 flex-none cursor-pointer rounded-lg object-cover ring-2 ring-slate-700 hover:opacity-80"
                                         onClick={() => setBioPhotoPreview(entry.photo_front_url)}
                                       />
                                     ) : null}
@@ -1517,7 +1534,7 @@ const Clients = () => {
                                       <img
                                         src={entry.photo_back_url}
                                         alt="Foto trasera"
-                                        className="h-12 w-12 cursor-pointer rounded-lg object-cover ring-2 ring-slate-700 hover:opacity-80"
+                                        className="h-16 w-12 flex-none cursor-pointer rounded-lg object-cover ring-2 ring-slate-700 hover:opacity-80"
                                         onClick={() => setBioPhotoPreview(entry.photo_back_url)}
                                       />
                                     ) : null}
@@ -1526,7 +1543,18 @@ const Clients = () => {
                                     )}
                                   </div>
                                 </td>
-                                <td className="px-4 py-3 max-w-xs text-slate-300">{entry.trainer_notes || '—'}</td>
+                                <td className="max-w-48 px-4 py-3 text-slate-300">
+                                  {entry.trainer_notes ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setTrainerNotePreview(entry.trainer_notes)}
+                                      title="Ver nota completa"
+                                      className="block max-w-48 truncate text-left text-slate-300 underline decoration-slate-600 underline-offset-2 transition hover:text-white"
+                                    >
+                                      {entry.trainer_notes}
+                                    </button>
+                                  ) : '—'}
+                                </td>
                               </tr>
                             ))
                           )}
@@ -1570,11 +1598,18 @@ const Clients = () => {
                   ) : trainerWorkouts.length === 0 ? (
                     <option value="">No se encontraron rutinas</option>
                   ) : (
-                    trainerWorkouts.map((workout) => (
-                      <option key={workout.id || workout.workout_id || workout.workoutId} value={workout.id || workout.workout_id || workout.workoutId}>
-                        {workout.title + ' (Sets: ' + workout.sets + ' Reps: ' + workout.reps_text + ' ' + workout.client_effort_notes + ')'}
-                      </option>
-                    ))
+                    sortedTrainerWorkouts.map((workout) => {
+                      const usesTime = Number(workout.sets_or_time) === 1;
+                      const workoutDetails = usesTime
+                        ? `Tiempo: ${workout.time ?? '—'} min. `
+                        : `Sets: ${workout.sets ?? '—'} Reps: ${workout.reps_text ?? workout.reps ?? '—'}`;
+
+                      return (
+                        <option key={workout.id || workout.workout_id || workout.workoutId} value={workout.id || workout.workout_id || workout.workoutId}>
+                          {`${workout.title || 'Rutina'} (${workoutDetails}${workout.client_effort_notes ? ` | ${workout.client_effort_notes}` : ''})`}
+                        </option>
+                      );
+                    })
                   )}
                 </select>
                 </label>
@@ -1675,6 +1710,17 @@ const Clients = () => {
             <Line data={progressChartData} options={progressChartOptions} />
           </div>
         )}
+      </ModalOverlay>
+
+      {/* Trainer note preview modal */}
+      <ModalOverlay
+        isOpen={Boolean(trainerNotePreview)}
+        onClose={() => setTrainerNotePreview('')}
+        title="Nota del entrenador"
+      >
+        <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-200">
+          {trainerNotePreview}
+        </p>
       </ModalOverlay>
 
       {/* Note Review Modal */}
