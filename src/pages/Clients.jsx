@@ -667,6 +667,36 @@ const Clients = () => {
     });
   };
 
+  const handleDeleteAllAssignedWorkouts = () => {
+    const assignmentIds = assignedWorkouts
+      .map((workout) => workout.id)
+      .filter(Boolean);
+
+    if (assignmentIds.length === 0) {
+      toast.error('No hay rutinas asignadas para eliminar.');
+      return;
+    }
+
+    yesNo(`¿Eliminar las ${assignmentIds.length} rutinas asignadas?`, async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return toast.error('Token no disponible. Inicia sesión.');
+        const config = {
+          data: {
+            ids: assignmentIds,
+          },
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        };
+        await axios.delete(`${apiUrl}/workouts/delete-workouts-batch`, config);
+        setAssignedWorkouts([]);
+        toast.success('Rutinas asignadas eliminadas correctamente.');
+      } catch (err) {
+        console.error(err);
+        toast.error('No se pudieron eliminar las rutinas asignadas.');
+      }
+    });
+  };
+
   useEffect(() => {
 
     var redirectPath = null;
@@ -1676,6 +1706,17 @@ const Clients = () => {
                 <span className="hidden text-[11px] text-slate-500 sm:inline">Pantalla completa</span>
               </div>
               <span className="rounded-full bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-300">
+                {visibleWorkouts.length > 0 && activeWorkoutTab === 'assigned' && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteAllAssignedWorkouts}
+                    className="ml-2 mr-2 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-600/90 text-white transition hover:bg-red-500"
+                    aria-label="Eliminar todas las rutinas asignadas"
+                    title="Eliminar todas las rutinas asignadas"
+                  >
+                    <FontAwesomeIcon icon={faTrash} size="xs" />
+                  </button>
+                )}                
                 Total: {visibleWorkouts.length}
               </span>
             </div>
