@@ -85,7 +85,7 @@ const TrainerPayments = () => {
       if (!trainerId) return;
       const token = localStorage.getItem('token');
       if (!token) {
-        toast.error('Token no disponible. Inicia sesión.');
+        toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
         return;
       }
 

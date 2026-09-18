@@ -147,7 +147,7 @@ const Trainers = () => {
             setLoading(true);
             try {
                 const token = localStorage.getItem('token');
-                if (!token) return toast.error('Token no disponible. Inicia sesión.');
+                if (!token) return toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
                 const config = { headers: { Authorization: `Bearer ${token}` } };
                 const res = await axios.get(`${apiUrl}/admin/trainers`, config);
                 const list = res.data?.entrenadores || [];

@@ -405,7 +405,7 @@ const Clients = () => {
     setLoadingAssignedWorkouts(true);
     try {
       const token = localStorage.getItem('token');
-      if (!token) return toast.error('Token no disponible. Inicia sesión.');
+      if (!token) return toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const res = await axios.get(`${apiUrl}/workouts/list/${clientId}`, config);
       setAssignedWorkouts(res.data?.filas || []);
@@ -421,7 +421,7 @@ const Clients = () => {
     setLoadingCompletedWorkouts(true);
     try {
       const token = localStorage.getItem('token');
-      if (!token) return toast.error('Token no disponible. Inicia sesión.');
+      if (!token) return toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const res = await axios.get(`${apiUrl}/workouts/list-completed/${clientId}`, config);
       setCompletedWorkouts(res.data?.filas || res.data || []);
@@ -437,7 +437,7 @@ const Clients = () => {
     setLoadingTrainerWorkouts(true);
     try {
       const token = localStorage.getItem('token');
-      if (!token) return toast.error('Token no disponible. Inicia sesión.');
+      if (!token) return toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const res = await axios.get(`${apiUrl}/workouts/list-by-trainer/${trainerId}`, config);
       setTrainerWorkouts(res.data?.filas || []);
@@ -453,7 +453,7 @@ const Clients = () => {
     setLoadingBioData(true);
     try {
       const token = localStorage.getItem('token');
-      if (!token) return toast.error('Token no disponible. Inicia sesión.');
+      if (!token) return toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const [profileRes, progressRes] = await Promise.all([
         axios.get(`${apiUrl}/progress/get-profile-by-id/${clientId}`, config),
@@ -478,7 +478,7 @@ const Clients = () => {
 
     try {
       const token = localStorage.getItem('token');
-      if (!token) return toast.error('Token no disponible. Inicia sesión.');
+      if (!token) return toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const meRes = await axios.get(`${apiUrl}/auth/me`, config);
       const currentTrainerId = meRes.data?.user?.id || meRes.data?.id || meRes.data?.trainer_id || meRes.data?.trainerId;
@@ -543,7 +543,7 @@ const Clients = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        toast.error('Token no disponible. Inicia sesión.');
+        toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
         closeNoteModal();
         return;
       }
@@ -572,7 +572,7 @@ const Clients = () => {
 
     try {
       const token = localStorage.getItem('token');
-      if (!token) return toast.error('Token no disponible. Inicia sesión.');
+      if (!token) return toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
 
       const config = {
         headers: {
@@ -626,7 +626,7 @@ const Clients = () => {
     setLoadingAssign(true);
     try {
       const token = localStorage.getItem('token');
-      if (!token) return toast.error('Token no disponible. Inicia sesión.');
+      if (!token) return toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
       const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
       const progress_history_id = clientProgressHistory.length > 0 ? clientProgressHistory[0].id : null;
 
@@ -654,7 +654,7 @@ const Clients = () => {
     yesNo('¿Eliminar esta rutina asignada?', async () => {
       try {
         const token = localStorage.getItem('token');
-        if (!token) return toast.error('Token no disponible. Inicia sesión.');
+        if (!token) return toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
         const config = { headers: { Authorization: `Bearer ${token}` } };
         await axios.delete(`${apiUrl}/workouts/delete/${assignmentId}`, config);
         setAssignedWorkouts((prev) => prev.filter((item) => item.id !== assignmentId));
@@ -680,7 +680,7 @@ const Clients = () => {
     yesNo(`¿Eliminar las ${assignmentIds.length} rutinas asignadas?`, async () => {
       try {
         const token = localStorage.getItem('token');
-        if (!token) return toast.error('Token no disponible. Inicia sesión.');
+        if (!token) return toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
         const config = {
           data: {
             ids: assignmentIds,
@@ -713,7 +713,7 @@ const Clients = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
-        if (!token) return toast.error('Token no disponible. Inicia sesión.');
+        if (!token) return toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
         const config = { headers: { Authorization: `Bearer ${token}` } };
         const res = await axios.get(`${apiUrl}/admin/clients`, config);
         const list = res.data?.clientes || res.data || [];
