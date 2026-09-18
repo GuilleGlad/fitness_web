@@ -5,8 +5,9 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import { Line } from 'react-chartjs-2';
 import toast from 'react-hot-toast';
 import TrainerLibrary from './TrainerLibrary';
+import BodySilhouette from '../components/BodySilhouette';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faNoteSticky, faTrash, faCalendarDays, faClock, faDumbbell, faCommentDots, faChevronDown, faExpand, faArrowLeft, faChartLine } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faNoteSticky, faTrash, faCalendarDays, faClock, faDumbbell, faCommentDots, faChevronDown, faExpand, faArrowLeft, faChartLine, faMale } from '@fortawesome/free-solid-svg-icons';
 import { verifyToken } from '../utils/tokenUtils';
 import { getClientStatusLabel, getCuentaLabel, normalizeClientRow, normalizeStatusCode } from '../utils/clientUtils';
 import moment from 'moment';
@@ -309,6 +310,7 @@ const Clients = () => {
   const [bioPhotoPreview, setBioPhotoPreview] = useState(null);
   const [trainerNotePreview, setTrainerNotePreview] = useState('');
   const [showProgressChartModal, setShowProgressChartModal] = useState(false);
+  const [showSilhouetteModal, setShowSilhouetteModal] = useState(false);
 
   /* ── Crear Entrenador (solo Administrador) ── */
   const [showNewTrainerModal, setShowNewTrainerModal] = useState(false);
@@ -499,6 +501,8 @@ const Clients = () => {
 
   const closeAssignModal = () => {
     setShowAssignModal(false);
+    setShowSilhouetteModal(false);
+    setShowProgressChartModal(false);
     setSelectedClient(null);
     setTrainerWorkouts([]);
     setAssignedWorkouts([]);
@@ -824,27 +828,32 @@ const Clients = () => {
     if (isSubmittingTrainer) return;
 
     if (!trainerForm.name.trim() || !trainerForm.email.trim()) return toast.error('Nombre y email son obligatorios.');
-    if (!trainerForm.password) return toast.error('La contraseña es obligatoria para crear un entrenador.');
+    if (!editingId && !trainerForm.password.trim()) {
+      return toast.error('La contraseña es obligatoria para crear un entrenador.');
+    }
 
     const token = localStorage.getItem('token');
     if (!token) return toast.error('Token no disponible.');
 
+    const password = trainerForm.password.trim();
     const payload = {
       name: trainerForm.name.trim(),
       email: trainerForm.email.trim(),
-      password: trainerForm.password,
-      role: 'Trainer',
       genre: trainerForm.genre.trim(),
       phone: trainerForm.phone.trim(),
       picture: trainerForm.picture.trim(),
       status: Number(trainerForm.status) || 0,
       status_cuenta: Number(trainerForm.status_cuenta) === 0 ? 0 : 1,
+      ...(editingId ? (password ? { password } : {}) : { password }),
+      ...(!editingId ? { role: 'Trainer' } : {}),
     };
     const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
 
     setIsSubmittingTrainer(true);
     if (editingId) {
-      setClients((p) => p.map((c) => c.id === editingId ? normalizeClientRow({ ...c, ...payload }) : c));
+      setClients((p) => p.map((c) => c.id === editingId
+        ? normalizeClientRow({ ...c, ...payload, role: c.role })
+        : c));
       cancelEditTrainer();
       try {
         await axios.put(`${apiUrl}/admin/user/${editingId}`, payload, config);
@@ -1113,28 +1122,28 @@ const Clients = () => {
                   </h4>
                 </div>
                 {activeWorkoutTab !== 'completed' &&
-                <div className="flex shrink-0 items-center gap-1.5">
-                  {item.workout_note_id &&
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {item.workout_note_id &&
+                      <button
+                        type='button'
+                        className={`inline-flex h-7 w-7 items-center justify-center rounded-full bg-green-800 text-white transition hover:bg-green-400 hover:text-slate-600 ${item.note && !item.status && 'animate-pulseBorder'}`}
+                        aria-label="Notas del Cliente"
+                        title='Notas del Cliente'
+                        onClick={() => handleNoteReview(item.workout_note_id)}
+                      >
+                        <FontAwesomeIcon icon={faNoteSticky} size='xs' />
+                      </button>
+                    }
                     <button
-                      type='button'
-                      className={`inline-flex h-7 w-7 items-center justify-center rounded-full bg-green-800 text-white transition hover:bg-green-400 hover:text-slate-600 ${item.note && !item.status && 'animate-pulseBorder'}`}
-                      aria-label="Notas del Cliente"
-                      title='Notas del Cliente'
-                      onClick={() => handleNoteReview(item.workout_note_id)}
+                      type="button"
+                      onClick={() => handleDeleteAssignedWorkout(item.id)}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white transition hover:bg-red-500"
+                      aria-label="Eliminar rutina asignada"
+                      title='Eliminar rutina asignada'
                     >
-                      <FontAwesomeIcon icon={faNoteSticky} size='xs' />
+                      <FontAwesomeIcon icon={faTrash} size='xs' />
                     </button>
-                  }
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteAssignedWorkout(item.id)}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white transition hover:bg-red-500"
-                    aria-label="Eliminar rutina asignada"
-                    title='Eliminar rutina asignada'
-                  >
-                    <FontAwesomeIcon icon={faTrash} size='xs' />
-                  </button>
-                </div>
+                  </div>
                 }
               </div>
 
@@ -1504,7 +1513,25 @@ const Clients = () => {
                   <details ref={biometricHistoryRef} open className="group overflow-hidden rounded-3xl border border-slate-700 bg-[#0f172a]">
                     <summary className="flex cursor-pointer list-none items-center justify-between border-b border-slate-700 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c] [&::-webkit-details-marker]:hidden">
                       <span>Historial biométrico</span>
-                      <FontAwesomeIcon icon={faChevronDown} className="transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+                      <div className="flex items-center gap-1">
+                          <button
+                          type="button"
+                          onClick={() => setShowSilhouetteModal(true)}
+                          aria-label="Ver silueta corporal"
+                          title="Ver silueta corporal"
+                        >
+                          <FontAwesomeIcon icon={faMale}> </FontAwesomeIcon>
+                        </button>                        
+                        <button
+                          type="button"
+                          onClick={() => setShowProgressChartModal(true)}
+                          aria-label="Ver evolución biométrica"
+                          title="Ver evolución biométrica"
+                        >
+                          <FontAwesomeIcon icon={faChartLine}> </FontAwesomeIcon>
+                        </button>
+                        <FontAwesomeIcon icon={faChevronDown} className="transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+                      </div>
                     </summary>
                     <div className="max-h-[320px] overflow-y-auto overflow-x-auto">
                       <table className="w-full min-w-[1200px] text-left text-sm">
@@ -1589,20 +1616,6 @@ const Clients = () => {
                             ))
                           )}
                         </tbody>
-                        <tfoot>
-                          <tr className="border-t border-slate-700/60">
-                            <td colSpan="8" className="text-right px-4 py-3 text-xs text-yellow-400 hover:text-yellow-200 transition">
-                              <button
-                                type="button"
-                                onClick={() => setShowProgressChartModal(true)}
-                                aria-label="Ver evolución biométrica"
-                                title="Ver evolución biométrica"
-                              >
-                                <FontAwesomeIcon icon={faChartLine}> </FontAwesomeIcon>
-                              </button>
-                            </td>
-                          </tr>
-                        </tfoot>
                       </table>
                     </div>
                   </details>
@@ -1616,75 +1629,74 @@ const Clients = () => {
               </summary>
               <form onSubmit={handleAssignSubmit} className="space-y-4 p-3 sm:space-y-5 sm:p-4">
                 <label className="block space-y-2 text-sm text-slate-200">
-                Rutina
-                <select
-                  value={selectedWorkoutId}
-                  onChange={(e) => setSelectedWorkoutId(e.target.value)}
-                  className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                >
-                  <option value="" disabled>Selecciona una rutina</option>
-                  {loadingTrainerWorkouts ? (
-                    <option value="">Cargando rutinas...</option>
-                  ) : trainerWorkouts.length === 0 ? (
-                    <option value="">No se encontraron rutinas</option>
-                  ) : (
-                    sortedTrainerWorkouts.map((workout) => {
-                      const usesTime = Number(workout.sets_or_time) === 1;
-                      const workoutDetails = usesTime
-                        ? `Tiempo: ${workout.time ?? '—'} min. `
-                        : `Sets: ${workout.sets ?? '—'} Reps: ${workout.reps_text ?? workout.reps ?? '—'}`;
+                  Rutina
+                  <select
+                    value={selectedWorkoutId}
+                    onChange={(e) => setSelectedWorkoutId(e.target.value)}
+                    className="w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                  >
+                    <option value="" disabled>Selecciona una rutina</option>
+                    {loadingTrainerWorkouts ? (
+                      <option value="">Cargando rutinas...</option>
+                    ) : trainerWorkouts.length === 0 ? (
+                      <option value="">No se encontraron rutinas</option>
+                    ) : (
+                      sortedTrainerWorkouts.map((workout) => {
+                        const usesTime = Number(workout.sets_or_time) === 1;
+                        const workoutDetails = usesTime
+                          ? `Tiempo: ${workout.time ?? '—'} min. `
+                          : `Sets: ${workout.sets ?? '—'} Reps: ${workout.reps_text ?? workout.reps ?? '—'}`;
 
-                      return (
-                        <option key={workout.id || workout.workout_id || workout.workoutId} value={workout.id || workout.workout_id || workout.workoutId}>
-                          {`${workout.title || 'Rutina'} (${workoutDetails}${workout.client_effort_notes ? ` | ${workout.client_effort_notes}` : ''})`}
-                        </option>
-                      );
-                    })
-                  )}
-                </select>
+                        return (
+                          <option key={workout.id || workout.workout_id || workout.workoutId} value={workout.id || workout.workout_id || workout.workoutId}>
+                            {`${workout.title || 'Rutina'} (${workoutDetails}${workout.client_effort_notes ? ` | ${workout.client_effort_notes}` : ''})`}
+                          </option>
+                        );
+                      })
+                    )}
+                  </select>
                 </label>
 
                 <div className="space-y-3">
-                <p className="text-sm font-semibold text-slate-200">Días de la semana</p>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {dayOptions.map((day) => (
-                    <label
-                      key={day.key}
-                      className={`inline-flex items-center gap-2 rounded-3xl border px-4 py-3 text-sm font-medium transition ${
-                        selectedDays[day.key]
-                          ? `border-transparent ${dayColorMap[day.key]}`
-                          : dayIdleMap[day.key]
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedDays[day.key]}
-                        onChange={() => handleToggleDay(day.key)}
-                        className={`h-4 w-4 rounded border-2 bg-slate-900 focus:ring-2 focus:ring-offset-0 ${dayBorderMap[day.key]} ${dayAccentMap[day.key]}`}
-                      />
-                      {day.label}
-                    </label>
-                  ))}
-                </div>
+                  <p className="text-sm font-semibold text-slate-200">Días de la semana</p>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {dayOptions.map((day) => (
+                      <label
+                        key={day.key}
+                        className={`inline-flex items-center gap-2 rounded-3xl border px-4 py-3 text-sm font-medium transition ${selectedDays[day.key]
+                            ? `border-transparent ${dayColorMap[day.key]}`
+                            : dayIdleMap[day.key]
+                          }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedDays[day.key]}
+                          onChange={() => handleToggleDay(day.key)}
+                          className={`h-4 w-4 rounded border-2 bg-slate-900 focus:ring-2 focus:ring-offset-0 ${dayBorderMap[day.key]} ${dayAccentMap[day.key]}`}
+                        />
+                        {day.label}
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
                 <label className="block space-y-2 text-sm text-slate-200">
-                Notas del entrenador
-                <textarea
-                  value={trainerNotes}
-                  onChange={(e) => setTrainerNotes(e.target.value)}
-                  placeholder="Escribe información extra sobre la rutina..."
-                  className="min-h-[120px] w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                />
+                  Notas del entrenador
+                  <textarea
+                    value={trainerNotes}
+                    onChange={(e) => setTrainerNotes(e.target.value)}
+                    placeholder="Escribe información extra sobre la rutina..."
+                    className="min-h-[120px] w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                  />
                 </label>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                <button type="submit" disabled={loadingAssign} className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-70">
-                  {loadingAssign ? 'Asignando...' : 'Asignar rutina'}
-                </button>
-                <button type="button" onClick={closeAssignModal} className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700">
-                  Cerrar
-                </button>
+                  <button type="submit" disabled={loadingAssign} className="rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e] disabled:cursor-not-allowed disabled:opacity-70">
+                    {loadingAssign ? 'Asignando...' : 'Asignar rutina'}
+                  </button>
+                  <button type="button" onClick={closeAssignModal} className="rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700">
+                    Cerrar
+                  </button>
                 </div>
               </form>
             </details>
@@ -1716,7 +1728,7 @@ const Clients = () => {
                   >
                     <FontAwesomeIcon icon={faTrash} size="xs" />
                   </button>
-                )}                
+                )}
                 Total: {visibleWorkouts.length}
               </span>
             </div>
@@ -1738,6 +1750,85 @@ const Clients = () => {
       </ModalOverlay>
 
       {/* Progress chart modal */}
+      <ModalOverlay
+        isOpen={showSilhouetteModal}
+        onClose={() => setShowSilhouetteModal(false)}
+        title={selectedClient ? `Silueta corporal de ${selectedClient.name}` : 'Silueta corporal'}
+      >
+        {clientProgressHistory.length === 0 ? (
+          <p className="py-12 text-center text-slate-400">No hay datos biométricos para mostrar.</p>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+            <div className="flex h-full flex-col">
+              <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c]">Silueta corporal</h4>
+              <BodySilhouette
+                genre={clientProfileData?.genre || selectedClient?.genre}
+                cadera={Number(clientProgressHistory[0]?.hips || clientProgressHistory[0]?.cadera)}
+                cintura={Number(clientProgressHistory[0]?.waist || clientProgressHistory[0]?.cintura)}
+                piernas={Number(clientProgressHistory[0]?.legs || clientProgressHistory[0]?.piernas)}
+                brazos={Number(clientProgressHistory[0]?.arms || clientProgressHistory[0]?.brazos)}
+              />
+            </div>
+
+            <div className="flex h-full flex-col">
+              <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c]">Valores biométricos</h4>
+              <div className="flex flex-1 overflow-hidden rounded-2xl border border-slate-700 bg-[#0f172a] lg:min-h-[450px]">
+                <table className="h-full w-full table-fixed text-left text-sm">
+                  <tbody className="divide-y divide-slate-700/70">
+                    {[
+                      { label: 'Peso', value: clientProgressHistory[0]?.weight ?? clientProgressHistory[0]?.peso, suffix: ' kg' },
+                      { label: 'Cintura', value: clientProgressHistory[0]?.waist ?? clientProgressHistory[0]?.cintura, suffix: ' cm' },
+                      { label: 'Cadera', value: clientProgressHistory[0]?.hips ?? clientProgressHistory[0]?.cadera, suffix: ' cm' },
+                      { label: 'Brazos', value: clientProgressHistory[0]?.arms ?? clientProgressHistory[0]?.brazos, suffix: ' cm' },
+                      { label: 'Piernas', value: clientProgressHistory[0]?.legs ?? clientProgressHistory[0]?.piernas, suffix: ' cm' },
+                    ].map((metric) => (
+                      <tr key={metric.label}>
+                        <th className="px-4 py-3 font-medium text-slate-400">{metric.label}</th>
+                        <td className="px-4 py-3 text-right font-semibold text-white">
+                          {metric.value !== null && metric.value !== undefined && metric.value !== ''
+                            ? `${metric.value}${metric.suffix}`
+                            : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr>
+                      <th className="px-4 py-3 align-top font-medium text-slate-400">Fotos</th>
+                      <td className="px-4 py-3">
+                        <div className="flex justify-end gap-2">
+                          {clientProgressHistory[0]?.photo_front_url && (
+                            <button
+                              type="button"
+                              onClick={() => setBioPhotoPreview(clientProgressHistory[0].photo_front_url)}
+                              className="h-16 w-12 overflow-hidden rounded-lg border border-slate-600 transition hover:border-[#f1b80c]"
+                              aria-label="Ver foto frontal"
+                            >
+                              <img src={clientProgressHistory[0].photo_front_url} alt="Frontal" className="h-full w-full object-cover" />
+                            </button>
+                          )}
+                          {clientProgressHistory[0]?.photo_back_url && (
+                            <button
+                              type="button"
+                              onClick={() => setBioPhotoPreview(clientProgressHistory[0].photo_back_url)}
+                              className="h-16 w-12 overflow-hidden rounded-lg border border-slate-600 transition hover:border-[#f1b80c]"
+                              aria-label="Ver foto trasera"
+                            >
+                              <img src={clientProgressHistory[0].photo_back_url} alt="Posterior" className="h-full w-full object-cover" />
+                            </button>
+                          )}
+                          {!clientProgressHistory[0]?.photo_front_url && !clientProgressHistory[0]?.photo_back_url && (
+                            <span className="text-slate-500">—</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </ModalOverlay>
+
       <ModalOverlay
         isOpen={showProgressChartModal}
         onClose={() => setShowProgressChartModal(false)}

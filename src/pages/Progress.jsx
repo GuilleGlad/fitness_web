@@ -60,7 +60,6 @@ const Progress = () => {
   const [progreso, setProgreso] = useState([{ cadera: 100, cintura: 100, piernas: 60, brazos: 30 }]);
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const [progressTab, setProgressTab] = useState('silhouette');
   const [chartLimit, setChartLimit] = useState(10);
 
   // Estados para foto de perfil
@@ -463,82 +462,60 @@ const Progress = () => {
               )}
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-2 mb-6">
-              <section className="rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
+            <div className="mb-6 grid gap-4 xl:grid-cols-2">
+              <section className="h-full rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
                 <div className="flex items-start justify-between mb-5 lg:flex-row flex-col">
                   <div>
                     <h2 className="text-xl font-semibold text-white">Progreso corporal</h2>
                   </div>
                 </div>
-                <div>
-                  <div className="mb-4 flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setProgressTab('silhouette')}
-                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'silhouette' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
-                    >
-                      Silueta
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setProgressTab('chart')}
-                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${progressTab === 'chart' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
-                    >
-                      Gráfico
-                    </button>
-                  </div>
+                <div className="space-y-4">
+                  <BodySilhouette
+                    genre={genre}
+                    cadera={Number(progreso[0]?.hips || progreso[0]?.cadera)}
+                    cintura={Number(progreso[0]?.waist || progreso[0]?.cintura)}
+                    piernas={Number(progreso[0]?.legs || progreso[0]?.piernas)}
+                    brazos={Number(progreso[0]?.arms || progreso[0]?.brazos)}
+                  />
+                </div>
+              </section>
 
-                  <div>
-                    {progressTab === 'silhouette' ? (
-                      <div className="space-y-4">
-                        <BodySilhouette
-                          genre={genre}
-                          cadera={Number(progreso[0]?.hips || progreso[0]?.cadera)}
-                          cintura={Number(progreso[0]?.waist || progreso[0]?.cintura)}
-                          piernas={Number(progreso[0]?.legs || progreso[0]?.piernas)}
-                          brazos={Number(progreso[0]?.arms || progreso[0]?.brazos)}
-                        />
+              <section className="flex h-full flex-col rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
+                <div className="flex w-full flex-1 chart-div">
+                  <div className="flex h-full w-full flex-col rounded-3xl bg-slate-950/90 border border-slate-800 p-4">
+                    <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Evolución biométrica</p>
+                        <h3 className="text-lg font-semibold text-white">Peso y medidas</h3>
                       </div>
-                    ) : (
-                      <div className="w-full chart-div mt-10">
-                        <div className="rounded-3xl bg-slate-950/90 border border-slate-800 p-4">
-                          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                            <div>
-                              <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Evolución biométrica</p>
-                              <h3 className="text-lg font-semibold text-white">Peso y medidas</h3>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <label htmlFor="chart-limit" className="text-xs uppercase tracking-[0.25em] text-slate-400">Últimos</label>
-                              <select
-                                id="chart-limit"
-                                value={chartLimit}
-                                onChange={(e) => setChartLimit(Number(e.target.value))}
-                                className="rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-[#f1b80c]"
-                              >
-                                {[5, 10, 15, 20, 30, 0].map((limit) => (
-                                  <option key={limit} value={limit}>
-                                    {limit === 0 ? 'Todos' : limit}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                          <div className="h-[320px] w-full">
-                            <Line
-                              data={chartData}
-                              options={chartOptions}
-                              height={320}
-                              style={{ width: '100%', display: 'block' }}
-                            />
-                          </div>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="chart-limit" className="text-xs uppercase tracking-[0.25em] text-slate-400">Últimos</label>
+                        <select
+                          id="chart-limit"
+                          value={chartLimit}
+                          onChange={(e) => setChartLimit(Number(e.target.value))}
+                          className="rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-[#f1b80c]"
+                        >
+                          {[5, 10, 15, 20, 30, 0].map((limit) => (
+                            <option key={limit} value={limit}>
+                              {limit === 0 ? 'Todos' : limit}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                    )}
+                    </div>
+                    <div className="min-h-[320px] w-full flex-1">
+                      <Line
+                        data={chartData}
+                        options={chartOptions}
+                        style={{ width: '100%', height: '100%', display: 'block' }}
+                      />
+                    </div>
                   </div>
                 </div>
               </section>
 
-              <section className="rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">
+              <section className="w-full overflow-visible rounded-2xl border border-slate-800 bg-[#141820] p-4 shadow-xl sm:rounded-3xl sm:p-6 xl:col-span-2">
                 <h2 className="items-center text-xl font-semibold text-white mb-4">Datos Iniciales</h2>
                 <div className="grid grid-cols-3 text-slate-300 mb-4">
                   {[
@@ -569,7 +546,7 @@ const Progress = () => {
                     </button>
                   </div>
                 </div>
-                <div className="max-h-[395px] overflow-y-auto space-y-3 pr-1">
+                <div className="space-y-3 pr-1">
                   {progreso.map((item, index) => {
                     const metricEntries = [
                       { label: 'Peso', value: getValidMetricValue(item, 'peso', 'weight'), suffix: ' kg' },

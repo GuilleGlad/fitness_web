@@ -86,35 +86,14 @@ const LibraryItem = ({ item, apiUrl, trainerId, token, onDeleteSuccess, onUpload
 
     const triggerYesNoToast = (handle, ...params) => {
         toast.success((t) => (
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div className="flex items-center gap-3 px-4 py-2">
                 <span>¿Está seguro que desea eliminar el elemento?</span>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                        onClick={() => {
-                            toast.dismiss(t.id); // Closes the toast
-                            handle(...params);
-                        }}
-                        style={{ background: '#9a1314', color: 'white', marginRight: '8px', padding: '8px 16px', borderRadius: '9999px', border: 'none', cursor: 'pointer' }}
-                    >
-                        Si
-                    </button>
-                    <button
-                        onClick={() => {
-                            toast.dismiss(t.id); // Closes the toast
-                        }}
-                        style={{ background: '#c8cfd5', color: '#242526', padding: '8px 16px', borderRadius: '9999px', border: 'none', cursor: 'pointer' }}
-                    >
-                        No
-                    </button>
+                <div className="flex gap-2">
+                    <button onClick={() => { toast.dismiss(t.id); handle(...params); }} className="rounded-full bg-[#9a1314] px-4 py-1.5 text-sm font-semibold text-white border-none cursor-pointer">Sí</button>
+                    <button onClick={() => toast.dismiss(t.id)} className="rounded-full bg-slate-600 px-4 py-1.5 text-sm font-semibold text-white border-none cursor-pointer">No</button>
                 </div>
             </div>
-        ), {
-            style: {
-                background: '#323',
-
-            },
-            duration: Infinity, // Prevents the toast from auto-closing before selection
-        });
+        ), { duration: Infinity });
     };
 
     const handleDelete = async (id) => {
