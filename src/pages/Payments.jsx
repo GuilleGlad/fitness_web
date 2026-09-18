@@ -361,7 +361,7 @@ const Payments = () => {
   return (
     <>
       <div className="min-h-screen bg-[#0d1117] text-white">
-        <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col lg:flex-row">
+        <div className="mx-auto flex min-h-screen max-w-auto flex-col lg:flex-row">
           <aside className="hidden w-full border-b border-slate-800 bg-[#141820] lg:block lg:w-[320px] lg:min-h-screen lg:border-r lg:border-b-0 lg:sticky lg:top-0">
             {SidebarPanel()}
           </aside>
@@ -383,7 +383,7 @@ const Payments = () => {
                 <h2 className="mt-3 text-3xl font-bold text-white">Pagos</h2>
               </div>
 
-              {(roleValue === 2 || roleValue === 3) && (
+              {/* {(roleValue === 2 || roleValue === 3) && (
                 <button
                   type="button"
                   onClick={openNotificationsModal}
@@ -396,7 +396,7 @@ const Payments = () => {
                     <p className="text-2xl font-bold text-white">{notifications.length}</p>
                   </div>
                 </button>
-              )}
+              )} */}
             </div>
 
             <section className="rounded-2xl bg-[#141820] border border-slate-800 p-4 shadow-xl w-full overflow-hidden sm:rounded-3xl sm:p-6">

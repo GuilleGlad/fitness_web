@@ -1253,7 +1253,7 @@ const Clients = () => {
   return (
     <div className="min-h-screen bg-[#0d1117] text-white">
       {/* Header */}
-      <div className="mx-auto max-w-7xl space-y-6 p-4 lg:p-8">
+      <div className="mx-auto max-w-auto space-y-6 p-4 lg:p-8">
         <div className="flex flex-col gap-4 rounded-[40px] border border-slate-800 bg-[#141820] p-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Admin</p>
@@ -1331,7 +1331,7 @@ const Clients = () => {
 
                   <tr key={client.id} className={`group transition ${client.deleted ? 'bg-red-950/30' : 'hover:bg-slate-800/40'}`}>
                     {/* <td className="px-6 py-4 text-slate-300">{client.id}</td> */}
-                    <td className="px-6 py-4"><img src={client.role != 'admin' ? client.picture || '/images/avatar.png' : '/images/avatar.png'} alt={client.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-700" /></td>
+                    <td className="px-4 py-4"><img src={client.role != 'admin' ? client.picture || '/images/avatar.png' : '/images/avatar.png'} alt={client.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-700" /></td>
                     <td className="px-6 py-4 font-medium text-white">{client.name}</td>
                     <td className="px-6 py-4 text-slate-300">{client.email}</td>
                     <td className="px-6 py-4 text-slate-300">{client.phone || '—'}</td>

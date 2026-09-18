@@ -342,7 +342,7 @@ const Trainers = () => {
 
     return (
         <div className="min-h-screen bg-[#0d1117] text-white">
-            <div className="mx-auto max-w-7xl space-y-6 p-4 lg:p-8">
+            <div className="mx-auto max-w-auto space-y-6 p-4 lg:p-8">
                 {/* Header */}
                 <div className="flex flex-col gap-4 rounded-[40px] border border-slate-800 bg-[#141820] p-6 lg:flex-row lg:items-center lg:justify-between">
                     <div>
