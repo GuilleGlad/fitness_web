@@ -1397,7 +1397,7 @@ const Dashboard = () => {
                 <h2 className="text-lg font-semibold text-white mb-3 sm:text-xl sm:mb-4">Workout Diario</h2>
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-row items-center gap-2">
                       <button
                         onClick={() => setCalendarView('week')}
                         className={`rounded-full px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm ${calendarView === 'week' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
@@ -1411,7 +1411,7 @@ const Dashboard = () => {
                         Mes
                       </button>
                     </div>
-                    <p className="text-xs text-slate-400 sm:text-sm">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faPencil}></FontAwesomeIcon>.</p>
+                    <p className="text-xs text-slate-400 sm:text-sm ml-10 mr-10">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faPencil}></FontAwesomeIcon>.</p>
                   </div>
 
                   {calendarView === 'week' ? (
@@ -1797,7 +1797,7 @@ const Dashboard = () => {
           <main className="flex-1 bg-[#0d1117] p-6 lg:p-8">
 
             {/* ✅ Botón hamburguesa — solo visible en móvil */}
-            <div className="mb-4 lg:hidden top-4 sticky text-right">
+            <div className="mb-4 lg:hidden top-4 sticky text-left">
               <button
                 onClick={() => setMenuOpen(true)}
                 aria-label="Abrir menú"
