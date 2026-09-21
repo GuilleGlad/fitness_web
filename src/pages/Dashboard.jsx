@@ -6,7 +6,7 @@ import { getClientStatusLabel } from '../utils/clientUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { faAdd, faHome, faPencil, faPlus, faVideo, faBars, faTimes, faBell, faDumbbell, faCalendarDays, faCommentDots } from '@fortawesome/free-solid-svg-icons';
+import { faAdd, faHome, faPencil, faPlus, faVideo, faBars, faTimes, faBell, faDumbbell, faCalendarDays, faCommentDots, faCheck } from '@fortawesome/free-solid-svg-icons';
 import BodySilhouette from '../components/BodySilhouette';
 import moment from 'moment';
 import 'moment/locale/es';
@@ -298,6 +298,7 @@ const Dashboard = () => {
   const filteredWorkouts = useMemo(() => {
     if (!workouts || workouts.length === 0) return [];
     const selectedLetter = getSelectedDayLetter(selectedDate);
+    console.log(workouts);
     return workouts.filter((item) => {
       const letters = getWorkoutDayLetters(item);
       return letters.includes(selectedLetter);
@@ -1523,11 +1524,11 @@ const Dashboard = () => {
                                   </button>
                                   <button
                                     type="button"
-                                    className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-black transition hover:bg-yellow-200"
-                                    title="Nota"
+                                    className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${item.note !== null ? "bg-yellow-400 text-black transition hover:bg-yellow-200" : "bg-green-800 text-white transition hover:bg-green-600"} `}
+                                    title={item.note !== null ? "Editar nota" : "Completar Rutina"}
                                     onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), workoutTitle, item.note)}
                                   >
-                                    <FontAwesomeIcon icon={faPencil} size="xs" />
+                                    <FontAwesomeIcon icon={item.note !== null ? faPencil : faCheck} size="xs" />
                                   </button>
                                 </div>
                               </div>
@@ -1896,7 +1897,7 @@ const Dashboard = () => {
           <div className="w-full max-w-2xl rounded-[32px] border border-slate-700 bg-[#141820] p-6 shadow-2xl shadow-black/40">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm text-slate-400 uppercase tracking-[0.3em]">Notas de Rutina</p>
+                <p className="text-sm text-slate-400 uppercase tracking-[0.3em]">RUTINA</p>
               </div>
               <button
                 onClick={closeNotesModal}

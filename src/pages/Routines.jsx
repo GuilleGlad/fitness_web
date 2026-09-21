@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { verifyToken } from '../utils/tokenUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faPencil, faVideo, faBars, faTimes, faBell, faDumbbell, faCalendarDays, faCommentDots } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faPencil, faVideo, faBars, faTimes, faBell, faDumbbell, faCalendarDays, faCommentDots, faCheck } from '@fortawesome/free-solid-svg-icons';
 import moment from 'moment';
 import 'moment/locale/es';
 import ExerciseCard from '../components/ExerciseCard';
@@ -505,7 +505,7 @@ const Routines = () => {
               <h2 className="text-lg font-semibold text-white mb-3 sm:text-xl sm:mb-4">Workout Diario</h2>
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-row items-center gap-2">
                     <button
                       onClick={() => setCalendarView('week')}
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm ${calendarView === 'week' ? 'bg-[#f1b80c] text-slate-950' : 'bg-slate-900/70 text-slate-200 hover:bg-slate-800'}`}
@@ -519,7 +519,7 @@ const Routines = () => {
                       Mes
                     </button>
                   </div>
-                  <p className="text-xs text-slate-400 sm:text-sm">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faPencil}></FontAwesomeIcon>.</p>
+                  <p className="text-xs text-slate-400 sm:text-sm ml-10 mr-10">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faPencil}></FontAwesomeIcon>.</p>
                 </div>
 
                 {calendarView === 'week' ? (
@@ -630,11 +630,11 @@ const Routines = () => {
                                 </button>
                                 <button
                                   type="button"
-                                  className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-black transition hover:bg-yellow-200"
-                                  title="Nota"
+                                  className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${item.note !== null ? "bg-yellow-400 text-black transition hover:bg-yellow-200" : "bg-green-800 text-white transition hover:bg-green-600"} `}
+                                  title={item.note !== null ? "Editar nota" : "Completar Rutina"}
                                   onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), workoutTitle, item.note)}
                                 >
-                                  <FontAwesomeIcon icon={faPencil} size="xs" />
+                                  <FontAwesomeIcon icon={item.note !== null ? faPencil : faCheck} size="xs" />
                                 </button>
                               </div>
                             </div>
@@ -735,7 +735,7 @@ const Routines = () => {
           <div className="w-full max-w-2xl rounded-[32px] border border-slate-700 bg-[#141820] p-6 shadow-2xl shadow-black/40">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm text-slate-400 uppercase tracking-[0.3em]">Notas de Rutina</p>
+                <p className="text-sm text-slate-400 uppercase tracking-[0.3em]">RUTINA</p>
               </div>
               <button
                 onClick={closeNotesModal}
