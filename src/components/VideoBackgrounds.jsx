@@ -29,7 +29,7 @@ const VideoBackground = ({ videoSrc }) => {
                 - autoPlay, loop, muted: Standard practices for background video players. 
                   (It's highly recommended to mute background videos).
             */}
-            <video 
+            <video
                 className="video-background" 
                 src={videoSrc} 
                 autoPlay 

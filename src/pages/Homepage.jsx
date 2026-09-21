@@ -455,7 +455,7 @@ function Homepage() {
                             <Reveal
                                 as="div"
                                 id="carousel"
-                                className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800"
+                                className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gradient-to-b from-black via-gray-600 to-black"
                             >
                                 {settingsLoading ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -498,7 +498,7 @@ function Homepage() {
                             </div>
                         </div>
                         <div className="flex-1 bg-black">
-                            <div id='adsDiv' className='w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800'>
+                            <div id='adsDiv' className='w-full px-8 lg:px-32 mt-10 py-10 rounded-lg  bg-gradient-to-b from-black via-gray-600 to-black'>
                                 <div className="w-full flex justify-center">
                                     {settingsLoading ? (
                                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-4 max-w-7xl w-full">
@@ -507,46 +507,23 @@ function Homepage() {
                                             ))}
                                         </div>
                                     ) : (
-                                    <div
-                                        className="
-          columns-1
-          sm:columns-2
-          md:columns-3
-          lg:columns-4
-          gap-4
-          p-4
-          max-w-7xl
-          mx-auto
-        "
-                                    >
-                                        {visibleAdsImages.map((src, index) => (
-                                            <Reveal
-                                                key={index}
-                                                delay={index * 100}
-                                                className="
-              mb-4
-              break-inside-avoid
-              overflow-hidden
-              rounded-xl
-              shadow-lg
-              bg-white
-            "
-                                            >
-                                                <img
-                                                    src={src}
-                                                    alt={`brand-${index}`}
-                                                    className="
-                w-full
-                h-auto
-                object-cover
-                hover:scale-105
-                transition-transform
-                duration-300
-              "
-                                                />
-                                            </Reveal>
-                                        ))}
-                                    </div>
+                                        <div
+                                            className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 p-4 max-w-7xl mx-auto"
+                                        >
+                                            {visibleAdsImages.map((src, index) => (
+                                                <Reveal
+                                                    key={index}
+                                                    delay={index * 100}
+                                                    className="mb-4 break-inside-avoid overflow-hidden rounded-xl shadow-lg bg-white"
+                                                >
+                                                    <img
+                                                        src={src}
+                                                        alt={`brand-${index}`}
+                                                        className="w-full h-auto object-cover hover:scale-105 transition-transform duration-300"
+                                                    />
+                                                </Reveal>
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
                                 {isMobileAds && adsImages.length > 1 && (
@@ -563,7 +540,6 @@ function Homepage() {
                             </div>
                         </div>
                     </div>
-                    <div className='separator lg:pt-32 pt-12 bg-black'></div>
                     {/* RRSS */}
                     {/* <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
 
@@ -630,39 +606,43 @@ function Homepage() {
 
                     <div className='separator lg:pt-32 pt-12 bg-black'></div>
                     {/* NOTICIAS */}
-                    <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
-                        <div className="flex-1 lg:flex bg-black lg:mr-32">
-                            <div className="hidden lg:block lg:w-1/4">
-                                {/* <FloatingText text="SECCION INFORMATIVA" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText> */}
-                            </div>
-                            <div className='w-full lg:w-3/4'>
-                                <Reveal>
-                                    <BigTitle title="MUNDO FITNESS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
-                                </Reveal>
-                            </div>
-                        </div>
-                        <Reveal className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
-                            {newsLoading ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {[0, 1, 2].map((i) => (
-                                        <Skeleton key={i} className="h-48 w-full" />
-                                    ))}
+                    {news && news.length > 0 && (
+                        <>
+                            <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
+                                <div className="flex-1 lg:flex bg-black lg:mr-32">
+                                    <div className="hidden lg:block lg:w-1/4">
+                                        {/* <FloatingText text="SECCION INFORMATIVA" color="text-white lg:ml-32" iconColor='#b8fb00'></FloatingText> */}
+                                    </div>
+                                    <div className='w-full lg:w-3/4'>
+                                        <Reveal>
+                                            <BigTitle title="MUNDO FITNESS" color="text-white" size="text-4xl lg:text-8xl"></BigTitle>
+                                        </Reveal>
+                                    </div>
                                 </div>
-                            ) : (
-                                slidersReady && news.length > 0 && (
-                                    <Slider key={sliderBucket} {...sliderSettingsNews} ref={sliderNewsRef}>
-                                        {
-                                            news.map((item, index) => (
-                                                <News key={index} text={item.text} image={item.image_url} title={item.title} />
-                                            ))
-                                        }
-                                    </Slider>
-                                )
-                            )}
-                        </Reveal>
+                                <Reveal className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gradient-to-b from-black via-gray-600 to-black">
+                                    {newsLoading ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {[0, 1, 2].map((i) => (
+                                                <Skeleton key={i} className="h-48 w-full" />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        slidersReady && news.length > 0 && (
+                                            <Slider key={sliderBucket} {...sliderSettingsNews} ref={sliderNewsRef}>
+                                                {
+                                                    news.map((item, index) => (
+                                                        <News key={index} text={item.text} image={item.image_url} title={item.title} />
+                                                    ))
+                                                }
+                                            </Slider>
+                                        )
+                                    )}
+                                </Reveal>
 
-                    </div>
-                    <div className='separator lg:pt-32 pt-12 bg-black'></div>
+                            </div>
+                            <div className='separator lg:pt-32 pt-12 bg-black'></div>
+                        </>
+                    )}
                     {/* RECIPES */}
                     <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
                         <div className="flex-1 lg:flex bg-black lg:mr-32">
@@ -675,7 +655,7 @@ function Homepage() {
                                 </Reveal>
                             </div>
                         </div>
-                        <Reveal className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
+                        <Reveal className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gradient-to-b from-black via-gray-600 to-black">
                             {recipesLoading ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {[0, 1, 2].map((i) => (
@@ -698,7 +678,6 @@ function Homepage() {
                         </Reveal>
 
                     </div>
-                    <div className='separator lg:pt-32 pt-12 bg-black'></div>
 
                     {/* EJERCICIOS PUBLICOS */}
                     <div className="bg-black w-full flex-1 lg:mr-32 mr-4">
@@ -712,7 +691,7 @@ function Homepage() {
                                 </Reveal>
                             </div>
                         </div>
-                        <Reveal className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gray-800">
+                        <Reveal className="w-full px-8 lg:px-32 mt-10 py-10 rounded-lg bg-gradient-to-b from-black via-gray-600 to-black">
                             {exercisesLoading ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {[0, 1, 2].map((i) => (
@@ -788,7 +767,7 @@ function Homepage() {
                     <div className="bg-black flex-1">
                         {/* <Footer logoPath={logoPath} email={defaultEmail} links={["transformations", "about us", "pricing", "how to start", "faq"]}/> */}
                         <Reveal>
-                            <Footer logoPath={logoPath} email={trainerEmail} trainerPhone={trainerPhone} trainerAddress={trainerAddress} facebook_url={settings.facebook_link || ''} x_url={settings.x_link || ''} youtube_url={settings.youtube_link || ''} instagram_url={settings.instagram_link || ''} tiktok_url={settings.tiktok_link || ''} loading={settingsLoading} title={settings.titulo}/>
+                            <Footer logoPath={logoPath} email={trainerEmail} trainerPhone={trainerPhone} trainerAddress={trainerAddress} facebook_url={settings.facebook_link || ''} x_url={settings.x_link || ''} youtube_url={settings.youtube_link || ''} instagram_url={settings.instagram_link || ''} tiktok_url={settings.tiktok_link || ''} loading={settingsLoading} title={settings.titulo} />
                         </Reveal>
                     </div>
                     <div className='separator lg:pt-32 pt-12 bg-black'></div>
