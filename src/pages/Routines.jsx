@@ -98,7 +98,7 @@ const Routines = () => {
   const [profile, setProfile] = useState({});
   const [workouts, setWorkouts] = useState([]);
   const [previewExercise, setPreviewExercise] = useState(null);
-  const [notesModal, setNotesModal] = useState({ isOpen: false, workoutId: null, title: '', date: '', notes: '' });
+  const [notesModal, setNotesModal] = useState({ isOpen: false, workoutId: null, title: '', date: '', notes: '', availableDates: [] });
   const [calendarView, setCalendarView] = useState('week');
   const [selectedDate, setSelectedDate] = useState(moment().startOf('day'));
 
@@ -278,6 +278,30 @@ const Routines = () => {
     });
   }, [workouts, selectedDate]);
 
+  const getWorkoutNoteDates = (workoutId, includeSelectedDate = false) => {
+    const dates = workouts
+      .filter((workout) => String(workout.id) === String(workoutId))
+      .map((workout) => moment(workout.workout_note_log_date))
+      .filter((date) => date.isValid() && date.isoWeekday() === selectedDate.isoWeekday())
+      .map((date) => date.format('YYYY-MM-DD'));
+
+    if (includeSelectedDate) {
+      dates.push(selectedDate.format('YYYY-MM-DD'));
+    }
+
+    return [...new Set(dates)].sort((firstDate, secondDate) => secondDate.localeCompare(firstDate));
+  };
+
+  const getWorkoutNoteForDate = (workoutId, date) => {
+    const workout = workouts.find((item) => (
+      String(item.id) === String(workoutId) &&
+      moment(item.workout_note_log_date).isValid() &&
+      moment(item.workout_note_log_date).format('YYYY-MM-DD') === moment(date).format('YYYY-MM-DD')
+    ));
+
+    return workout?.notes ?? workout?.note ?? '';
+  };
+
   const selectWeekDay = (day) => {
     setSelectedDate(day.clone().startOf('day'));
     setCalendarView('week');
@@ -307,12 +331,13 @@ const Routines = () => {
       workoutId: workout_id,
       title: title || 'Rutina',
       date: log_date,
-      notes: note || '',
+      notes: getWorkoutNoteForDate(workout_id, log_date) || note || '',
+      availableDates: getWorkoutNoteDates(workout_id, note === null),
     });
   };
 
   const closeNotesModal = () => {
-    setNotesModal({ isOpen: false, workoutId: null, title: '', date: '', notes: '' });
+    setNotesModal({ isOpen: false, workoutId: null, title: '', date: '', notes: '', availableDates: [] });
   };
 
   const formatTimestamp = (dateString) => {
@@ -632,7 +657,7 @@ const Routines = () => {
                                   type="button"
                                   className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${item.note !== null ? "bg-yellow-400 text-black transition hover:bg-yellow-200" : "bg-green-800 text-white transition hover:bg-green-600"} `}
                                   title={item.note !== null ? "Editar nota" : "Completar Rutina"}
-                                  onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), workoutTitle, item.note)}
+                                  onClick={() => handleWorkoutNotes(item.id, clientId, item.note === null ? selectedDate.format('YYYY-MM-DD') : item.workout_note_log_date || selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), workoutTitle, item.note)}
                                 >
                                   <FontAwesomeIcon icon={item.note !== null ? faPencil : faCheck} size="xs" />
                                 </button>}
@@ -752,8 +777,23 @@ const Routines = () => {
                   <p className="mt-2 text-2x1 font-semibold text-white">{notesModal.title}</p>
                 </div>
                 <div className="rounded-3xl bg-slate-950/70 p-4">
-                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Fecha</p>
-                  <p className="mt-2 text-2x1 font-semibold text-white">{moment(notesModal.date).format("DD-MM-YYYY")}</p>
+                  <label className="text-xs uppercase tracking-[0.25em] text-slate-500" htmlFor="workout-note-date">Fecha</label>
+                  <select
+                    id="workout-note-date"
+                    value={moment(notesModal.date).format('YYYY-MM-DD')}
+                    onChange={(e) => setNotesModal((prev) => ({
+                      ...prev,
+                      date: e.target.value,
+                      notes: getWorkoutNoteForDate(prev.workoutId, e.target.value),
+                    }))}
+                    className="mt-2 w-full rounded-2xl border border-slate-700 bg-[#111827] p-3 text-sm font-semibold text-white focus:border-[#f1b80c] focus:outline-none focus:ring-2 focus:ring-[#f1b80c]/20"
+                  >
+                    {(notesModal.availableDates || []).map((date) => (
+                      <option key={date} value={date}>
+                        {moment(date).format('DD-MM-YYYY')}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
