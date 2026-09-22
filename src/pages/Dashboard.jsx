@@ -1500,7 +1500,7 @@ const Dashboard = () => {
                           const workoutTitle = item.title || item.name || item.workout_name || `Rutina ${item.workout_id || item.id}`;
                           return (
                             <div
-                              key={item.id || `${item.workout_id}-${item.day_of_week}-${workoutTitle}`}
+                              key={item.id + (Math.random() * 100) || `${item.workout_id}-${item.day_of_week}-${workoutTitle}` + (Math.random() * 100)}
                               className="group relative flex min-w-0 flex-col gap-2 rounded-xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-2.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800 sm:gap-2.5 sm:rounded-2xl sm:p-3.5"
                             >
                               {/* Header: icon + title + acciones */}

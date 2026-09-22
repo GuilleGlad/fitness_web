@@ -440,7 +440,7 @@ c -1.188 -2.523 -2.763 -3.085 -4.457 -4.93 `;
     return (
         <div className="flex justify-center bg-gray-700/60 p-4 rounded-xl border border-gray-200">
             <svg version="1.1" id="Layer_1" x="0px" y="0px" stroke='white' strokeWidth='4'
-                viewBox={viewport_metrics} enable-background="new 0 0 837.483 1819.369" fill="#f1b80c" className="w-48 h-auto">
+                viewBox={viewport_metrics} enableBackground="new 0 0 837.483 1819.369" fill="#f1b80c" className="w-48 h-auto">
                 <path d={silhouette} />
             </svg>
 
