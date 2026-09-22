@@ -298,7 +298,6 @@ const Dashboard = () => {
   const filteredWorkouts = useMemo(() => {
     if (!workouts || workouts.length === 0) return [];
     const selectedLetter = getSelectedDayLetter(selectedDate);
-    console.log(workouts);
     return workouts.filter((item) => {
       const letters = getWorkoutDayLetters(item);
       return letters.includes(selectedLetter);
@@ -1495,7 +1494,7 @@ const Dashboard = () => {
                       <p className="text-sm text-slate-400">No hay rutinas asignadas para este día.</p>
                     ) : (
                       <div className="grid gap-3 md:grid-cols-1">
-                        {filteredWorkouts.map((item) => {
+                        {filteredWorkouts.filter((value, index, self) => self.findIndex(v => v.id === value.id && v.name === value.name) === index).map((item) => {
                           const dayLetters = getWorkoutDayLetters(item).split('').filter(Boolean);
                           const workoutTitle = item.title || item.name || item.workout_name || `Rutina ${item.workout_id || item.id}`;
                           return (
@@ -1522,14 +1521,14 @@ const Dashboard = () => {
                                   >
                                     <FontAwesomeIcon icon={faVideo} size="xs" />
                                   </button>
-                                  <button
+                                  {(moment().diff(selectedDate) >= 0) && <button
                                     type="button"
                                     className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${item.note !== null ? "bg-yellow-400 text-black transition hover:bg-yellow-200" : "bg-green-800 text-white transition hover:bg-green-600"} `}
                                     title={item.note !== null ? "Editar nota" : "Completar Rutina"}
                                     onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), workoutTitle, item.note)}
                                   >
                                     <FontAwesomeIcon icon={item.note !== null ? faPencil : faCheck} size="xs" />
-                                  </button>
+                                  </button>}
                                 </div>
                               </div>
 
@@ -1560,20 +1559,20 @@ const Dashboard = () => {
                               )}
 
                               {/* Nota del cliente */}
-                              {item.note &&
+                              {/* {item.note &&
                                 <p className="line-clamp-2 flex items-start gap-1.5 rounded-xl border border-yellow-400/40 bg-yellow-400/5 px-3 py-2 text-xs text-slate-200" title={item.note}>
                                   <FontAwesomeIcon icon={faCommentDots} className="mt-0.5 shrink-0 text-[#f1b80c]" />
-                                  <span><span className="mr-1 font-semibold text-white">Notas:</span>{item.note}</span>
+                                  <span><span className="mr-1 font-semibold text-white">Notas:</span>{item.note}</span> | <span className='font-bold'>{moment(item.workout_note_log_date).format('DD/MM/YYYY')}</span>
                                 </p>
-                              }
+                              } */}
 
                               {/* Feedback del entrenador */}
-                              {item.feedback &&
+                              {/* {item.feedback &&
                                 <p className="line-clamp-2 rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-3 py-2 text-xs text-slate-200" title={item.feedback}>
                                   <span className="mr-1 font-semibold text-emerald-400">{profile?.trainer_name || 'Feedback'}:</span>
                                   {item.feedback}
                                 </p>
-                              }
+                              } */}
 
                               {item.description && (
                                 <p className="text-xs leading-5 text-slate-300">{item.description}</p>
