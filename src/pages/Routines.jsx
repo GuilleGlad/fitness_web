@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { verifyToken } from '../utils/tokenUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faPencil, faVideo, faBars, faTimes, faBell, faDumbbell, faCalendarDays, faCommentDots, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faPencil, faVideo, faBars, faTimes, faBell, faDumbbell, faCalendarDays, faCommentDots, faCheck, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import moment from 'moment';
 import 'moment/locale/es';
 import ExerciseCard from '../components/ExerciseCard';
@@ -98,7 +98,7 @@ const Routines = () => {
   const [profile, setProfile] = useState({});
   const [workouts, setWorkouts] = useState([]);
   const [previewExercise, setPreviewExercise] = useState(null);
-  const [notesModal, setNotesModal] = useState({ isOpen: false, workoutId: null, title: '', date: '', notes: '', availableDates: [] });
+  const [notesModal, setNotesModal] = useState({ isOpen: false, workoutId: null, title: '', date: '', notes: '', clientEffortNotes: '', availableDates: [] });
   const [calendarView, setCalendarView] = useState('week');
   const [selectedDate, setSelectedDate] = useState(moment().startOf('day'));
 
@@ -274,11 +274,11 @@ const Routines = () => {
     const selectedLetter = getSelectedDayLetter(selectedDate);
     return workouts.filter((item) => {
       const letters = getWorkoutDayLetters(item);
-      return letters.includes(selectedLetter);
+      return letters.includes(selectedLetter) && moment(item.log_date).format("DD/MM/YYYY") <= selectedDate.format("DD/MM/YYYY");
     });
   }, [workouts, selectedDate]);
 
-  const getWorkoutNoteDates = (workoutId, includeSelectedDate = false) => {
+  const getWorkoutNoteDates = (workoutId, includeSelectedDate = true) => {
     const dates = workouts
       .filter((workout) => String(workout.id) === String(workoutId))
       .map((workout) => moment(workout.workout_note_log_date))
@@ -292,14 +292,28 @@ const Routines = () => {
     return [...new Set(dates)].sort((firstDate, secondDate) => secondDate.localeCompare(firstDate));
   };
 
-  const getWorkoutNoteForDate = (workoutId, date) => {
-    const workout = workouts.find((item) => (
+  const getWorkoutForNoteDate = (workoutId, date) => workouts.find((item) => (
       String(item.id) === String(workoutId) &&
       moment(item.workout_note_log_date).isValid() &&
       moment(item.workout_note_log_date).format('YYYY-MM-DD') === moment(date).format('YYYY-MM-DD')
     ));
 
-    return workout?.notes ?? workout?.note ?? '';
+  const getWorkoutNoteForDate = (workoutId, date) => {
+    const workout = getWorkoutForNoteDate(workoutId, date);
+    const note = workout?.notes ?? workout?.note ?? '';
+    const suffix = `|${workout?.client_effort_notes || ''}`;
+
+    return note.endsWith(suffix) ? note.slice(0, -suffix.length) : note;
+  };
+
+  const handleWorkoutNoteDateChange = (workoutId, date) => {
+    const workout = getWorkoutForNoteDate(workoutId, date);
+    setNotesModal((prev) => ({
+      ...prev,
+      date,
+      notes: getWorkoutNoteForDate(workoutId, date),
+      clientEffortNotes: workout?.client_effort_notes || prev.clientEffortNotes,
+    }));
   };
 
   const selectWeekDay = (day) => {
@@ -324,20 +338,21 @@ const Routines = () => {
     }
   };
 
-  const handleWorkoutNotes = async (workout_id, client_id, log_date, title = '', note) => {
+  const handleWorkoutNotes = async (workout_id, client_id, log_date, title = '', note, clientEffortNotes = '') => {
     if (!workout_id || !client_id || !log_date) return;
     setNotesModal({
       isOpen: true,
       workoutId: workout_id,
       title: title || 'Rutina',
-      date: log_date,
-      notes: getWorkoutNoteForDate(workout_id, log_date) || note || '',
-      availableDates: getWorkoutNoteDates(workout_id, note === null),
+      date: selectedDate.format('YYYY-MM-DD'),
+      notes: getWorkoutNoteForDate(workout_id, selectedDate),
+      clientEffortNotes: clientEffortNotes || '',
+      availableDates: getWorkoutNoteDates(workout_id),
     });
   };
 
   const closeNotesModal = () => {
-    setNotesModal({ isOpen: false, workoutId: null, title: '', date: '', notes: '', availableDates: [] });
+    setNotesModal({ isOpen: false, workoutId: null, title: '', date: '', notes: '', clientEffortNotes: '', availableDates: [] });
   };
 
   const formatTimestamp = (dateString) => {
@@ -358,23 +373,36 @@ const Routines = () => {
     if (!notesModal.workoutId) return;
     try {
       const formattedDate = formatTimestamp(notesModal.date);
+      const noteWithClientEffort = `${notesModal.notes}|${notesModal.clientEffortNotes}`;
       const data = {
         client_id: clientId,
         daily_workouts_id: notesModal.workoutId,
-        note: notesModal.notes,
+        note: noteWithClientEffort,
         log_date: formattedDate,
       };
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const response = await axios.post(`${apiUrl}/workouts/add-note`, data, config);
-      const savedNote = response.data?.note || notesModal.notes;
+      const savedNote = response.data?.note || noteWithClientEffort;
 
-      setWorkouts((prevWorkouts) =>
-        prevWorkouts.map((workout) =>
+      try {
+        const workoutsResponse = await axios.get(`${apiUrl}/workouts/list/${clientId}`, config);
+        if (workoutsResponse.status === 200) {
+          setWorkouts(workoutsResponse.data.filas || []);
+        }
+      } catch (refreshError) {
+        console.error('Error refreshing workouts after saving note:', refreshError);
+        setWorkouts((prevWorkouts) => prevWorkouts.map((workout) => (
           workout.id === notesModal.workoutId
-            ? { ...workout, note: savedNote, trainer_notes: savedNote }
+            ? {
+              ...workout,
+              note: savedNote,
+              notes: savedNote,
+              trainer_notes: savedNote,
+              workout_note_log_date: notesModal.date,
+            }
             : workout
-        )
-      );
+        )));
+      }
       toast.success('Nota guardada correctamente', { autoClose: 2000 });
     } catch (error) {
       console.error('Error saving notes:', error);
@@ -632,41 +660,47 @@ const Routines = () => {
                         const workoutTitle = item.title || item.name || item.workout_name || `Rutina ${item.workout_id || item.id}`;
                         return (
                           <div
-                            key={item.id || `${item.workout_id}-${item.day_of_week}-${workoutTitle}`}
+                            key={item.id + (Math.random() * 100) || `${item.workout_id}-${item.day_of_week}-${workoutTitle}` + (Math.random() * 100)}
                             className="group relative flex min-w-0 flex-col gap-2 rounded-xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-2.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800 sm:gap-2.5 sm:rounded-2xl sm:p-3.5"
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex min-w-0 flex-1 items-center gap-2">
+                                  <span className='text-xs ' title={'Fecha de Asignacion: '+moment(item.log_date).format("DD/MM/YYYY")}><FontAwesomeIcon className='text-yellow-400 cursor-help' icon={faInfoCircle}></FontAwesomeIcon></span>
                                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c] sm:h-8 sm:w-8">
-                                  <FontAwesomeIcon icon={faDumbbell} size="sm" />
+                                  <button
+                                    type="button"
+                                    className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-black transition hover:bg-yellow-200"
+                                    title="Video"
+                                    onClick={() => handleExercisePreview(item.exercise_id)}
+                                  >
+                                    <FontAwesomeIcon icon={faVideo} size="xs" />
+                                  </button>
                                 </span>
-                                <h4 className="min-w-0 flex-1 truncate text-sm font-semibold text-white" title={workoutTitle}>
+                                <h4 className="min-w-0 max-w-[70%] flex-1 truncate text-sm font-semibold text-white" title={workoutTitle}>
                                   {workoutTitle}
                                 </h4>
                               </div>
                               <div className="flex shrink-0 items-center gap-1.5">
-                                <button
-                                  type="button"
-                                  className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-black transition hover:bg-yellow-200"
-                                  title="Video"
-                                  onClick={() => handleExercisePreview(item.exercise_id)}
-                                >
-                                  <FontAwesomeIcon icon={faVideo} size="xs" />
-                                </button>
                                 {(moment().diff(selectedDate) >= 0) && <button
+                                  name="boton_rutina"
                                   type="button"
                                   className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${item.note !== null ? "bg-yellow-400 text-black transition hover:bg-yellow-200" : "bg-green-800 text-white transition hover:bg-green-600"} `}
-                                  title={item.note !== null ? "Editar nota" : "Completar Rutina"}
-                                  onClick={() => handleWorkoutNotes(item.id, clientId, item.note === null ? selectedDate.format('YYYY-MM-DD') : item.workout_note_log_date || selectedDate.clone().set({ hour: moment().hour(), minute: moment().minute(), second: moment().second() }).format('YYYY-MM-DD HH:mm:ss'), workoutTitle, item.note)}
+                                  title={item.note !== null ? "Completar Rutina / Ver Notas" : "Completar Rutina"}
+                                  onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.format('YYYY-MM-DD'), workoutTitle, item.note, item.client_effort_notes)}
                                 >
-                                  <FontAwesomeIcon icon={item.note !== null ? faPencil : faCheck} size="xs" />
+                                  <FontAwesomeIcon icon={faCheck} size="xs" />
                                 </button>}
                               </div>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 sm:gap-x-4">
-                              <span className="inline-flex flex-wrap items-center gap-1">
-                                <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
+                            <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs text-slate-400 sm:gap-x-4">
+                              <span className="rounded-full bg-slate-900/60 px-2 py-0.5 text-sm font-semibold uppercase tracking-wide text-[#f1b80c]">
+                                {item.client_effort_notes && (
+                                  <span className="text-sm text-slate-200">{item.client_effort_notes} | </span>
+                                )}
+                                Sets: {item.sets || '—'} · Reps: {item.reps_text || '—'}
+                              </span>
+                              <span className="inline-flex flex-wrap items-right gap-1">
                                 {dayLetters.length > 0 ? (
                                   dayLetters.map((d) => (
                                     <span
@@ -680,14 +714,7 @@ const Routines = () => {
                                   <span className="text-slate-500">—</span>
                                 )}
                               </span>
-                              <span className="rounded-full bg-slate-900/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#f1b80c]">
-                                Sets: {item.sets || '—'} · Reps: {item.reps_text || '—'}
-                              </span>
                             </div>
-
-                            {item.client_effort_notes && (
-                              <p className="text-xs text-slate-400">{item.client_effort_notes}</p>
-                            )}
 
                             {/* {item.note && (
                               <p className="line-clamp-2 flex items-start gap-1.5 rounded-xl border border-yellow-400/40 bg-yellow-400/5 px-3 py-2 text-xs text-slate-200" title={item.note}>
@@ -781,11 +808,7 @@ const Routines = () => {
                   <select
                     id="workout-note-date"
                     value={moment(notesModal.date).format('YYYY-MM-DD')}
-                    onChange={(e) => setNotesModal((prev) => ({
-                      ...prev,
-                      date: e.target.value,
-                      notes: getWorkoutNoteForDate(prev.workoutId, e.target.value),
-                    }))}
+                    onChange={(e) => handleWorkoutNoteDateChange(notesModal.workoutId, e.target.value)}
                     className="mt-2 w-full rounded-2xl border border-slate-700 bg-[#111827] p-3 text-sm font-semibold text-white focus:border-[#f1b80c] focus:outline-none focus:ring-2 focus:ring-[#f1b80c]/20"
                   >
                     {(notesModal.availableDates || []).map((date) => (
@@ -798,7 +821,14 @@ const Routines = () => {
               </div>
 
               <div className="rounded-3xl bg-slate-950/70 p-4">
-                <label className="text-2x1 font-semibold text-slate-200" htmlFor="workout-notes">Notas</label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="text-2x1 font-semibold text-slate-200" htmlFor="workout-notes">Nota</label>
+                  {notesModal.clientEffortNotes && (
+                    <span className="rounded-full border border-[#f1b80c]/40 bg-[#f1b80c]/10 px-2 py-1 text-xs font-semibold text-[#f1b80c]" title="Este texto se agregará al guardar la nota">
+                       {notesModal.clientEffortNotes}
+                    </span>
+                  )}
+                </div>
                 <textarea
                   id="workout-notes"
                   value={notesModal.notes}
