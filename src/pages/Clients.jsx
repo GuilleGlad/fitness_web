@@ -29,7 +29,7 @@ const initialForm = {
 };
 
 /* ───────── Reusable Modal Wrapper ───────── */
-const ModalOverlay = ({ isOpen, onClose, title, children, size = 'default' }) => {
+const ModalOverlay = ({ isOpen, onClose, title, children, size = 'default', id }) => {
   if (!isOpen) return null;
   const sizeClass = size === 'full'
     ? 'w-[96vw] max-w-[1600px] max-h-[95vh]'
@@ -37,6 +37,7 @@ const ModalOverlay = ({ isOpen, onClose, title, children, size = 'default' }) =>
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 sm:p-4" onClick={onClose}>
       <div
+        id={id}
         className={`relative ${sizeClass} overflow-y-auto rounded-2xl border border-slate-700 bg-[#141820] shadow-2xl sm:rounded-[32px]`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -181,6 +182,13 @@ const initialTrainerForm = {
   status_cuenta: 1
 };
 
+const getRoutineId = (item) => item?.workout_id ?? item?.daily_workouts_id ?? item?.id;
+const getWorkoutNoteId = (item) => item?.workout_note_id ?? item?.note_id ?? (item?.workout_note_log_date ? item.id : null);
+const getWorkoutNoteDate = (item) => {
+  const date = item?.workout_note_log_date;
+  return date && moment(date).isValid() ? moment(date).format('YYYY-MM-DD') : '';
+};
+
 const TrainerForm = ({ form, setForm, editingId, initialForm, onSubmit, onCancel, onOpenLibrary, isSubmitting }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -298,10 +306,13 @@ const Clients = () => {
   const [trainerId, setTrainerId] = useState(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteModalData, setNoteModalData] = useState(null);
+  const [noteRoutineRows, setNoteRoutineRows] = useState([]);
+  const [selectedNoteId, setSelectedNoteId] = useState('');
   const [noteFeedback, setNoteFeedback] = useState('');
   const [loadingNoteModal, setLoadingNoteModal] = useState(false);
   const [savingNoteFeedback, setSavingNoteFeedback] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [noteDateSelected, SetNoteDateSelected] = useState(false);
 
   /* ── Datos biométricos del cliente (modal Asignar rutina) ── */
   const [clientProfileData, setClientProfileData] = useState(null);
@@ -515,14 +526,18 @@ const Clients = () => {
   };
 
   const closeNoteModal = () => {
+    SetNoteDateSelected(false);
     setShowNoteModal(false);
     setNoteModalData(null);
+    setNoteRoutineRows([]);
+    setSelectedNoteId('');
     setNoteFeedback('');
     setLoadingNoteModal(false);
     setSavingNoteFeedback(false);
   };
 
-  const handleNoteReview = async (workoutNoteId) => {
+  const handleNoteReview = async (workout) => {
+    const workoutNoteId = typeof workout === 'object' ? getWorkoutNoteId(workout) : workout;
     if (!workoutNoteId) {
       toast.error('ID de nota inválido.');
       return;
@@ -531,15 +546,30 @@ const Clients = () => {
     setShowNoteModal(true);
     setLoadingNoteModal(true);
     setNoteModalData(null);
+    setNoteRoutineRows([]);
+    setSelectedNoteId('');
     setNoteFeedback('');
 
-    const existingNote = assignedWorkouts.find(
-      (item) => item.workout_note_id === workoutNoteId
-    );
+    const existingNote = [...assignedWorkouts, ...completedWorkouts].find(
+      (item) => String(getWorkoutNoteId(item)) === String(workoutNoteId)
+    ) || (typeof workout === 'object' ? workout : null);
 
     if (existingNote) {
-      setNoteModalData(existingNote);
-      setNoteFeedback(existingNote.feedback || '');
+      const routineId = getRoutineId(existingNote);
+      const routineRows = [...assignedWorkouts, ...completedWorkouts]
+        .filter((item) => String(getRoutineId(item)) === String(routineId))
+        .filter((item, index, rows) => rows.findIndex((candidate) => {
+          const candidateNoteId = getWorkoutNoteId(candidate);
+          const itemNoteId = getWorkoutNoteId(item);
+          if (candidateNoteId || itemNoteId) return String(candidateNoteId) === String(itemNoteId);
+          return String(candidate.id ?? '') === String(item.id ?? '') && getWorkoutNoteDate(candidate) === getWorkoutNoteDate(item);
+        }) === index);
+      const noteRows = routineRows.filter(getWorkoutNoteId);
+      const selectedNote = noteRows.find((item) => String(getWorkoutNoteId(item)) === String(workoutNoteId)) || existingNote;
+      setNoteRoutineRows(routineRows);
+      setSelectedNoteId(String(getWorkoutNoteId(selectedNote) || ''));
+      setNoteModalData(selectedNote);
+      setNoteFeedback(selectedNote.feedback || '');
       setLoadingNoteModal(false);
       return;
     }
@@ -559,6 +589,8 @@ const Clients = () => {
         closeNoteModal();
         return;
       }
+      setNoteRoutineRows([noteData]);
+      setSelectedNoteId(String(getWorkoutNoteId(noteData) || workoutNoteId));
       setNoteModalData(noteData);
       setNoteFeedback(noteData.feedback || '');
     } catch (err) {
@@ -568,6 +600,18 @@ const Clients = () => {
     } finally {
       setLoadingNoteModal(false);
     }
+  };
+
+  const handleNoteDateChange = (noteId) => {
+    const selectedNote = noteRoutineRows.find((item) => String(getWorkoutNoteId(item)) === String(noteId));
+    if (!selectedNote) {
+      SetNoteDateSelected(false);
+      return;
+    }
+    SetNoteDateSelected(true);
+    setSelectedNoteId(String(getWorkoutNoteId(selectedNote)));
+    setNoteModalData(selectedNote);
+    setNoteFeedback(selectedNote.feedback || '');
   };
 
   const saveNoteFeedback = async () => {
@@ -585,7 +629,7 @@ const Clients = () => {
         },
       };
 
-      const noteId = noteModalData.workout_note_id || noteModalData.id;
+      const noteId = getWorkoutNoteId(noteModalData);
       const payload = {
         feedback: noteFeedback.trim(),
       };
@@ -597,7 +641,21 @@ const Clients = () => {
 
       setAssignedWorkouts((prev) =>
         prev.map((item) =>
-          item.workout_note_id === noteId
+          String(getWorkoutNoteId(item)) === String(noteId)
+            ? { ...item, feedback: updatedFeedback, status: updatedStatus }
+            : item
+        )
+      );
+      setCompletedWorkouts((prev) =>
+        prev.map((item) =>
+          String(getWorkoutNoteId(item)) === String(noteId)
+            ? { ...item, feedback: updatedFeedback, status: updatedStatus }
+            : item
+        )
+      );
+      setNoteRoutineRows((prev) =>
+        prev.map((item) =>
+          String(getWorkoutNoteId(item)) === String(noteId)
             ? { ...item, feedback: updatedFeedback, status: updatedStatus }
             : item
         )
@@ -1043,8 +1101,8 @@ const Clients = () => {
 
   const visibleWorkouts = vw.filter((o, index, arr) =>
     arr.findIndex(item => (item.id === o.id)) === index
-  );  
-console.log(visibleWorkouts);
+  );
+    console.log(visibleWorkouts);
   const loadingVisibleWorkouts = activeWorkoutTab === 'completed' ? loadingCompletedWorkouts : loadingAssignedWorkouts;
 
   const renderWorkoutsList = ({ cardsWrapperClass = 'min-h-0 flex-1 space-y-2 overflow-y-auto pr-2 pb-2 sm:space-y-3 sm:pr-4' } = {}) => (
@@ -1136,7 +1194,7 @@ console.log(visibleWorkouts);
                         className={`inline-flex h-7 w-7 items-center justify-center rounded-full bg-green-800 text-white transition hover:bg-green-400 hover:text-slate-600 ${item.note && !item.status && 'animate-pulseBorder'}`}
                         aria-label="Notas del Cliente"
                         title='Notas del Cliente'
-                        onClick={() => handleNoteReview(item.workout_note_id)}
+                        onClick={() => handleNoteReview(item)}
                       >
                         <FontAwesomeIcon icon={faNoteSticky} size='xs' />
                       </button>
@@ -1175,11 +1233,11 @@ console.log(visibleWorkouts);
                   <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
                   {item.workout_note_log_date ? new Date(item.workout_note_log_date).toLocaleDateString() : '—'}
                 </span> */}
-                {item.status === 1 &&
+                {/* {item.status === 1 &&
                   <span className="ml-auto rounded-full bg-emerald-600/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400 lg:text-xs">
                     Revisada
                   </span>
-                }
+                } */}
               </div>
 
               {/* Indicaciones del entrenador */}
@@ -1189,13 +1247,13 @@ console.log(visibleWorkouts);
                   <span className="text-sm text-slate-200">{item.client_effort_notes} | </span>
                 )}
                 {item.sets_or_time === 0 &&
-                (<>
-                Sets: {item.sets || '—'} · Reps: {item.reps_text || '—'}
-                </>)}
+                  (<>
+                    Sets: {item.sets || '—'} · Reps: {item.reps_text || '—'}
+                  </>)}
                 {item.sets_or_time === 1 &&
-                (<>
-                Tiempo: {item.time || '-'}
-                </>)}
+                  (<>
+                    Tiempo: {item.time || '-'}
+                  </>)}
               </p>
 
               {/* Nota del cliente */}
@@ -1207,12 +1265,12 @@ console.log(visibleWorkouts);
               } */}
 
               {/* Feedback del entrenador */}
-              {item.status === 1 &&
+              {/* {item.status === 1 &&
                 <p className="line-clamp-2 rounded-xl border border-emerald-400/30 bg-emerald-400/5 px-3 py-2 text-xs text-slate-200 lg:text-sm" title={item.feedback || ''}>
                   <span className="mr-1 font-semibold text-emerald-400">Respuesta:</span>
                   {item.feedback || '—'}
                 </p>
-              }
+              } */}
             </div>
           ))}
         </div>
@@ -1826,70 +1884,131 @@ console.log(visibleWorkouts);
       </ModalOverlay>
 
       {/* Note Review Modal */}
-      <ModalOverlay isOpen={showNoteModal} onClose={closeNoteModal} title="Revisar nota">
+      <ModalOverlay isOpen={showNoteModal} onClose={closeNoteModal} title="Revisar notas" id="notas_modal">
         <div className="space-y-4">
           {loadingNoteModal ? (
             <p className="text-slate-400">Cargando nota…</p>
           ) : noteModalData ? (
             <>
               {/* Contexto de la rutina */}
-              <div className="rounded-2xl border border-slate-700 bg-slate-900 p-4">
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
-                    <FontAwesomeIcon icon={faDumbbell} size="sm" />
-                  </span>
-                  <h4 className="truncate text-sm font-semibold text-white">
-                    {noteModalData.title || noteModalData.name || noteModalData.workout_name || `#${noteModalData.workout_id || '—'}`}
-                  </h4>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div className=''>
+                  <div className="rounded-2xl border border-slate-700 bg-slate-900 p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
+                        <FontAwesomeIcon icon={faDumbbell} size="sm" />
+                      </span>
+                      <h4 className="truncate text-sm font-semibold text-white">
+                        {noteModalData?.title || '—'}
+                      </h4>
+                    </div>
+                    <label className="mb-3 block space-y-1.5 text-xs font-medium text-slate-400">
+                      <span>Fecha del registro</span>
+                      <select
+                        
+                        onChange={(event) => handleNoteDateChange(event.target.value)}
+                        className="w-full rounded-xl border border-slate-700 bg-[#0f172a] px-3 py-2 text-sm text-white outline-none focus:border-[#f1b80c]"
+                      >
+                        <option selected={true} value={-1}>Seleccionar Fecha...</option>
+                        {noteRoutineRows.filter((item) => getWorkoutNoteId(item) && getWorkoutNoteDate(item)).map((item) => (
+                          <option key={getWorkoutNoteId(item)} value={getWorkoutNoteId(item)}>
+                            {moment(item.workout_note_log_date).format('DD-MM-YYYY HH:mm')}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-400">
+                      <span className="inline-flex flex-wrap items-center gap-1">
+                        <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
+                        {(noteModalData.day_of_week || noteModalData.days || noteModalData.day) ? (
+                          (noteModalData.day_of_week || noteModalData.days || noteModalData.day)
+                            .split(',')
+                            .filter(Boolean)
+                            .map((d) => (
+                              <span
+                                key={d}
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${dayColorMap[d.trim()] || 'bg-slate-600/40 text-slate-300 ring-1 ring-inset ring-slate-500/30'}`}
+                              >
+                                {translateDay(d.trim())}
+                              </span>
+                            ))
+                        ) : (
+                          <span className="text-slate-500">—</span>
+                        )}
+                      </span>
+                      {/* <span className="inline-flex items-center gap-1.5">
+                        <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
+                        {getWorkoutNoteDate(noteModalData) ? moment(noteModalData.workout_note_log_date).format('DD-MM-YYYY HH:mm') : '—'}
+                      </span> */}
+                    </div>
+                  </div>
+
+                  {/* Nota del cliente (solo lectura) */}
+                  {noteDateSelected && (
+                    <>
+                  <div className="rounded-2xl border p-4">
+                    <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
+                      <FontAwesomeIcon icon={faCommentDots} className="text-slate-200" />
+                      Indicaciones
+                    </p>
+                    <p className="whitespace-pre-wrap text-sm text-slate-200">
+                      {noteModalData?.client_effort_notes || 'No hay indicaciones.'}
+                    </p>
+                  </div>
+                  
+                  <div className="rounded-2xl border border-yellow-400/40 bg-yellow-400/5 p-4">
+                    <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
+                      <FontAwesomeIcon icon={faCommentDots} className="text-[#f1b80c]" />
+                      Nota del cliente
+                    </p>
+                    <p className="whitespace-pre-wrap text-sm text-slate-200">
+                      {noteModalData?.note.slice(0,noteModalData.note.indexOf('|')) || 'El cliente no dejó ninguna nota.'}
+                    </p>
+                  </div>
+
+                  {/* Respuesta del entrenador */}
+                  <label className="block space-y-2 text-sm text-slate-200">
+                    <span className="font-semibold text-white">Tu respuesta</span>
+                    <textarea
+                      value={noteFeedback}
+                      onChange={(e) => setNoteFeedback(e.target.value)}
+                      placeholder="Escribe tu respuesta para el cliente..."
+                      className="min-h-[140px] w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                    />
+                  </label>
+                  </>
+                  ) }
                 </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-400">
-                  <span className="inline-flex flex-wrap items-center gap-1">
-                    <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
-                    {(noteModalData.day_of_week || noteModalData.days || noteModalData.day) ? (
-                      (noteModalData.day_of_week || noteModalData.days || noteModalData.day)
-                        .split(',')
-                        .filter(Boolean)
-                        .map((d) => (
-                          <span
-                            key={d}
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${dayColorMap[d.trim()] || 'bg-slate-600/40 text-slate-300 ring-1 ring-inset ring-slate-500/30'}`}
-                          >
-                            {translateDay(d.trim())}
-                          </span>
-                        ))
-                    ) : (
-                      <span className="text-slate-500">—</span>
-                    )}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
-                    {noteModalData.log_date ? new Date(noteModalData.workout_note_log_date).toLocaleDateString() : '—'}
-                  </span>
+                <div className=''>
+                  <section className="space-y-2 border-t border-slate-700 pt-4">
+                    <h4 className="text-sm font-semibold text-white">Registros de esta rutina</h4>
+                    <div className="h-[90%] space-y-2 overflow-y-auto pr-1">
+                      {noteRoutineRows.map((item, index) => {
+                        const noteText = item?.note.slice(0,item?.note.indexOf('|')) || item.notes || '';
+                        const rowNoteId = getWorkoutNoteId(item);
+                        return (
+                          <div key={rowNoteId || `${item.id || 'row'}-${getWorkoutNoteDate(item)}-${index}`} className="rounded-xl border border-slate-700 bg-slate-900/70 p-3">
+                            <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs">
+                              <span className="font-medium text-slate-300">
+                                {getWorkoutNoteDate(item) ? moment(item.workout_note_log_date).format('DD-MM-YYYY HH:mm') : 'Sin fecha'}
+                              </span>
+                              <span className={item.feedback?.trim() ? 'text-emerald-400' : noteText.trim() ? 'text-emerald-400' : 'text-slate-500'}>
+                                {item.feedback?.trim() ? 'Revisada' : noteText.trim() ? 'Dejó una nota' : 'Sin nota del cliente'}
+                              </span>
+                            </div>
+                            {noteText.trim() && <p className="whitespace-pre-wrap break-words text-sm text-slate-200">{noteText}</p>}
+                            {item.feedback && (
+                              <p className="mt-2 whitespace-pre-wrap break-words border-t border-slate-700 pt-2 text-sm text-emerald-300">
+                                <span className="font-semibold">Respuesta del entrenador:</span> {item.feedback}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
                 </div>
               </div>
-
-              {/* Nota del cliente (solo lectura) */}
-              <div className="rounded-2xl border border-yellow-400/40 bg-yellow-400/5 p-4">
-                <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
-                  <FontAwesomeIcon icon={faCommentDots} className="text-[#f1b80c]" />
-                  Nota del cliente
-                </p>
-                <p className="whitespace-pre-wrap text-sm text-slate-200">
-                  {noteModalData.note || noteModalData.notes || 'El cliente no dejó ninguna nota.'}
-                </p>
-              </div>
-
-              {/* Respuesta del entrenador */}
-              <label className="block space-y-2 text-sm text-slate-200">
-                <span className="font-semibold text-white">Tu respuesta</span>
-                <textarea
-                  value={noteFeedback}
-                  onChange={(e) => setNoteFeedback(e.target.value)}
-                  placeholder="Escribe tu respuesta para el cliente..."
-                  className="min-h-[140px] w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                />
-              </label>
-
               <div className="grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
