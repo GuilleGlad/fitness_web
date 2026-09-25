@@ -306,7 +306,7 @@ const Clients = () => {
   /* ── Datos biométricos del cliente (modal Asignar rutina) ── */
   const [clientProfileData, setClientProfileData] = useState(null);
   const [clientProgressHistory, setClientProgressHistory] = useState([]);
-  const [loadingBioData, setLoadingBioData] = useState(false);
+  const [loadingBioData, setLoadingBioData] = useState(true);
   const [bioPhotoPreview, setBioPhotoPreview] = useState(null);
   const [trainerNotePreview, setTrainerNotePreview] = useState('');
   const [showProgressChartModal, setShowProgressChartModal] = useState(false);
@@ -326,15 +326,15 @@ const Clients = () => {
   useEffect(() => {
     if (!showAssignModal) return undefined;
 
-    personalDataRef.current?.setAttribute('open', '');
-    biometricHistoryRef.current?.setAttribute('open', '');
+    // personalDataRef.current?.setAttribute('open', '');
+    // biometricHistoryRef.current?.setAttribute('open', '');
 
-    const closeAccordionsTimer = setTimeout(() => {
-      personalDataRef.current?.removeAttribute('open');
-      biometricHistoryRef.current?.removeAttribute('open');
-    }, 3000);
+    // const closeAccordionsTimer = setTimeout(() => {
+    //   personalDataRef.current?.removeAttribute('open');
+    //   biometricHistoryRef.current?.removeAttribute('open');
+    // }, 3000);
 
-    return () => clearTimeout(closeAccordionsTimer);
+    // return () => clearTimeout(closeAccordionsTimer);
   }, [showAssignModal]);
 
   const dayOptions = [
@@ -691,7 +691,7 @@ const Clients = () => {
           },
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         };
-        await axios.delete(`${apiUrl}/workouts/delete-workouts-batch`, config);
+        await axios.delete(`${apiUrl}/workouts/delete-batch`, config);
         setAssignedWorkouts([]);
         toast.success('Rutinas asignadas eliminadas correctamente.');
       } catch (err) {
@@ -1034,15 +1034,22 @@ const Clients = () => {
       y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148,163,184,0.15)' } },
     },
   }), []);
-  const filteredCompletedWorkouts = completedDateFilter
-    ? completedWorkouts.filter((item) => item.log_date && moment(item.log_date).format('YYYY-MM-DD') === completedDateFilter)
-    : completedWorkouts;
-  const visibleWorkouts = activeWorkoutTab === 'completed' ? filteredCompletedWorkouts : assignedWorkouts;
+  // const filteredCompletedWorkouts = completedDateFilter
+  //   ? completedWorkouts.filter((item) => item.workout_note_log_date && moment(item.workout_note_log_date).format('YYYY-MM-DD') === completedDateFilter)
+  //   : completedWorkouts;
+
+  const filteredCompletedWorkouts = completedWorkouts;
+  const vw = activeWorkoutTab === 'completed' ? filteredCompletedWorkouts : assignedWorkouts;
+
+  const visibleWorkouts = vw.filter((o, index, arr) =>
+    arr.findIndex(item => (item.id === o.id)) === index
+  );  
+console.log(visibleWorkouts);
   const loadingVisibleWorkouts = activeWorkoutTab === 'completed' ? loadingCompletedWorkouts : loadingAssignedWorkouts;
 
   const renderWorkoutsList = ({ cardsWrapperClass = 'min-h-0 flex-1 space-y-2 overflow-y-auto pr-2 pb-2 sm:space-y-3 sm:pr-4' } = {}) => (
     <>
-      <div className="mb-3 grid grid-cols-2 gap-1.5 rounded-2xl bg-slate-900/80 p-1 sm:mb-4 sm:gap-2" role="tablist" aria-label="Rutinas del cliente">
+      {/* <div className="mb-3 grid grid-cols-2 gap-1.5 rounded-2xl bg-slate-900/80 p-1 sm:mb-4 sm:gap-2" role="tablist" aria-label="Rutinas del cliente">
         <button
           type="button"
           role="tab"
@@ -1093,7 +1100,7 @@ const Clients = () => {
             </button>
           )}
         </div>
-      )}
+      )} */}
       {loadingVisibleWorkouts ? (
         <p className="text-slate-400">
           {activeWorkoutTab === 'completed' ? 'Cargando rutinas completadas…' : 'Cargando rutinas asignadas…'}
@@ -1108,7 +1115,7 @@ const Clients = () => {
         <div className={cardsWrapperClass}>
           {visibleWorkouts.map((item) => (
             <div
-              key={item.id || `${item.client_id}-${item.workout_id}-${item.log_date}`}
+              key={item.id + (Math.random() * 100) || `${item.client_id}-${item.workout_id}-${item.log_date}`}
               className="group relative flex flex-col gap-2 rounded-xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-2.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800 sm:gap-2.5 sm:rounded-2xl sm:p-3.5"
             >
               {/* Header: icon + title + actions */}
@@ -1164,10 +1171,10 @@ const Clients = () => {
                     <span className="text-slate-500">—</span>
                   )}
                 </span>
-                <span className="inline-flex items-center gap-1.5 text-white">
+                {/* <span className="inline-flex items-center gap-1.5 text-white">
                   <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
-                  {item.log_date ? new Date(item.log_date).toLocaleDateString() : '—'}
-                </span>
+                  {item.workout_note_log_date ? new Date(item.workout_note_log_date).toLocaleDateString() : '—'}
+                </span> */}
                 {item.status === 1 &&
                   <span className="ml-auto rounded-full bg-emerald-600/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400 lg:text-xs">
                     Revisada
@@ -1175,66 +1182,29 @@ const Clients = () => {
                 }
               </div>
 
-              {/* {activeWorkoutTab === 'completed' && (
-                <details className="group rounded-xl border border-slate-700/80 bg-slate-900/60">
-                  <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 lg:text-xs [&::-webkit-details-marker]:hidden">
-                    <span>Datos Biométricos para la Fecha</span>
-                    <FontAwesomeIcon icon={faChevronDown} className="text-slate-500 transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
-                  </summary>
-                  <div className="border-t border-slate-700/80 p-3">
-                    <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-5 lg:text-sm">
-                      {[
-                        { label: 'Peso', value: item.weight },
-                        { label: 'Cadera', value: item.hips },
-                        { label: 'Cintura', value: item.waist },
-                        { label: 'Piernas', value: item.legs },
-                        { label: 'Brazos', value: item.arms },
-                      ].map((metric) => (
-                        <div key={metric.label} className="rounded-lg bg-slate-800/70 px-2 py-1.5">
-                          <p className="text-[10px] text-slate-500 lg:text-xs">{metric.label}</p>
-                          <p className="font-semibold text-slate-200">{metric.value ?? '—'}</p>
-                        </div>
-                      ))}
-                    </div>
-                    {(item.photo_front_url || item.photo_back_url) && (
-                      <div className="mt-3 flex gap-2">
-                        {item.photo_front_url && (
-                          <img
-                            src={item.photo_front_url}
-                            alt="Foto frontal del progreso"
-                            title="Foto frontal"
-                            className="h-14 w-14 cursor-pointer rounded-lg object-cover ring-1 ring-slate-600 transition hover:opacity-80"
-                            onClick={() => setBioPhotoPreview(item.photo_front_url)}
-                          />
-                        )}
-                        {item.photo_back_url && (
-                          <img
-                            src={item.photo_back_url}
-                            alt="Foto trasera del progreso"
-                            title="Foto trasera"
-                            className="h-14 w-14 cursor-pointer rounded-lg object-cover ring-1 ring-slate-600 transition hover:opacity-80"
-                            onClick={() => setBioPhotoPreview(item.photo_back_url)}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </details>
-              )} */}
-
               {/* Indicaciones del entrenador */}
               <p className="line-clamp-2 rounded-xl bg-slate-900/60 px-3 py-2 text-xs text-slate-300 lg:text-sm" title={item.trainer_notes || ''}>
                 <span className="mr-1 font-semibold text-slate-200">Indicaciones:</span>
-                {item.trainer_notes || '—'}
+                {item.client_effort_notes && (
+                  <span className="text-sm text-slate-200">{item.client_effort_notes} | </span>
+                )}
+                {item.sets_or_time === 0 &&
+                (<>
+                Sets: {item.sets || '—'} · Reps: {item.reps_text || '—'}
+                </>)}
+                {item.sets_or_time === 1 &&
+                (<>
+                Tiempo: {item.time || '-'}
+                </>)}
               </p>
 
               {/* Nota del cliente */}
-              {item.note &&
+              {/* {item.note &&
                 <p className="line-clamp-2 flex items-start gap-1.5 rounded-xl border border-yellow-400/40 bg-yellow-400/5 px-3 py-2 text-xs text-slate-200 lg:text-sm" title={item.note}>
                   <FontAwesomeIcon icon={faCommentDots} className="mt-0.5 shrink-0 text-[#f1b80c]" />
                   <span><span className="mr-1 font-semibold text-white">Cliente:</span>{item.note}</span>
                 </p>
-              }
+              } */}
 
               {/* Feedback del entrenador */}
               {item.status === 1 &&
@@ -1478,7 +1448,7 @@ const Clients = () => {
               ) : (
                 <>
                   {/* Datos personales */}
-                  <details ref={personalDataRef} open className="group overflow-hidden rounded-3xl border border-slate-700 bg-[#0f172a]">
+                  <details ref={personalDataRef} className="group overflow-hidden rounded-3xl border border-slate-700 bg-[#0f172a]">
                     <summary className="flex cursor-pointer list-none items-center justify-between border-b border-slate-700 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c] [&::-webkit-details-marker]:hidden">
                       <span>Datos personales</span>
                       <FontAwesomeIcon icon={faChevronDown} className="transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
@@ -1510,18 +1480,18 @@ const Clients = () => {
                   </details>
 
                   {/* Historial biométrico */}
-                  <details ref={biometricHistoryRef} open className="group overflow-hidden rounded-3xl border border-slate-700 bg-[#0f172a]">
+                  <details ref={biometricHistoryRef} className="group overflow-hidden rounded-3xl border border-slate-700 bg-[#0f172a]">
                     <summary className="flex cursor-pointer list-none items-center justify-between border-b border-slate-700 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#f1b80c] [&::-webkit-details-marker]:hidden">
                       <span>Historial biométrico</span>
                       <div className="flex items-center gap-1">
-                          <button
+                        <button
                           type="button"
                           onClick={() => setShowSilhouetteModal(true)}
                           aria-label="Ver silueta corporal"
                           title="Ver silueta corporal"
                         >
                           <FontAwesomeIcon icon={faMale}> </FontAwesomeIcon>
-                        </button>                        
+                        </button>
                         <button
                           type="button"
                           onClick={() => setShowProgressChartModal(true)}
@@ -1659,13 +1629,13 @@ const Clients = () => {
 
                 <div className="space-y-3">
                   <p className="text-sm font-semibold text-slate-200">Días de la semana</p>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-7">
                     {dayOptions.map((day) => (
                       <label
                         key={day.key}
                         className={`inline-flex items-center gap-2 rounded-3xl border px-4 py-3 text-sm font-medium transition ${selectedDays[day.key]
-                            ? `border-transparent ${dayColorMap[day.key]}`
-                            : dayIdleMap[day.key]
+                          ? `border-transparent ${dayColorMap[day.key]}`
+                          : dayIdleMap[day.key]
                           }`}
                       >
                         <input
@@ -1705,7 +1675,7 @@ const Clients = () => {
           <div className="flex min-h-0 flex-col rounded-2xl border border-slate-700 bg-[#0f172a] p-3 sm:rounded-3xl sm:p-4 lg:h-[65vh] lg:max-h-[65vh]">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold text-white sm:text-lg">Rutinas asignadas</h3>
+                <h3 className="text-base font-semibold text-white sm:text-lg">Rutinas</h3>
                 <button
                   type="button"
                   onClick={() => setShowWorkoutsFullModal(true)}
@@ -1893,7 +1863,7 @@ const Clients = () => {
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
-                    {noteModalData.log_date ? new Date(noteModalData.log_date).toLocaleDateString() : '—'}
+                    {noteModalData.log_date ? new Date(noteModalData.workout_note_log_date).toLocaleDateString() : '—'}
                   </span>
                 </div>
               </div>
