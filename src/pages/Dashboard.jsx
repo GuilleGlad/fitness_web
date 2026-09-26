@@ -300,7 +300,7 @@ const Dashboard = () => {
     const selectedLetter = getSelectedDayLetter(selectedDate);
     return workouts.filter((item) => {
       const letters = getWorkoutDayLetters(item);
-      return letters.includes(selectedLetter) && moment(item.log_date).format("DD/MM/YYYY") <= selectedDate.format("DD/MM/YYYY");
+      return letters.includes(selectedLetter) && ((moment(item.log_date).isSameOrBefore(selectedDate,'day') && moment(item.close_date).isSameOrAfter(selectedDate,'day')) || (moment(item.log_date).isSameOrBefore(selectedDate,'day') && item.close_date === null));
     });
   }, [workouts, selectedDate]);
 
@@ -668,6 +668,7 @@ const Dashboard = () => {
         console.error('Error fetching workouts:', error);
       } finally {
         setLoadingWorkouts(false);
+        console.log(workouts);
       }
     }
 

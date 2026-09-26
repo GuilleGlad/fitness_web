@@ -713,12 +713,20 @@ const Clients = () => {
 
   const handleDeleteAssignedWorkout = async (assignmentId) => {
     if (!assignmentId) return;
+    console.log(assignmentId);
     yesNo('¿Eliminar esta rutina asignada?', async () => {
       try {
+        const assignmentIds = [];
+        assignmentIds.push(assignmentId);
         const token = localStorage.getItem('token');
         if (!token) return toast.error('Hubo un problema con su sesión. Inicia sesión nuevamente.');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        await axios.delete(`${apiUrl}/workouts/delete/${assignmentId}`, config);
+        const config = {
+          data: {
+            ids: assignmentIds,
+          },
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        };
+        await axios.delete(`${apiUrl}/workouts/deactivate`, config);
         setAssignedWorkouts((prev) => prev.filter((item) => item.id !== assignmentId));
         setCompletedWorkouts((prev) => prev.filter((item) => item.id !== assignmentId));
         toast.success('Rutina asignada eliminada correctamente.');
@@ -749,7 +757,7 @@ const Clients = () => {
           },
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         };
-        await axios.delete(`${apiUrl}/workouts/delete-batch`, config);
+        await axios.delete(`${apiUrl}/workouts/deactivate`, config);
         setAssignedWorkouts([]);
         toast.success('Rutinas asignadas eliminadas correctamente.');
       } catch (err) {
@@ -1100,7 +1108,7 @@ const Clients = () => {
   const vw = activeWorkoutTab === 'completed' ? filteredCompletedWorkouts : assignedWorkouts;
 
   const visibleWorkouts = vw.filter((o, index, arr) =>
-    arr.findIndex(item => (item.id === o.id)) === index
+    arr.findIndex(item => (item.id === o.id && item.active)) === index
   );
     console.log(visibleWorkouts);
   const loadingVisibleWorkouts = activeWorkoutTab === 'completed' ? loadingCompletedWorkouts : loadingAssignedWorkouts;
