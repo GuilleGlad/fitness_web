@@ -274,7 +274,7 @@ const Routines = () => {
     const selectedLetter = getSelectedDayLetter(selectedDate);
     return workouts.filter((item) => {
       const letters = getWorkoutDayLetters(item);
-      return letters.includes(selectedLetter) && moment(item.log_date).format("DD/MM/YYYY") <= selectedDate.format("DD/MM/YYYY");
+      return letters.includes(selectedLetter) && ((moment(item.log_date).isSameOrBefore(selectedDate,'day') && moment(item.close_date).isSameOrAfter(selectedDate,'day')) || (moment(item.log_date).isSameOrBefore(selectedDate,'day') && item.close_date === null));
     });
   }, [workouts, selectedDate]);
 
@@ -572,7 +572,7 @@ const Routines = () => {
                       Mes
                     </button>
                   </div>
-                  <p className="text-xs text-slate-400 sm:text-sm ml-10 mr-10">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faPencil}></FontAwesomeIcon>.</p>
+                  <p className="text-xs text-slate-400 sm:text-sm ml-10 mr-10">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faCheck} className='text-white font-bold'></FontAwesomeIcon>.</p>
                 </div>
 
                 {calendarView === 'week' ? (

@@ -1466,7 +1466,7 @@ const Dashboard = () => {
                         Mes
                       </button>
                     </div>
-                    <p className="text-xs text-slate-400 sm:text-sm ml-10 mr-10">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faPencil}></FontAwesomeIcon>.</p>
+                    <p className="text-xs text-slate-400 sm:text-sm ml-10 mr-10">Selecciona un día para ver las rutinas asignadas y escribe tus observaciones en el icono <FontAwesomeIcon icon={faCheck} className='text-white font-bold'></FontAwesomeIcon>.</p>
                   </div>
 
                   {calendarView === 'week' ? (
