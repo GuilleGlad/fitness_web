@@ -98,7 +98,7 @@ const Routines = () => {
   const [profile, setProfile] = useState({});
   const [workouts, setWorkouts] = useState([]);
   const [previewExercise, setPreviewExercise] = useState(null);
-  const [notesModal, setNotesModal] = useState({ isOpen: false, workoutId: null, title: '', date: '', notes: '', clientEffortNotes: '', feedback: '', availableDates: [] });
+  const [notesModal, setNotesModal] = useState({ isOpen: false, workoutId: null, title: '', date: '', notes: '', clientEffortNotes: '', feedback: '', sets_or_time: 0, sets: null, reps_text: '', time: null, availableDates: [] });
   const [calendarView, setCalendarView] = useState('week');
   const [selectedDate, setSelectedDate] = useState(moment().startOf('day'));
 
@@ -274,7 +274,7 @@ const Routines = () => {
     const selectedLetter = getSelectedDayLetter(selectedDate);
     return workouts.filter((item) => {
       const letters = getWorkoutDayLetters(item);
-      return letters.includes(selectedLetter) && ((moment(item.log_date).isSameOrBefore(selectedDate,'day') && moment(item.close_date).isSameOrAfter(selectedDate,'day')) || (moment(item.log_date).isSameOrBefore(selectedDate,'day') && item.close_date === null));
+      return letters.includes(selectedLetter) && ((moment(item.log_date).isSameOrBefore(selectedDate, 'day') && moment(item.close_date).isSameOrAfter(selectedDate, 'day')) || (moment(item.log_date).isSameOrBefore(selectedDate, 'day') && item.close_date === null));
     });
   }, [workouts, selectedDate]);
 
@@ -293,10 +293,10 @@ const Routines = () => {
   };
 
   const getWorkoutForNoteDate = (workoutId, date) => workouts.find((item) => (
-      String(item.id) === String(workoutId) &&
-      moment(item.workout_note_log_date).isValid() &&
-      moment(item.workout_note_log_date).format('YYYY-MM-DD') === moment(date).format('YYYY-MM-DD')
-    ));
+    String(item.id) === String(workoutId) &&
+    moment(item.workout_note_log_date).isValid() &&
+    moment(item.workout_note_log_date).format('YYYY-MM-DD') === moment(date).format('YYYY-MM-DD')
+  ));
 
   const getWorkoutNoteForDate = (workoutId, date) => {
     const workout = getWorkoutForNoteDate(workoutId, date);
@@ -339,7 +339,7 @@ const Routines = () => {
     }
   };
 
-  const handleWorkoutNotes = async (workout_id, client_id, log_date, title = '', note, clientEffortNotes = '') => {
+  const handleWorkoutNotes = async (workout_id, client_id, log_date, title = '', note, clientEffortNotes = '', workout = {}) => {
     if (!workout_id || !client_id || !log_date) return;
     setNotesModal({
       isOpen: true,
@@ -348,13 +348,17 @@ const Routines = () => {
       date: selectedDate.format('YYYY-MM-DD'),
       notes: getWorkoutNoteForDate(workout_id, selectedDate),
       clientEffortNotes: clientEffortNotes || '',
+      sets_or_time: workout.sets_or_time,
+      sets: workout.sets,
+      reps_text: workout.reps_text,
+      time: workout.time,
       availableDates: getWorkoutNoteDates(workout_id),
       feedback: getWorkoutForNoteDate(workout_id, selectedDate)?.feedback || '',
     });
   };
 
   const closeNotesModal = () => {
-    setNotesModal({ isOpen: false, workoutId: null, title: '', date: '', notes: '', clientEffortNotes: '', feedback: '', availableDates: [] });
+    setNotesModal({ isOpen: false, workoutId: null, title: '', date: '', notes: '', clientEffortNotes: '', feedback: '', sets_or_time: 0, sets: null, reps_text: '', time: null, availableDates: [] });
   };
 
   const formatTimestamp = (dateString) => {
@@ -667,7 +671,7 @@ const Routines = () => {
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex min-w-0 flex-1 items-center gap-2">
-                                  <span className='text-xs ' title={'Fecha de Asignacion: '+moment(item.log_date).format("DD/MM/YYYY")}><FontAwesomeIcon className='text-yellow-400 cursor-help' icon={faInfoCircle}></FontAwesomeIcon></span>
+                                <span className='text-xs ' title={'Fecha de Asignacion: ' + moment(item.log_date).format("DD/MM/YYYY")}><FontAwesomeIcon className='text-yellow-400 cursor-help' icon={faInfoCircle}></FontAwesomeIcon></span>
                                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c] sm:h-8 sm:w-8">
                                   <button
                                     type="button"
@@ -688,7 +692,7 @@ const Routines = () => {
                                   type="button"
                                   className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${item.note !== null ? "bg-yellow-400 text-black transition hover:bg-yellow-200" : "bg-green-800 text-white transition hover:bg-green-600"} `}
                                   title={item.note !== null ? "Completar Rutina / Ver Notas" : "Completar Rutina"}
-                                  onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.format('YYYY-MM-DD'), workoutTitle, item.note, item.client_effort_notes)}
+                                  onClick={() => handleWorkoutNotes(item.id, clientId, selectedDate.format('YYYY-MM-DD'), workoutTitle, item.note, item.client_effort_notes, item)}
                                 >
                                   <FontAwesomeIcon icon={faCheck} size="xs" />
                                 </button>}
@@ -698,9 +702,9 @@ const Routines = () => {
                             <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs text-slate-400 sm:gap-x-4">
                               <span className="rounded-full bg-slate-900/60 px-2 py-0.5 text-sm font-semibold uppercase tracking-wide text-[#f1b80c]">
                                 {item.client_effort_notes && (
-                                  <span className="text-sm text-slate-200">{item.client_effort_notes} | </span>
+                                  <span className="text-sm text-slate-200">Indicaciones: {item.client_effort_notes} | </span>
                                 )}
-                                Sets: {item.sets || '—'} · Reps: {item.reps_text || '—'}
+                                {item.sets_or_time == 0 ? <span>Sets: {item.sets || '—'} · Reps: {item.reps_text || '—'} </span> : <span >Tiempo: {item.time + " minutos" || '—'}</span>}
                               </span>
                               <span className="inline-flex flex-wrap items-right gap-1">
                                 {dayLetters.length > 0 ? (
@@ -797,7 +801,7 @@ const Routines = () => {
                 aria-label="Cerrar modal"
               >
                 <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
-              </button>              
+              </button>
 
             </div>
 
@@ -806,14 +810,19 @@ const Routines = () => {
                 <div className="rounded-3xl bg-slate-950/70 p-4">
                   <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Ejercicio</p>
                   <p className="mt-2 text-2x1 font-semibold text-white">{notesModal.title}</p>
+                  <p className="mt-1 text-sm text-slate-300">
+                    {Number(notesModal.sets_or_time) === 0
+                      ? `Sets: ${notesModal.sets ?? '—'} · Reps: ${notesModal.reps_text || '—'}`
+                      : `Tiempo: ${notesModal.time ?? '—'} minutos`}
+                  </p>
                   {notesModal.clientEffortNotes && (
-                  <>
-                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mt-2">Indicaciones</p>
-                  <p className="mt-2 text-2x1 font-semibold text-white">
-                      <span>{notesModal.clientEffortNotes}</span>
-                  </p>                  
-                  </>
-                  )}                     
+                    <>
+                      <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mt-2">Indicaciones</p>
+                      <p className="mt-2 text-2x1 font-semibold text-white">
+                        <span>{notesModal.clientEffortNotes}</span>
+                      </p>
+                    </>
+                  )}
                 </div>
                 <div className="rounded-3xl bg-slate-950/70 p-4">
                   <label className="text-xs uppercase tracking-[0.25em] text-slate-500" htmlFor="workout-note-date">Fecha</label>
@@ -843,14 +852,14 @@ const Routines = () => {
                   placeholder="Escribe tus notas aquí..."
                   className="mt-3 min-h-[180px] w-full resize-y rounded-tl-3xl rounded-tr-3xl border border-slate-700 bg-[#111827] p-4 text-sm text-slate-200 placeholder:text-slate-500 focus:border-[#f1b80c] focus:outline-none focus:ring-2 focus:ring-[#f1b80c]/20"
                 />
-              {notesModal.feedback && ( <>
-              <div className="rounded-bl-3xl rounded-br-3xl border border-emerald-400/30 bg-emerald-400/5 p-4">
-                <p className="text-sm font-semibold text-emerald-300 uppercase tracking-[0.3em]">Feedback del entrenador</p>
-                <p className="mt-2 whitespace-pre-wrap break-words text-sm text-slate-200">
-                  {notesModal.feedback || 'El entrenador aún no ha dejado feedback para esta fecha.'}
-                </p>
-              </div>                   
-              </>)}
+                {notesModal.feedback && (<>
+                  <div className="rounded-bl-3xl rounded-br-3xl border border-emerald-400/30 bg-emerald-400/5 p-4">
+                    <p className="text-sm font-semibold text-emerald-300 uppercase tracking-[0.3em]">Feedback del entrenador</p>
+                    <p className="mt-2 whitespace-pre-wrap break-words text-sm text-slate-200">
+                      {notesModal.feedback || 'El entrenador aún no ha dejado feedback para esta fecha.'}
+                    </p>
+                  </div>
+                </>)}
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
