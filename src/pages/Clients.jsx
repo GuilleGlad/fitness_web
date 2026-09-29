@@ -295,6 +295,10 @@ const Clients = () => {
   const [completedWorkouts, setCompletedWorkouts] = useState([]);
   const [activeWorkoutTab, setActiveWorkoutTab] = useState('assigned');
   const [showWorkoutsFullModal, setShowWorkoutsFullModal] = useState(false);
+  const [showPastWorkoutsModal, setShowPastWorkoutsModal] = useState(false);
+  const [pastWorkoutsDateFilter, setPastWorkoutsDateFilter] = useState('');
+  const [pastWorkoutsCompletedDateFilter, setPastWorkoutsCompletedDateFilter] = useState('');
+  const [pastWorkoutsTitleFilter, setPastWorkoutsTitleFilter] = useState('');
   const [completedDateFilter, setCompletedDateFilter] = useState('');
   const [selectedWorkoutId, setSelectedWorkoutId] = useState('');
   const [selectedDays, setSelectedDays] = useState({ L: false, M: false, X: false, J: false, V: false, S: false, D: false });
@@ -729,8 +733,7 @@ const Clients = () => {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         };
         await axios.delete(`${apiUrl}/workouts/deactivate`, config);
-        setAssignedWorkouts((prev) => prev.filter((item) => item.id !== assignmentId));
-        setCompletedWorkouts((prev) => prev.filter((item) => item.id !== assignmentId));
+        if (selectedClient?.id) await fetchAssignedWorkouts(selectedClient.id);
         toast.success('Rutina asignada eliminada correctamente.');
       } catch (err) {
         console.error(err);
@@ -760,7 +763,7 @@ const Clients = () => {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         };
         await axios.delete(`${apiUrl}/workouts/deactivate`, config);
-        setAssignedWorkouts([]);
+        if (selectedClient?.id) await fetchAssignedWorkouts(selectedClient.id);
         toast.success('Rutinas asignadas eliminadas correctamente.');
       } catch (err) {
         console.error(err);
@@ -1112,6 +1115,29 @@ const Clients = () => {
   const visibleWorkouts = vw.filter((o, index, arr) =>
     arr.findIndex(item => (item.id === o.id && item.active)) === index
   );
+
+  const pastWorkouts = assignedWorkouts.filter((o, index, arr) =>
+    arr.findIndex(item => (item.id === o.id)) === index).filter((item) =>
+      Number(item.active) === 0 &&
+      item.close_date &&
+      moment(item.close_date).isValid() &&
+      moment(item.close_date).isSameOrBefore(moment(), 'day')
+    );
+  const pastWorkoutNoteRecords = [...assignedWorkouts, ...completedWorkouts];
+  const filteredPastWorkouts = pastWorkouts.filter((item) => {
+    const matchesCloseDate = !pastWorkoutsDateFilter || moment(item.close_date).format('YYYY-MM-DD') === pastWorkoutsDateFilter;
+    const dailyWorkoutId = item.daily_workouts_id ?? item.id;
+    const matchesCompletedDate = !pastWorkoutsCompletedDateFilter || pastWorkoutNoteRecords.some((record) => {
+      const recordDailyWorkoutId = record.daily_workouts_id ?? record.id;
+      return String(recordDailyWorkoutId) === String(dailyWorkoutId) &&
+        record.workout_note_log_date &&
+        moment(record.workout_note_log_date).isValid() &&
+        moment(record.workout_note_log_date).format('YYYY-MM-DD') === pastWorkoutsCompletedDateFilter;
+    });
+    const workoutTitle = item.title || item.name || item.workout_name || `#${item.workout_id}`;
+    const matchesTitle = workoutTitle.toLocaleLowerCase().includes(pastWorkoutsTitleFilter.trim().toLocaleLowerCase());
+    return matchesCloseDate && matchesCompletedDate && matchesTitle;
+  });
   console.log(visibleWorkouts);
   const loadingVisibleWorkouts = activeWorkoutTab === 'completed' ? loadingCompletedWorkouts : loadingAssignedWorkouts;
 
@@ -1196,19 +1222,19 @@ const Clients = () => {
                     {item.title || item.name || item.workout_name || `#${item.workout_id}`}
                   </h4>
                 </div>
-                {activeWorkoutTab !== 'completed' &&
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    {item.workout_note_id &&
-                      <button
-                        type='button'
-                        className={`inline-flex h-7 w-7 items-center justify-center rounded-full bg-green-800 text-white transition hover:bg-green-400 hover:text-slate-600 ${item.note && !item.status && 'animate-pulseBorder'}`}
-                        aria-label="Notas del Cliente"
-                        title='Notas del Cliente'
-                        onClick={() => handleNoteReview(item)}
-                      >
-                        <FontAwesomeIcon icon={faNoteSticky} size='xs' />
-                      </button>
-                    }
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {getWorkoutNoteId(item) &&
+                    <button
+                      type='button'
+                      className={`inline-flex h-7 w-7 items-center justify-center rounded-full bg-green-800 text-white transition hover:bg-green-400 hover:text-slate-600 ${item.note && !item.status ? 'animate-pulseBorder' : ''}`}
+                      aria-label="Notas del Cliente"
+                      title='Ver notas y feedback'
+                      onClick={() => handleNoteReview(item)}
+                    >
+                      <FontAwesomeIcon icon={faNoteSticky} size='xs' />
+                    </button>
+                  }
+                  {activeWorkoutTab !== 'completed' &&
                     <button
                       type="button"
                       onClick={() => handleDeleteAssignedWorkout(item.id)}
@@ -1218,8 +1244,8 @@ const Clients = () => {
                     >
                       <FontAwesomeIcon icon={faTrash} size='xs' />
                     </button>
-                  </div>
-                }
+                  }
+                </div>
               </div>
 
               {/* Meta: día / fecha as inline chips */}
@@ -1743,7 +1769,7 @@ const Clients = () => {
           <div className="flex min-h-0 flex-col rounded-2xl border border-slate-700 bg-[#0f172a] p-3 sm:rounded-3xl sm:p-4 lg:h-[65vh] lg:max-h-[65vh]">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold text-white sm:text-lg">Rutinas</h3>
+                <h3 className="text-base font-semibold text-white sm:text-lg uppercase">Rutinas</h3>
                 <div className='inline-flex p-2 gap-2 shrink-0 items-center justify-center rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]'>
                   <button
                     name='rutinas_pantalla_completa'
@@ -1752,20 +1778,26 @@ const Clients = () => {
                     aria-label="Ver rutinas en pantalla completa"
                     title="Ver en pantalla completa"
                   >
-                    <FontAwesomeIcon icon={faExpand} size="xs" />
-                    <span className="ml-2 hidden text-[12px] text-slate-800 sm:inline">Pantalla completa</span>
+                    <FontAwesomeIcon icon={faExpand} size="sm" />
+                    <span className="ml-2 hidden text-[12px] text-slate-800 sm:inline uppercase">Pantalla completa</span>
                   </button>
                 </div>
                 <div className='inline-flex p-2 gap-2 shrink-0 items-center justify-center rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]'>
                   <button
                     name='rutinas_pasadas'
                     type="button"
-                    onClick={() => setShowWorkoutsFullModal(true)}
-                    aria-label="Ver rutinas en pantalla completa"
-                    title="Ver en pantalla completa"
+                    onClick={() => {
+                      setPastWorkoutsCompletedDateFilter('');
+                      setPastWorkoutsDateFilter('');
+                      setPastWorkoutsTitleFilter('');
+                      setShowPastWorkoutsModal(true)
+                    }
+                    }
+                    aria-label="Ver rutinas pasadas"
+                    title="Ver rutinas pasadas"
                   >
-                    <FontAwesomeIcon icon={faList12} size="xs" />
-                    <span className="ml-2 hidden text-[12px] text-slate-800 sm:inline">Ver rutinas pasadas</span>
+                    <FontAwesomeIcon icon={faList12} size="sm" />
+                    <span className="ml-2 hidden text-[12px] text-slate-800 sm:inline uppercase">Rutinas pasadas</span>
                   </button>
                 </div>
               </div>
@@ -1799,6 +1831,140 @@ const Clients = () => {
         <div className="flex min-h-0 flex-col lg:h-[80vh] lg:max-h-[80vh]">
           {renderWorkoutsList()}
         </div>
+      </ModalOverlay>
+
+      <ModalOverlay
+        isOpen={showPastWorkoutsModal}
+        onClose={() => setShowPastWorkoutsModal(false)}
+        title={selectedClient ? `Rutinas pasadas de ${selectedClient.name}` : 'Rutinas pasadas'}
+      >
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          <label className="block w-full space-y-1.5 text-xs font-medium text-slate-400 sm:max-w-[260px]">
+            <span className="pl-1">Fecha de cierre</span>
+            <span className="relative block">
+              <FontAwesomeIcon icon={faCalendarDays} className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-500" aria-hidden="true" />
+              <input
+                type="date"
+                value={pastWorkoutsDateFilter}
+                onChange={(event) => setPastWorkoutsDateFilter(event.target.value)}
+                onClick={(event) => event.currentTarget.showPicker?.()}
+                aria-label="Filtrar rutinas pasadas por fecha de cierre"
+                className="w-full rounded-xl border border-slate-700/80 bg-slate-900/70 py-2 pl-9 pr-3 text-sm text-slate-200 outline-none transition hover:border-slate-600 focus:border-[#f1b80c]/70 focus:ring-1 focus:ring-[#f1b80c]/30"
+                style={{ colorScheme: 'dark' }}
+              />
+            </span>
+          </label>
+          <label className="block w-full space-y-1.5 text-xs font-medium text-slate-400 sm:max-w-[260px]">
+            <span className="pl-1">Fecha completada</span>
+            <span className="relative block">
+              <FontAwesomeIcon icon={faCalendarDays} className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-500" aria-hidden="true" />
+              <input
+                type="date"
+                value={pastWorkoutsCompletedDateFilter}
+                onChange={(event) => setPastWorkoutsCompletedDateFilter(event.target.value)}
+                onClick={(event) => event.currentTarget.showPicker?.()}
+                aria-label="Filtrar rutinas por fecha completada"
+                className="w-full rounded-xl border border-slate-700/80 bg-slate-900/70 py-2 pl-9 pr-3 text-sm text-slate-200 outline-none transition hover:border-slate-600 focus:border-[#f1b80c]/70 focus:ring-1 focus:ring-[#f1b80c]/30"
+                style={{ colorScheme: 'dark' }}
+              />
+            </span>
+          </label>
+          <label className="block w-full space-y-1.5 text-xs font-medium text-slate-400 sm:max-w-[260px]">
+            <span className="pl-1">Título de la rutina</span>
+            <input
+              type="search"
+              value={pastWorkoutsTitleFilter}
+              onChange={(event) => setPastWorkoutsTitleFilter(event.target.value)}
+              placeholder="Buscar por título"
+              aria-label="Filtrar rutinas pasadas por título"
+              className="w-full rounded-xl border border-slate-700/80 bg-slate-900/70 px-3 py-2 text-sm text-slate-200 outline-none transition placeholder:text-slate-500 hover:border-slate-600 focus:border-[#f1b80c]/70 focus:ring-1 focus:ring-[#f1b80c]/30"
+            />
+          </label>
+          {(pastWorkoutsDateFilter || pastWorkoutsCompletedDateFilter || pastWorkoutsTitleFilter) && (
+            <button
+              type="button"
+              onClick={() => {
+                setPastWorkoutsDateFilter('');
+                setPastWorkoutsCompletedDateFilter('');
+                setPastWorkoutsTitleFilter('');
+              }}
+              className="self-start rounded-xl px-2 py-2 text-xs font-semibold text-slate-400 transition hover:bg-slate-800 hover:text-white sm:self-end"
+            >
+              Limpiar filtros
+            </button>
+          )}
+        </div>
+        {loadingAssignedWorkouts ? (
+          <p className="text-slate-400">Cargando rutinas...</p>
+        ) : filteredPastWorkouts.length === 0 ? (
+          <p className="text-slate-400">
+            {pastWorkoutsDateFilter || pastWorkoutsCompletedDateFilter || pastWorkoutsTitleFilter
+              ? 'No hay rutinas pasadas que coincidan con los filtros seleccionados.'
+              : 'No hay rutinas pasadas para este cliente.'}
+          </p>
+        ) : (
+          <div className="max-h-[70vh] space-y-3 overflow-y-auto">
+            {filteredPastWorkouts.map((item) => (
+              <div
+                key={item.id || `${item.workout_id}-${item.close_date}`}
+                className="group relative flex flex-col gap-2 rounded-xl border border-slate-700 border-l-4 border-l-[#f1b80c] bg-slate-800/70 p-2.5 shadow-lg transition hover:border-slate-600 hover:bg-slate-800 sm:gap-2.5 sm:rounded-2xl sm:p-3.5"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c] sm:h-8 sm:w-8">
+                      <FontAwesomeIcon icon={faDumbbell} size="sm" />
+                    </span>
+                    <h4 className="truncate text-sm font-semibold text-white lg:text-base" title={item.title || item.name || item.workout_name}>
+                      {item.title || item.name || item.workout_name || `#${item.workout_id}`}
+                    </h4>
+                  </div>
+                  {getWorkoutNoteId(item) && (
+                    <button
+                      type="button"
+                      onClick={() => handleNoteReview(item)}
+                      className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-800 text-white transition hover:bg-green-400 hover:text-slate-600 ${item.note && !item.status ? 'animate-pulseBorder' : ''}`}
+                      aria-label="Ver notas y feedback de la rutina"
+                      title="Ver notas y feedback"
+                    >
+                      <FontAwesomeIcon icon={faNoteSticky} size="xs" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 sm:gap-x-4 lg:text-sm">
+                  <span className="inline-flex flex-wrap items-center gap-1">
+                    <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
+                    {item.day_of_week ? item.day_of_week.split(',').filter(Boolean).map((day) => (
+                      <span
+                        key={day}
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold lg:text-xs ${dayColorMap[day.trim()] || 'bg-slate-600/40 text-slate-300 ring-1 ring-inset ring-slate-500/30'}`}
+                      >
+                        {translateDay(day.trim())}
+                      </span>
+                    )) : <span className="text-slate-500">—</span>}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
+                    Cerrada: {moment(item.close_date).format('DD/MM/YYYY')}
+                  </span>
+                  {/* {item.workout_note_log_date && moment(item.workout_note_log_date).isValid() && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
+                      Completada: {moment(item.workout_note_log_date).format('DD/MM/YYYY HH:mm')}
+                    </span>
+                  )} */}
+                </div>
+
+                <p className="line-clamp-2 rounded-xl bg-slate-900/60 px-3 py-2 text-xs text-slate-300 lg:text-sm" title={item.trainer_notes || ''}>
+                  <span className="mr-1 font-semibold text-slate-200">Indicaciones:</span>
+                  {item.client_effort_notes && <span className="text-sm text-slate-200">{item.client_effort_notes} | </span>}
+                  {item.sets_or_time === 0 && <>Sets: {item.sets || '—'} · Reps: {item.reps_text || '—'}</>}
+                  {item.sets_or_time === 1 && <>Tiempo: {item.time || '-'}</>}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </ModalOverlay>
 
       {/* Progress chart modal */}
@@ -1922,24 +2088,28 @@ const Clients = () => {
                       <FontAwesomeIcon icon={faDumbbell} />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold uppercase text-slate-400">Rutina</p>
+                      <p className="text-sm font-semibold uppercase text-slate-400">Rutina</p>
                       <h4 className="truncate text-base font-semibold text-white">
                         {noteModalData?.title || '—'}
                       </h4>
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
+                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
+                        <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
+                      </span>
                       <span>Fecha seleccionada</span>
                       <span className="font-medium text-white">
                         {getWorkoutNoteDate(noteModalData)
-                          ? moment(noteModalData.workout_note_log_date).format('DD-MM-YYYY HH:mm')
+                          ? moment(noteModalData.workout_note_log_date).format('DD-MM-YYYY')
                           : 'Sin fecha'}
                       </span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
-                      <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
+                    <div className="flex flex-wrap items-center gap-1.5 text-sm text-slate-400">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
+                        <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
+                      </span>
                       {(noteModalData.day_of_week || noteModalData.days || noteModalData.day) ? (
                         (noteModalData.day_of_week || noteModalData.days || noteModalData.day)
                           .split(',')
@@ -1958,6 +2128,14 @@ const Clients = () => {
                     </div>
                   </div>
                 </div>
+                {noteModalData?.client_effort_notes && (
+                  <div className="flex min-w-0 items-center gap-3 mt-4">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
+                      <FontAwesomeIcon icon={faNoteSticky} />
+                    </span>
+                    Indicaciones: {noteModalData?.client_effort_notes || 'No hay indicaciones.'}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -1966,7 +2144,7 @@ const Clients = () => {
                     <h4 className="text-sm font-semibold text-white">Registros de esta rutina</h4>
                     <span className="text-xs text-slate-500">Selecciona una fecha</span>
                   </div>
-                  <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+                  <div className="max-h-[250px] md:max-h-[420px] space-y-2 overflow-y-auto pr-1">
                     {noteRoutineRows.map((item, index) => {
                       const noteText = item?.note.slice(0, item?.note.indexOf('|')) || item.notes || '';
                       const rowNoteId = getWorkoutNoteId(item);
@@ -1981,17 +2159,17 @@ const Clients = () => {
                           className={`block w-full rounded-xl border p-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f1b80c] disabled:cursor-default ${isSelected ? 'border-[#f1b80c] bg-yellow-400/10' : 'border-slate-700 bg-slate-900/70 hover:border-slate-500 hover:bg-slate-800'}`}
                         >
                           <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs">
-                            <span className="font-medium text-slate-300">
-                              {getWorkoutNoteDate(item) ? moment(item.workout_note_log_date).format('DD-MM-YYYY HH:mm') : 'Sin fecha'}
+                            <span className="font-medium text-[#f1b80c]">
+                              {getWorkoutNoteDate(item) ? moment(item.workout_note_log_date).format('DD-MM-YYYY') : 'Sin fecha'}
                             </span>
-                            <span className={item.feedback?.trim() ? 'text-emerald-400' : noteText.trim() ? 'text-emerald-400' : 'text-slate-500'}>
+                            {/* <span className={item.feedback?.trim() ? 'text-emerald-400' : noteText.trim() ? 'text-emerald-400' : 'text-slate-500'}>
                               {item.feedback?.trim() ? 'Revisada' : noteText.trim() ? 'Dejó una nota' : 'Sin nota del cliente'}
-                            </span>
+                            </span> */}
                           </div>
                           {noteText.trim() && <p className="whitespace-pre-wrap break-words text-sm text-slate-200">{noteText}</p>}
                           {item.feedback && (
                             <p className="mt-2 whitespace-pre-wrap break-words border-t border-slate-700 pt-2 text-sm text-emerald-300">
-                              <span className="font-semibold">Respuesta del entrenador:</span> {item.feedback}
+                              <span className="font-semibold">Respuesta:</span> {item.feedback}
                             </p>
                           )}
                         </button>
@@ -2003,16 +2181,6 @@ const Clients = () => {
                 <section className="space-y-3">
                   {noteDateSelected ? (
                     <>
-                      <div className="rounded-2xl border border-slate-700 bg-slate-900/50 p-4">
-                        <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
-                          <FontAwesomeIcon icon={faCommentDots} className="text-slate-200" />
-                          Indicaciones
-                        </p>
-                        <p className="whitespace-pre-wrap text-sm text-slate-200">
-                          {noteModalData?.client_effort_notes || 'No hay indicaciones.'}
-                        </p>
-                      </div>
-
                       <div className="rounded-2xl border border-yellow-400/40 bg-yellow-400/5 p-4">
                         <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
                           <FontAwesomeIcon icon={faCommentDots} className="text-[#f1b80c]" />
