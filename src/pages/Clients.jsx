@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import TrainerLibrary from './TrainerLibrary';
 import BodySilhouette from '../components/BodySilhouette';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faNoteSticky, faTrash, faCalendarDays, faClock, faDumbbell, faCommentDots, faChevronDown, faExpand, faArrowLeft, faChartLine, faMale } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faNoteSticky, faTrash, faCalendarDays, faClock, faDumbbell, faCommentDots, faChevronDown, faExpand, faArrowLeft, faChartLine, faMale, faTimeline, faList12 } from '@fortawesome/free-solid-svg-icons';
 import { verifyToken } from '../utils/tokenUtils';
 import { getClientStatusLabel, getCuentaLabel, normalizeClientRow, normalizeStatusCode } from '../utils/clientUtils';
 import moment from 'moment';
@@ -570,6 +570,7 @@ const Clients = () => {
       setSelectedNoteId(String(getWorkoutNoteId(selectedNote) || ''));
       setNoteModalData(selectedNote);
       setNoteFeedback(selectedNote.feedback || '');
+      SetNoteDateSelected(true);
       setLoadingNoteModal(false);
       return;
     }
@@ -593,6 +594,7 @@ const Clients = () => {
       setSelectedNoteId(String(getWorkoutNoteId(noteData) || workoutNoteId));
       setNoteModalData(noteData);
       setNoteFeedback(noteData.feedback || '');
+      SetNoteDateSelected(true);
     } catch (err) {
       console.error(err);
       toast.error('No se pudo cargar la nota.');
@@ -1110,7 +1112,7 @@ const Clients = () => {
   const visibleWorkouts = vw.filter((o, index, arr) =>
     arr.findIndex(item => (item.id === o.id && item.active)) === index
   );
-    console.log(visibleWorkouts);
+  console.log(visibleWorkouts);
   const loadingVisibleWorkouts = activeWorkoutTab === 'completed' ? loadingCompletedWorkouts : loadingAssignedWorkouts;
 
   const renderWorkoutsList = ({ cardsWrapperClass = 'min-h-0 flex-1 space-y-2 overflow-y-auto pr-2 pb-2 sm:space-y-3 sm:pr-4' } = {}) => (
@@ -1742,16 +1744,30 @@ const Clients = () => {
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-semibold text-white sm:text-lg">Rutinas</h3>
-                <button
-                  type="button"
-                  onClick={() => setShowWorkoutsFullModal(true)}
-                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-slate-700 hover:text-white"
-                  aria-label="Ver rutinas en pantalla completa"
-                  title="Ver en pantalla completa"
-                >
-                  <FontAwesomeIcon icon={faExpand} size="xs" />
-                </button>
-                <span className="hidden text-[11px] text-slate-500 sm:inline">Pantalla completa</span>
+                <div className='inline-flex p-2 gap-2 shrink-0 items-center justify-center rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]'>
+                  <button
+                    name='rutinas_pantalla_completa'
+                    type="button"
+                    onClick={() => setShowWorkoutsFullModal(true)}
+                    aria-label="Ver rutinas en pantalla completa"
+                    title="Ver en pantalla completa"
+                  >
+                    <FontAwesomeIcon icon={faExpand} size="xs" />
+                    <span className="ml-2 hidden text-[12px] text-slate-800 sm:inline">Pantalla completa</span>
+                  </button>
+                </div>
+                <div className='inline-flex p-2 gap-2 shrink-0 items-center justify-center rounded-full bg-[#f1b80c] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#d69e2e]'>
+                  <button
+                    name='rutinas_pasadas'
+                    type="button"
+                    onClick={() => setShowWorkoutsFullModal(true)}
+                    aria-label="Ver rutinas en pantalla completa"
+                    title="Ver en pantalla completa"
+                  >
+                    <FontAwesomeIcon icon={faList12} size="xs" />
+                    <span className="ml-2 hidden text-[12px] text-slate-800 sm:inline">Ver rutinas pasadas</span>
+                  </button>
+                </div>
               </div>
               <span className="rounded-full bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-300">
                 {visibleWorkouts.length > 0 && activeWorkoutTab === 'assigned' && (
@@ -1899,123 +1915,130 @@ const Clients = () => {
           ) : noteModalData ? (
             <>
               {/* Contexto de la rutina */}
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className=''>
-                  <div className="rounded-2xl border border-slate-700 bg-slate-900 p-4">
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
-                        <FontAwesomeIcon icon={faDumbbell} size="sm" />
-                      </span>
-                      <h4 className="truncate text-sm font-semibold text-white">
+              <div className="rounded-2xl border border-slate-700 bg-slate-900 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-600/20 text-[#f1b80c]">
+                      <FontAwesomeIcon icon={faDumbbell} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase text-slate-400">Rutina</p>
+                      <h4 className="truncate text-base font-semibold text-white">
                         {noteModalData?.title || '—'}
                       </h4>
                     </div>
-                    <label className="mb-3 block space-y-1.5 text-xs font-medium text-slate-400">
-                      <span>Fecha del registro</span>
-                      <select
-                        
-                        onChange={(event) => handleNoteDateChange(event.target.value)}
-                        className="w-full rounded-xl border border-slate-700 bg-[#0f172a] px-3 py-2 text-sm text-white outline-none focus:border-[#f1b80c]"
-                      >
-                        <option selected={true} value={-1}>Seleccionar Fecha...</option>
-                        {noteRoutineRows.filter((item) => getWorkoutNoteId(item) && getWorkoutNoteDate(item)).map((item) => (
-                          <option key={getWorkoutNoteId(item)} value={getWorkoutNoteId(item)}>
-                            {moment(item.workout_note_log_date).format('DD-MM-YYYY HH:mm')}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-400">
-                      <span className="inline-flex flex-wrap items-center gap-1">
-                        <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
-                        {(noteModalData.day_of_week || noteModalData.days || noteModalData.day) ? (
-                          (noteModalData.day_of_week || noteModalData.days || noteModalData.day)
-                            .split(',')
-                            .filter(Boolean)
-                            .map((d) => (
-                              <span
-                                key={d}
-                                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${dayColorMap[d.trim()] || 'bg-slate-600/40 text-slate-300 ring-1 ring-inset ring-slate-500/30'}`}
-                              >
-                                {translateDay(d.trim())}
-                              </span>
-                            ))
-                        ) : (
-                          <span className="text-slate-500">—</span>
-                        )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
+                      <span>Fecha seleccionada</span>
+                      <span className="font-medium text-white">
+                        {getWorkoutNoteDate(noteModalData)
+                          ? moment(noteModalData.workout_note_log_date).format('DD-MM-YYYY HH:mm')
+                          : 'Sin fecha'}
                       </span>
-                      {/* <span className="inline-flex items-center gap-1.5">
-                        <FontAwesomeIcon icon={faClock} className="text-[#f1b80c]" />
-                        {getWorkoutNoteDate(noteModalData) ? moment(noteModalData.workout_note_log_date).format('DD-MM-YYYY HH:mm') : '—'}
-                      </span> */}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
+                      <FontAwesomeIcon icon={faCalendarDays} className="mr-0.5 text-[#f1b80c]" />
+                      {(noteModalData.day_of_week || noteModalData.days || noteModalData.day) ? (
+                        (noteModalData.day_of_week || noteModalData.days || noteModalData.day)
+                          .split(',')
+                          .filter(Boolean)
+                          .map((d) => (
+                            <span
+                              key={d}
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${dayColorMap[d.trim()] || 'bg-slate-600/40 text-slate-300 ring-1 ring-inset ring-slate-500/30'}`}
+                            >
+                              {translateDay(d.trim())}
+                            </span>
+                          ))
+                      ) : (
+                        <span className="text-slate-500">—</span>
+                      )}
                     </div>
                   </div>
-
-                  {/* Nota del cliente (solo lectura) */}
-                  {noteDateSelected && (
-                    <>
-                  <div className="rounded-2xl border p-4">
-                    <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
-                      <FontAwesomeIcon icon={faCommentDots} className="text-slate-200" />
-                      Indicaciones
-                    </p>
-                    <p className="whitespace-pre-wrap text-sm text-slate-200">
-                      {noteModalData?.client_effort_notes || 'No hay indicaciones.'}
-                    </p>
-                  </div>
-                  
-                  <div className="rounded-2xl border border-yellow-400/40 bg-yellow-400/5 p-4">
-                    <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
-                      <FontAwesomeIcon icon={faCommentDots} className="text-[#f1b80c]" />
-                      Nota del cliente
-                    </p>
-                    <p className="whitespace-pre-wrap text-sm text-slate-200">
-                      {noteModalData?.note.slice(0,noteModalData.note.indexOf('|')) || 'El cliente no dejó ninguna nota.'}
-                    </p>
-                  </div>
-
-                  {/* Respuesta del entrenador */}
-                  <label className="block space-y-2 text-sm text-slate-200">
-                    <span className="font-semibold text-white">Tu respuesta</span>
-                    <textarea
-                      value={noteFeedback}
-                      onChange={(e) => setNoteFeedback(e.target.value)}
-                      placeholder="Escribe tu respuesta para el cliente..."
-                      className="min-h-[140px] w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
-                    />
-                  </label>
-                  </>
-                  ) }
                 </div>
-                <div className=''>
-                  <section className="space-y-2 border-t border-slate-700 pt-4">
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <section className="space-y-2 rounded-2xl border border-slate-700 bg-slate-900/50 p-4">
+                  <div className="flex items-center justify-between gap-3">
                     <h4 className="text-sm font-semibold text-white">Registros de esta rutina</h4>
-                    <div className="h-[90%] space-y-2 overflow-y-auto pr-1">
-                      {noteRoutineRows.map((item, index) => {
-                        const noteText = item?.note.slice(0,item?.note.indexOf('|')) || item.notes || '';
-                        const rowNoteId = getWorkoutNoteId(item);
-                        return (
-                          <div key={rowNoteId || `${item.id || 'row'}-${getWorkoutNoteDate(item)}-${index}`} className="rounded-xl border border-slate-700 bg-slate-900/70 p-3">
-                            <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs">
-                              <span className="font-medium text-slate-300">
-                                {getWorkoutNoteDate(item) ? moment(item.workout_note_log_date).format('DD-MM-YYYY HH:mm') : 'Sin fecha'}
-                              </span>
-                              <span className={item.feedback?.trim() ? 'text-emerald-400' : noteText.trim() ? 'text-emerald-400' : 'text-slate-500'}>
-                                {item.feedback?.trim() ? 'Revisada' : noteText.trim() ? 'Dejó una nota' : 'Sin nota del cliente'}
-                              </span>
-                            </div>
-                            {noteText.trim() && <p className="whitespace-pre-wrap break-words text-sm text-slate-200">{noteText}</p>}
-                            {item.feedback && (
-                              <p className="mt-2 whitespace-pre-wrap break-words border-t border-slate-700 pt-2 text-sm text-emerald-300">
-                                <span className="font-semibold">Respuesta del entrenador:</span> {item.feedback}
-                              </p>
-                            )}
+                    <span className="text-xs text-slate-500">Selecciona una fecha</span>
+                  </div>
+                  <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+                    {noteRoutineRows.map((item, index) => {
+                      const noteText = item?.note.slice(0, item?.note.indexOf('|')) || item.notes || '';
+                      const rowNoteId = getWorkoutNoteId(item);
+                      const isSelected = String(rowNoteId) === String(selectedNoteId);
+                      return (
+                        <button
+                          type="button"
+                          key={rowNoteId || `${item.id || 'row'}-${getWorkoutNoteDate(item)}-${index}`}
+                          onClick={() => handleNoteDateChange(rowNoteId)}
+                          disabled={!rowNoteId}
+                          aria-pressed={isSelected}
+                          className={`block w-full rounded-xl border p-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f1b80c] disabled:cursor-default ${isSelected ? 'border-[#f1b80c] bg-yellow-400/10' : 'border-slate-700 bg-slate-900/70 hover:border-slate-500 hover:bg-slate-800'}`}
+                        >
+                          <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs">
+                            <span className="font-medium text-slate-300">
+                              {getWorkoutNoteDate(item) ? moment(item.workout_note_log_date).format('DD-MM-YYYY HH:mm') : 'Sin fecha'}
+                            </span>
+                            <span className={item.feedback?.trim() ? 'text-emerald-400' : noteText.trim() ? 'text-emerald-400' : 'text-slate-500'}>
+                              {item.feedback?.trim() ? 'Revisada' : noteText.trim() ? 'Dejó una nota' : 'Sin nota del cliente'}
+                            </span>
                           </div>
-                        );
-                      })}
+                          {noteText.trim() && <p className="whitespace-pre-wrap break-words text-sm text-slate-200">{noteText}</p>}
+                          {item.feedback && (
+                            <p className="mt-2 whitespace-pre-wrap break-words border-t border-slate-700 pt-2 text-sm text-emerald-300">
+                              <span className="font-semibold">Respuesta del entrenador:</span> {item.feedback}
+                            </p>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="space-y-3">
+                  {noteDateSelected ? (
+                    <>
+                      <div className="rounded-2xl border border-slate-700 bg-slate-900/50 p-4">
+                        <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
+                          <FontAwesomeIcon icon={faCommentDots} className="text-slate-200" />
+                          Indicaciones
+                        </p>
+                        <p className="whitespace-pre-wrap text-sm text-slate-200">
+                          {noteModalData?.client_effort_notes || 'No hay indicaciones.'}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-yellow-400/40 bg-yellow-400/5 p-4">
+                        <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
+                          <FontAwesomeIcon icon={faCommentDots} className="text-[#f1b80c]" />
+                          Nota del cliente
+                        </p>
+                        <p className="whitespace-pre-wrap text-sm text-slate-200">
+                          {noteModalData?.note.slice(0, noteModalData.note.indexOf('|')) || 'El cliente no dejó ninguna nota.'}
+                        </p>
+                      </div>
+
+                      <label className="block space-y-2 text-sm text-slate-200">
+                        <span className="font-semibold text-white">Tu respuesta</span>
+                        <textarea
+                          value={noteFeedback}
+                          onChange={(e) => setNoteFeedback(e.target.value)}
+                          placeholder="Escribe tu respuesta para el cliente..."
+                          className="min-h-[140px] w-full rounded-3xl border border-slate-700 bg-[#0f172a] px-4 py-3 text-white outline-none transition focus:border-[#f1b80c]"
+                        />
+                      </label>
+                    </>
+                  ) : (
+                    <div className="flex min-h-48 items-center justify-center rounded-2xl border border-dashed border-slate-700 p-6 text-center text-sm text-slate-400">
+                      Selecciona un registro para ver sus indicaciones y notas.
                     </div>
-                  </section>
-                </div>
+                  )}
+                </section>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <button

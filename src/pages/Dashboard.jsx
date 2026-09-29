@@ -6,7 +6,7 @@ import { getClientStatusLabel } from '../utils/clientUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { faAdd, faHome, faPencil, faPlus, faVideo, faBars, faTimes, faBell, faDumbbell, faCalendarDays, faCommentDots, faCheck, faCalendarDay, faInfo, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAdd, faHome, faPencil, faPlus, faVideo, faBars, faTimes, faBell, faDumbbell, faCalendarDays, faCommentDots, faCheck, faCalendarDay, faInfo, faInfoCircle, faXmark } from '@fortawesome/free-solid-svg-icons';
 import BodySilhouette from '../components/BodySilhouette';
 import moment from 'moment';
 import 'moment/locale/es';
@@ -85,7 +85,7 @@ const Dashboard = () => {
   const [receiptPreviewImage, setReceiptPreviewImage] = useState(null);
   const [workouts, setWorkouts] = useState([]);
   const [previewExercise, setPreviewExercise] = useState(null);
-  const [notesModal, setNotesModal] = useState({ isOpen: false, workoutId: null, title: '', date: '', notes: '', clientEffortNotes: '', availableDates: [] });
+  const [notesModal, setNotesModal] = useState({ isOpen: false, workoutId: null, title: '', date: '', notes: '', clientEffortNotes: '', feedback: '', availableDates: [] });
   const [calendarView, setCalendarView] = useState('week');
   const [selectedDate, setSelectedDate] = useState(moment().startOf('day'));
   const [progressTab, setProgressTab] = useState('silhouette');
@@ -267,7 +267,7 @@ const Dashboard = () => {
         hidden
         type="button"
         onClick={() => setShowPaymentModal(true)}
-        className="mt-2 rounded-full bg-[#f1b80c] px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-[#d69e2e]"
+        className="text-nowrap flex items-center gap-2 bg-yellow-400 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 hover:bg-yellow-200 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
       >
         Registrar comprobante
       </button>
@@ -305,6 +305,7 @@ const Dashboard = () => {
   }, [workouts, selectedDate]);
 
   const getWorkoutNoteDates = (workoutId, includeSelectedDate = true) => {
+    console.log(workouts);
     const dates = workouts
       .filter((workout) => String(workout.id) === String(workoutId))
       .map((workout) => moment(workout.workout_note_log_date))
@@ -339,6 +340,7 @@ const Dashboard = () => {
       date,
       notes: getWorkoutNoteForDate(workoutId, date),
       clientEffortNotes: workout?.client_effort_notes || prev.clientEffortNotes,
+      feedback: workout?.feedback || '',
     }));
   };
 
@@ -925,13 +927,14 @@ const Dashboard = () => {
       date: selectedDate.format('YYYY-MM-DD'),
       notes: getWorkoutNoteForDate(workout_id, selectedDate),
       clientEffortNotes: clientEffortNotes || '',
+      feedback: getWorkoutForNoteDate(workout_id, selectedDate)?.feedback || '',
       // availableDates: getWorkoutNoteDates(workout_id, note === null),
       availableDates: getWorkoutNoteDates(workout_id),
     });
   };
 
   const closeNotesModal = () => {
-    setNotesModal({ isOpen: false, workoutId: null, title: '', date: '', notes: '', clientEffortNotes: '', availableDates: [] });
+    setNotesModal({ isOpen: false, workoutId: null, title: '', date: '', notes: '', clientEffortNotes: '', feedback: '', availableDates: [] });
   };
 
   const formatTimestamp = (dateString) => {
@@ -1650,7 +1653,7 @@ const Dashboard = () => {
                 <div className="flex flex-col gap-2 mb-2 sm:flex-row sm:items-center sm:gap-3">
                   <button
                     onClick={() => setShowPaymentModal(true)}
-                    className='bg-yellow-400 hover:bg-yellow-200 text-black rounded-xl px-3 py-1.5 text-sm font-semibold sm:rounded-2xl sm:p-2 sm:text-base'
+                    className="text-nowrap flex items-center gap-2 bg-yellow-400 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 hover:bg-yellow-200 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
                   >
                     Registrar Comprobante <FontAwesomeIcon icon={faPlus}></FontAwesomeIcon>
                   </button>
@@ -1956,10 +1959,11 @@ const Dashboard = () => {
               </div>
               <button
                 onClick={closeNotesModal}
-                className="rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                aria-label="Cerrar modal"
               >
-                Cerrar
-              </button>
+                <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
+              </button>              
             </div>
 
             <div className="space-y-5">
@@ -1967,6 +1971,14 @@ const Dashboard = () => {
                 <div className="rounded-3xl bg-slate-950/70 p-4">
                   <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Ejercicio</p>
                   <p className="mt-2 text-2x1 font-semibold text-white">{notesModal.title}</p>
+                  {notesModal.clientEffortNotes && (
+                  <>
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500 mt-2">Indicaciones</p>
+                  <p className="mt-2 text-2x1 font-semibold text-white">
+                      <span>{notesModal.clientEffortNotes}</span>
+                  </p>                  
+                  </>
+                  )}                    
                 </div>
                 <div className="rounded-3xl bg-slate-950/70 p-4">
                   <label className="text-xs uppercase tracking-[0.25em] text-slate-500" htmlFor="workout-note-date">Fecha</label>
@@ -1988,20 +2000,25 @@ const Dashboard = () => {
               <div className="rounded-3xl bg-slate-950/70 p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <label className="text-2x1 font-semibold text-slate-200" htmlFor="workout-notes">Nota</label>
-                  {notesModal.clientEffortNotes && (
-                    <span className="rounded-full border border-[#f1b80c]/40 bg-[#f1b80c]/10 px-2 py-1 text-xs font-semibold text-[#f1b80c]" title="Este texto se agregará al guardar la nota">
-                      {notesModal.clientEffortNotes}
-                    </span>
-                  )}
                 </div>
                 <textarea
                   id="workout-notes"
                   value={notesModal.notes}
                   onChange={(e) => setNotesModal((prev) => ({ ...prev, notes: e.target.value }))}
                   placeholder="Escribe tus notas aquí..."
-                  className="mt-3 min-h-[180px] w-full resize-y rounded-3xl border border-slate-700 bg-[#111827] p-4 text-sm text-slate-200 placeholder:text-slate-500 focus:border-[#f1b80c] focus:outline-none focus:ring-2 focus:ring-[#f1b80c]/20"
+                  className="mt-3 min-h-[180px] w-full resize-y rounded-tl-3xl rounded-tr-3xl border border-slate-700 bg-[#111827] p-4 text-sm text-slate-200 placeholder:text-slate-500 focus:border-[#f1b80c] focus:outline-none focus:ring-2 focus:ring-[#f1b80c]/20"
                 />
+              {notesModal.feedback && ( <>
+              <div className="rounded-bl-3xl rounded-br-3xl border border-emerald-400/30 bg-emerald-400/5 p-4">
+                <p className="text-sm font-semibold text-emerald-300 uppercase tracking-[0.3em]">Feedback del entrenador</p>
+                <p className="mt-2 whitespace-pre-wrap break-words text-sm text-slate-200">
+                  {notesModal.feedback || 'El entrenador aún no ha dejado feedback para esta fecha.'}
+                </p>
+              </div>                   
+              </>)}
               </div>
+
+
 
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <button

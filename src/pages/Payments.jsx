@@ -405,7 +405,7 @@ const Payments = () => {
                 <div className="flex flex-col gap-2 mb-2 sm:flex-row sm:items-center sm:gap-3">
                   <button
                     onClick={() => setShowPaymentModal(true)}
-                    className='bg-yellow-400 hover:bg-yellow-200 text-black rounded-xl px-3 py-1.5 text-sm font-semibold sm:rounded-2xl sm:p-2 sm:text-base'
+                    className="text-nowrap flex items-center gap-2 bg-yellow-400 text-gray-800 lg:px-4 lg:py-2 px-2 py-1 hover:bg-yellow-200 transition duration-200 rounded-full uppercase lg:text-md text-xs justify-center font-bold"
                   >
                     Registrar Comprobante <FontAwesomeIcon icon={faPlus}></FontAwesomeIcon>
                   </button>
